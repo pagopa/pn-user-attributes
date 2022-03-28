@@ -38,6 +38,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAddresses'
         '400':
+          description: Invalid ID supplied\
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /address-book-private/v1/digital-address/legal/{recipientId}/{senderId}:
+    get:
+      summary: get the legal digital addresses of the recipient to the sender 
+      description: Returns a legal digital address for the recipient to the sender specified
+      operationId: getLegalAddressBySender
+      tags:
+        - legal
+      parameters:
+        - $ref: '#/components/parameters/recipientId'
+        - $ref: '#/components/parameters/senderId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: '#/components/schemas/LegalDigitalAddress'
+        '400':
+          description: Invalid ID supplied
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /address-book-private/v1/digital-address/courtesy/{recipientId}/{senderId}:
+    get:
+      summary: get the courtesy digital addresses of the recipient to the sender 
+      description: Returns a courtesy digital address for the recipient to the sender specified
+      operationId: getCourtesyAddressBySender
+      tags:
+        - courtesy
+      parameters:
+        - $ref: '#/components/parameters/recipientId'
+        - $ref: '#/components/parameters/senderId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: '#/components/schemas/CourtesyDigitalAddress'
+        '400':
           description: Invalid ID supplied
         '401':
           $ref: '#/components/responses/UnauthorizedError'
@@ -97,9 +143,9 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/LegalChannelType'
-    put:
+    post:
       summary: Create or update a digital address with legal value
-      operationId: putRecipientLegalAddress
+      operationId: postRecipientLegalAddress
       tags:
         - legal
       requestBody:
@@ -107,10 +153,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutAddressValue'
+              $ref: '#/components/schemas/AddressVerification'
       responses:
         '200':
-          description: Verification by Code needed FIXME attenzione alle sovrascritture
+          description: Verification by Code needed. This response is sent when the address provided need to be verified.
         '204':
           description: successful operation
         '400':
@@ -133,8 +179,7 @@ paths:
         '404':
           description: Digital Address not found
 
-
-  /address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}:               
+  /address-book/v1/digital-address/{recipientId}/courtesy/[{senderId}|default]/{channelType}:       
     parameters:
       - $ref: '#/components/parameters/recipientId'
       - $ref: '#/components/parameters/senderId'
@@ -144,9 +189,9 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/CourtesyChannelType'
-    put:
+    post:
       summary: Create or update a digital address without legal value
-      operationId: putRecipientCourtesyAddress
+      operationId: postRecipientCourtesyAddress
       tags:
         - courtesy
       requestBody:
@@ -154,10 +199,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutAddressValue'
+              $ref: '#/components/schemas/AddressVerification'
       responses:
         '200':
-          description: Verification by Code needed FIXME attenzione alle sovrascritture
+          description: Verification by Code needed
         '204':
           description: successful operation
         '400':
@@ -180,11 +225,6 @@ paths:
         '404':
           description: Digital Address not found
 
-  
-  
-  # FIXME API per microservizio pn-delivery-push /address-book-private/v1/digital-address/{recipientId}/{senderId}: 
-
-
 components:
   parameters:
     recipientId:
@@ -198,13 +238,14 @@ components:
     senderId:
       in: path
       name: senderId
-      description: sender Id
+      description: sender Id or 'default' for general addresses not associated to a sender
+      example: 'default'
       required: true
       schema:
         type: string
     
   schemas:
-    PutAddressValue:
+    AddressVerification:
       type: object
       required:
        - value
@@ -229,6 +270,7 @@ components:
           example: '123e4567-e89b-12d3-a456-426614174000'
         senderId:
           type: string
+          description: senderId or 'default'
           example: 'cmbo'
         channelType:
           type: string
@@ -275,7 +317,7 @@ components:
               enum: ['courtesy']
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
-    
+  
     UserAddresses:
       type: object
       properties:
@@ -289,6 +331,7 @@ components:
           items:
             type: object
             $ref: '#/components/schemas/CourtesyDigitalAddress'
+    
     VerificationCode:
       type: string
       description: Verification Code
