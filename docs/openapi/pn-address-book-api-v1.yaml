@@ -1,0 +1,306 @@
+openapi: 3.0.0
+info:
+  description: |
+    OpenApi definition for PN User Attributes Digital Addresses and Digital Domicile
+  version: v1
+  title: PN User Attributes
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: 'https://webapi.pn.pagopa.it/v1'
+tags:
+  - name: all
+    description: Receiver Digital Address and Digital Domicile
+  - name: legal
+    description: Receiver Digital Domicile
+  - name: courtesy
+    description: Receiver Digital Addresses
+    
+paths:
+  /address-book/v1/digital-address/{recipientId}:
+    get:
+      summary: Get all digital addressed
+      description: Returns all digital address for the recipient
+      operationId: getAddressesByRecipient
+      tags:
+        - all
+      parameters:
+        - $ref: '#/components/parameters/recipientId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddresses'
+        '400':
+          description: Invalid ID supplied
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  
+  /address-book/v1/digital-address/{recipientId}/legal:
+    get:
+      summary: get digital addresses with legal value
+      operationId: getLegalAddressByRecipient
+      tags:
+        - legal
+      parameters:
+        - $ref: '#/components/parameters/recipientId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LegalDigitalAddress'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  
+  /address-book/v1/digital-address/{recipientId}/courtesy:
+    get:
+      summary: get digital addresses without legal value
+      operationId: getCourtesyAddressByRecipient
+      tags:
+        - courtesy
+      parameters:
+        - $ref: '#/components/parameters/recipientId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourtesyDigitalAddress'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  
+  
+  /address-book/v1/digital-address/{recipientId}/legal/{senderId}/{channelType}:               
+    parameters:
+      - $ref: '#/components/parameters/recipientId'
+      - $ref: '#/components/parameters/senderId'
+      - in: path
+        name: channelType
+        description: Communication Channel type
+        required: true
+        schema:
+          $ref: '#/components/schemas/LegalChannelType'
+    put:
+      summary: Create or update a digital address with legal value
+      operationId: putRecipientLegalAddress
+      tags:
+        - legal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAddressValue'
+      responses:
+        '200':
+          description: Verification by Code needed FIXME attenzione alle sovrascritture
+        '204':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    delete:
+      summary: Delete Digital Address
+      description: Delete a single Digital Address with legal value
+      operationId: deleteRecipientLegalAddress
+      tags:
+        - legal
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Digital Address not found
+
+
+  /address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}:               
+    parameters:
+      - $ref: '#/components/parameters/recipientId'
+      - $ref: '#/components/parameters/senderId'
+      - in: path
+        name: channelType
+        description: Communication Channel type
+        required: true
+        schema:
+          $ref: '#/components/schemas/CourtesyChannelType'
+    put:
+      summary: Create or update a digital address without legal value
+      operationId: putRecipientCourtesyAddress
+      tags:
+        - courtesy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAddressValue'
+      responses:
+        '200':
+          description: Verification by Code needed FIXME attenzione alle sovrascritture
+        '204':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    delete:
+      summary: Delete Digital Address
+      description: Delete a single Digital Address without legal value
+      operationId: deleteRecipientCourtesyAddress
+      tags:
+        - courtesy
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Digital Address not found
+
+  
+  
+  # FIXME API per microservizio pn-delivery-push /address-book-private/v1/digital-address/{recipientId}/{senderId}: 
+
+
+components:
+  parameters:
+    recipientId:
+      in: path
+      name: recipientId
+      description: recipient Id
+      required: true
+      example: '123e4567-e89b-12d3-a456-426614174000'
+      schema:
+        type: string
+    senderId:
+      in: path
+      name: senderId
+      description: sender Id
+      required: true
+      schema:
+        type: string
+    
+  schemas:
+    PutAddressValue:
+      type: object
+      required:
+       - value
+      properties:
+        value:
+          type: string
+        verificationCode: 
+          type: string
+
+    BaseDigitalAddress:
+      type: object
+      required:
+        - addressType
+        - recipientId
+        - channelType
+        - value
+      properties:
+        addressType:
+          type: string
+        recipientId:
+          type: string
+          example: '123e4567-e89b-12d3-a456-426614174000'
+        senderId:
+          type: string
+          example: 'cmbo'
+        channelType:
+          type: string
+        value: 
+          type: string
+          example: 'nome.utente@server.it'
+        code:
+          $ref: '#/components/schemas/VerificationCode'
+
+    LegalChannelType:
+      type: string
+      description: Communication Channel types __with__ legal value
+      enum: [PEC, IOPEC]
+    
+    LegalDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+          properties:
+            addressType:
+              type: string
+              enum: ['legal']
+            channelType:
+              $ref: '#/components/schemas/LegalChannelType'
+    
+    CourtesyChannelType:
+      type: string
+      description: Communication Channel types __without__ legal value
+      enum: [EMAIL, SMS, IOMSG]
+    
+    CourtesyDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+          properties:
+            addressType:
+              type: string
+              enum: ['courtesy']
+            channelType:
+              $ref: '#/components/schemas/CourtesyChannelType'
+    
+    UserAddresses:
+      type: object
+      properties:
+        legal:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/LegalDigitalAddress'
+        courtesy:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/CourtesyDigitalAddress'
+    VerificationCode:
+      type: string
+      description: Verification Code
+      minLength: 5
+      maxLength: 5
+      pattern: '^\d{5}$'
+      example: '12345'
+  
+  responses:
+    BadRequestError:
+      description: Parameters are invalid
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  
+  
