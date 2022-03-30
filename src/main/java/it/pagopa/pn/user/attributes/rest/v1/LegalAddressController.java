@@ -51,8 +51,4 @@ public class LegalAddressController implements LegalApi {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String>  handleException(RuntimeException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
 }
