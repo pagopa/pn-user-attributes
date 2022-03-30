@@ -75,7 +75,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
         <version>5.4.0</version>
         <executions>
           <execution>
-            <id>pn-external-registires-ipa-server</id>
+            <id>pn-user-attributes-address-book-server</id>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -104,7 +104,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
             </configuration>
           </execution>
           <execution>
-            <id>pn-external-registires-recipients-server</id>
+            <id>pn-user-attributes-user-consents-server</id>
             <goals>
               <goal>generate</goal>
             </goals>
