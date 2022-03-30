@@ -133,8 +133,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
-  
-  
+
+
   /address-book/v1/digital-address/{recipientId}/legal/{senderId}/{channelType}:               
     parameters:
       - $ref: '#/components/parameters/recipientId'
@@ -165,6 +165,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '406':
+          $ref: '#/components/responses/VerificationCodeFailure'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address with legal value
@@ -211,6 +213,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '406':
+          $ref: '#/components/responses/VerificationCodeFailure'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address without legal value
@@ -355,5 +359,5 @@ components:
       description: Parameters are invalid
     UnauthorizedError:
       description: Access token is missing or invalid
-  
-  
+    VerificationCodeFailure:
+      description: Verification code mismatch
