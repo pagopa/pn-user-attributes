@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User Attributes Digital Addresses and Digital Domicile
+    OpenApi definition for PN User Attributes - Address Book
   version: v1
-  title: PN User Attributes - Digital Addresses and Digital Domicile
+  title: PN User Attributes - Address Book
   termsOfService: 'http://swagger.io/terms/'
   contact:
     email: pn@pagopa.it
@@ -181,7 +181,7 @@ paths:
         '404':
           description: Digital Address not found
 
-  /address-book/v1/digital-address/{recipientId}/courtesy/[{senderId}|default]/{channelType}:       
+  /address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}:
     parameters:
       - $ref: '#/components/parameters/recipientId'
       - $ref: '#/components/parameters/senderId'
@@ -286,8 +286,8 @@ components:
       type: string
       description: Communication Channel types __with__ legal value
       enum:
-        - PEC
-        - IOPEC
+        - pec
+        - appio
     
     LegalDigitalAddress:
       allOf:
@@ -309,9 +309,9 @@ components:
       type: string
       description: Communication Channel types __without__ legal value
       enum:
-        - EMAIL
-        - SMS
-        - IOMSG
+        - email
+        - sms
+        - appio
 
     CourtesyDigitalAddress:
       allOf:
