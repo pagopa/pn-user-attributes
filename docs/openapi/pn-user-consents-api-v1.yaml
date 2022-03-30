@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User - Consents
+    OpenApi definition for PN User Attributes - Consents
   version: v1
   title: PN User Attributes Consents
   termsOfService: 'http://swagger.io/terms/'
