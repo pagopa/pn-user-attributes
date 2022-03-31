@@ -6,6 +6,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,22 +21,30 @@ import javax.validation.ConstraintViolationException;
 public class LegalAddressController implements LegalApi {
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, ServerWebExchange exchange) {
-        return LegalApi.super.deleteRecipientLegalAddress(recipientId, senderId, channelType, exchange);
+        Mono<Void> result = Mono.empty();
+        exchange.getResponse().setStatusCode(HttpStatus.NO_CONTENT);
+        return result.then(Mono.empty());
     }
 
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressByRecipient(String recipientId, ServerWebExchange exchange) {
-        return LegalApi.super.getLegalAddressByRecipient(recipientId, exchange);
+        Mono<Void> result = Mono.empty();
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
+        return result.then(Mono.empty());
     }
 
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressBySender(String recipientId, String senderId, ServerWebExchange exchange) {
-        return LegalApi.super.getLegalAddressBySender(recipientId, senderId, exchange);
+        Mono<Void> result = Mono.empty();
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
+        return result.then(Mono.empty());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        return LegalApi.super.postRecipientLegalAddress(recipientId, senderId, channelType, addressVerificationDto, exchange);
+        Mono<Void> result = Mono.empty();
+        exchange.getResponse().setStatusCode(HttpStatus.CREATED);
+        return result.then(Mono.empty());
     }
 
     // catch ConstraintViolationException
