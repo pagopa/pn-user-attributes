@@ -113,9 +113,9 @@ components:
       type: string
       description: type of consent
       enum:
-        - tos
-        - dataPrivacy
-    
+        - TOS
+        - DATAPRIVACY
+
     ConsentAction:
       type: object
       properties:
