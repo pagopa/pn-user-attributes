@@ -17,7 +17,7 @@ tags:
     description: PN User Consents
     
 paths:
-  /user-attributes/v1/consents/{recipientId}:
+  /user-consents/v1/consents/{recipientId}:
     get:
       summary: Get all recipient consents
       description: Returns all consents for the recipient
@@ -40,7 +40,7 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
   
-  /user-attributes/v1/consents/{recipientId}/{consentType}:
+  /user-consents/v1/consents/{recipientId}/{consentType}:
     parameters:
       - $ref: '#/components/parameters/recipientId'
       - $ref: '#/components/parameters/consentType'

@@ -25,7 +25,7 @@ class ConsentsControllerTest {
     void consentAction() {
         //
 
-        String url = "/user-attributes/v1/consents/{recipientId}/{consentType}"
+        String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
                 .replace("{recipientId}", RECIPIENTID)
                 .replace("{consentType}", CONSENTTYPE);
 
@@ -44,7 +44,7 @@ class ConsentsControllerTest {
 
     @Test
     void getConsentByType() {
-        String url = "/user-attributes/v1/consents/{recipientId}/{consentType}"
+        String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
                 .replace("{recipientId}", RECIPIENTID)
                 .replace("{consentType}", CONSENTTYPE);
 
@@ -58,7 +58,7 @@ class ConsentsControllerTest {
 
     @Test
     void getConsents() {
-        String url = "/user-attributes/v1/consents/{recipientId}"
+        String url = "/user-consents/v1/consents/{recipientId}"
                 .replace("{recipientId}", RECIPIENTID);
 
         webTestClient.get()
