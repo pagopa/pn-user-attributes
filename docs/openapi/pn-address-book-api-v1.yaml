@@ -290,8 +290,8 @@ components:
       type: string
       description: Communication Channel types __with__ legal value
       enum:
-        - pec
-        - appio
+        - PEC
+        - APPIO
     
     LegalDigitalAddress:
       allOf:
@@ -304,7 +304,7 @@ components:
             addressType:
               type: string
               enum:
-                - legal
+                - LEGAL
 
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
@@ -313,9 +313,9 @@ components:
       type: string
       description: Communication Channel types __without__ legal value
       enum:
-        - email
-        - sms
-        - appio
+        - EMAIL
+        - SMS
+        - APPIO
 
     CourtesyDigitalAddress:
       allOf:
@@ -328,7 +328,7 @@ components:
             addressType:
               type: string
               enum:
-                - courtesy
+                - COURTESY
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
   
