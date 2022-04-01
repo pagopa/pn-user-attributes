@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User Attributes Digital Addresses and Digital Domicile
+    OpenApi definition for PN User Attributes - Address Book
   version: v1
-  title: PN User Attributes
+  title: PN User Attributes - Address Book
   termsOfService: 'http://swagger.io/terms/'
   contact:
     email: pn@pagopa.it
@@ -59,7 +59,8 @@ paths:
             application/json:
               schema:
                 type: array
-                $ref: '#/components/schemas/LegalDigitalAddress'
+                items:
+                  $ref: '#/components/schemas/LegalDigitalAddress'
         '400':
           description: Invalid ID supplied
         '401':
@@ -82,7 +83,8 @@ paths:
             application/json:
               schema:
                 type: array
-                $ref: '#/components/schemas/CourtesyDigitalAddress'
+                items:
+                   $ref: '#/components/schemas/CourtesyDigitalAddress'
         '400':
           description: Invalid ID supplied
         '401':
@@ -131,8 +133,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
-  
-  
+
+
   /address-book/v1/digital-address/{recipientId}/legal/{senderId}/{channelType}:               
     parameters:
       - $ref: '#/components/parameters/recipientId'
@@ -163,6 +165,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '406':
+          $ref: '#/components/responses/VerificationCodeFailure'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address with legal value
@@ -179,7 +183,7 @@ paths:
         '404':
           description: Digital Address not found
 
-  /address-book/v1/digital-address/{recipientId}/courtesy/[{senderId}|default]/{channelType}:       
+  /address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}:
     parameters:
       - $ref: '#/components/parameters/recipientId'
       - $ref: '#/components/parameters/senderId'
@@ -209,6 +213,8 @@ paths:
           $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '406':
+          $ref: '#/components/responses/VerificationCodeFailure'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address without legal value
@@ -283,7 +289,9 @@ components:
     LegalChannelType:
       type: string
       description: Communication Channel types __with__ legal value
-      enum: [PEC, IOPEC]
+      enum:
+        - PEC
+        - APPIO
     
     LegalDigitalAddress:
       allOf:
@@ -295,15 +303,20 @@ components:
           properties:
             addressType:
               type: string
-              enum: ['legal']
+              enum:
+                - LEGAL
+
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
     
     CourtesyChannelType:
       type: string
       description: Communication Channel types __without__ legal value
-      enum: [EMAIL, SMS, IOMSG]
-    
+      enum:
+        - EMAIL
+        - SMS
+        - APPIO
+
     CourtesyDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -314,7 +327,8 @@ components:
           properties:
             addressType:
               type: string
-              enum: ['courtesy']
+              enum:
+                - COURTESY
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
   
@@ -345,5 +359,5 @@ components:
       description: Parameters are invalid
     UnauthorizedError:
       description: Access token is missing or invalid
-  
-  
+    VerificationCodeFailure:
+      description: Verification code mismatch

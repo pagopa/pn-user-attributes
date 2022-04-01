@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User Consents
+    OpenApi definition for PN User Attributes - Consents
   version: v1
-  title: PN User Attributes
+  title: PN User Attributes Consents
   termsOfService: 'http://swagger.io/terms/'
   contact:
     email: pn@pagopa.it
@@ -22,6 +22,8 @@ paths:
       summary: Get all recipient consents
       description: Returns all consents for the recipient
       operationId: getConsents
+      tags:
+        - consents
       parameters:
         - $ref: '#/components/parameters/recipientId'
       responses:
@@ -46,6 +48,8 @@ paths:
       summary: Get single consent by type 
       description: Returns single consent type for the recipient
       operationId: getConsentByType
+      tags:
+        - consents
       responses:
         '200':  
           description: successful operation
@@ -61,6 +65,8 @@ paths:
       summary: Accept a single consent type 
       description: Accept single consent type for the recipient
       operationId: consentAction
+      tags:
+        - consents
       requestBody:
         required: true
         content:
@@ -106,16 +112,19 @@ components:
     ConsentType:
       type: string
       description: type of consent
-      enum: [tos, dataPrivacy]
-    
+      enum:
+        - TOS
+        - DATAPRIVACY
+
     ConsentAction:
       type: object
       properties:
         action: 
           type: string
           description: action on consent
-          enum: [ACCEPT, DECLINE]
-    
+          enum:
+            - ACCEPT
+            - DECLINE
     
     Consent:
       type: object
