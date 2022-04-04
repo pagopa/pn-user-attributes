@@ -107,21 +107,6 @@ Resources:
             Resource:
               - !Ref UserAttributesDynamoTableArn
 
-
-  # Expose PN-UserAttributes microservice public API with API-GW for B2B usage
-  AddressBookMicroservicePrivateAPI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
-        IntendedUsage: B2B
-        DnsName: !Ref ApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: '/address-book-private/*'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-
   # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
