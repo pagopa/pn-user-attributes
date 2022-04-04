@@ -55,11 +55,11 @@ Parameters:
     Type: String
     Description: 'network load balancer link for API-GW'
 
-  UserAttributesDynamoTableName:
+  UserAttributesTableName:
     Type: String
     Description: 'Name of dynamodb table containing User Attributes information'
 
-  UserAttributesDynamoTableArn:
+  UserAttributesTableArn:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
@@ -77,6 +77,7 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
+        ContainerEnvEntry3: !Sub 'PN_USERATTRIBUTES_TABLENAME=${UserAttributesTableName}'
         MappedPaths: '/user-attributes/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -105,7 +106,7 @@ Resources:
               - dynamodb:TransactWriteItems
               - dynamodb:UpdateItem
             Resource:
-              - !Ref UserAttributesDynamoTableArn
+              - !Ref UserAttributesTableArn
 
   # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
