@@ -125,7 +125,7 @@ Resources:
   AddressBookMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-s
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
         IntendedUsage: WEB
@@ -134,3 +134,4 @@ Resources:
         ServiceApiPath: '/address-book/*'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+
