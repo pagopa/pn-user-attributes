@@ -4,6 +4,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.services.v1.ConsentsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
@@ -19,25 +20,33 @@ import javax.validation.ConstraintViolationException;
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi  {
+    ConsentsService consentsService;
+
+    public ConsentsController(ConsentsService consentsService) {
+        this.consentsService = consentsService;
+    }
+
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        Mono<Void> result = Mono.empty();
-        exchange.getResponse().setStatusCode(HttpStatus.OK);
-        return result.then(Mono.empty());
+        return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
+                .map(m -> ResponseEntity.status(HttpStatus.OK).body(null));
     }
 
     @Override
     public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, ServerWebExchange exchange) {
-        Mono<Void> result = Mono.empty();
-        exchange.getResponse().setStatusCode(HttpStatus.OK);
-        return result.then(Mono.empty());
+        return this.consentsService.getConsentByType(recipientId, consentType)
+                .map(m -> ResponseEntity.status(HttpStatus.OK).body(m))
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
-        Mono<Void> result = Mono.empty();
-        exchange.getResponse().setStatusCode(HttpStatus.OK);
-        return result.then(Mono.empty());
+        return this.consentsService.getConsents(recipientId).collectList().map(consentDtos -> {
+            if (consentDtos.isEmpty())
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            else
+                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(consentDtos));
+        });
     }
 
     // catch ConstraintViolationException

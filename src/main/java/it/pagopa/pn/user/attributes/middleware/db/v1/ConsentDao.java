@@ -15,16 +15,10 @@ import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
-import utils.DateFormatUtils;
-
-import java.time.Instant;
 
 @Repository
 @Slf4j
 public class ConsentDao extends BaseDao {
-
-    private static final String CONSENT_PK_PREFIX = "CO#";
-
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
 
     public ConsentDao(DynamoDbEnhancedAsyncClient dynamoDbAsyncClient,
@@ -32,69 +26,65 @@ public class ConsentDao extends BaseDao {
         this.userAttributesTable = dynamoDbAsyncClient.table(table, TableSchema.fromBean(ConsentEntity.class));
     }
 
+    // Crea o modifica l'entity ConsentEntity
 
+    /**
+     * Inserice o aggiorna un item di tipo ConsentEntity
+     * setta i campi accepted, created, lastModified
+     * @param userAttributes
+     * @return none
+     */
     public Mono<Object> consentAction(ConsentEntity userAttributes){
-        userAttributes.setPk(CONSENT_PK_PREFIX + userAttributes.getPk());
-        userAttributes.setInsertDate(DateFormatUtils.formatInstantToIso8601String(Instant.now()));
-/*
-        AttributeValue rightnow = AttributeValue.builder()
-                .s()
-                .build();
-
-        Map<String, AttributeValue> expressionValues = new HashMap<>();
-            expressionValues.put(":right_now", rightnow);
-        Expression exp = Expression
-                .builder()
-                .expression("SET if_not_exists(insertDate, :right_now)")
-                .expressionValues(expressionValues)
-                .build();
-*/
-
-        log.debug("key pk {} - sk {}", userAttributes.getPk(), userAttributes.getSk());
-
-        UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
-                .item(userAttributes)
-                .ignoreNulls(true)
-                .build();
-        return Mono.fromFuture(userAttributesTable.updateItem(updRequest));
-/*
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
-                .key(getKeyBuild(userAttributes.getPk(), userAttributes.getSk()))
+                .key(getKeyBuild(userAttributes.getRecipientId(), userAttributes.getConsentType()))
                 .build();
 
-        return Mono.fromFuture(() -> userAttributesTable.getItem(getReq))
-                .zipWhen(r -> {
-                    log.info("fromFuture");
-                    if (r != null)
-                        userAttributes.setInsertDate(null);
+        return  Mono.fromFuture(userAttributesTable.getItem(getReq).thenApply(r -> {
+                    if (r != null) {
+                        // update -> don't modify created
+                        userAttributes.setCreated(null);
+                        if (r.isAccepted() == userAttributes.isAccepted())
+                            // se il consenso non cambia non modifico lastModified
+                            userAttributes.setLastModified(null);
+                    }
+                    else
+                        // create -> don't set lastModified
+                        userAttributes.setLastModified(null);
 
                     UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
                             .item(userAttributes)
                             .ignoreNulls(true)
                             .build();
-                    return Mono.fromFuture(userAttributesTable.updateItem(updRequest));
-                }, (r,u) -> Mono.empty());
-*/
+                    return userAttributesTable.updateItem(updRequest);
+                }));
     }
 
-    public Mono<ConsentEntity> getConsentByType(String recipientId, ConsentTypeDto consentType) {
+    /**
+     * Legge l'entity ConsentEntity associata a recipientId e ConsentType (TOS/DATAPRIVACY)
+     *
+     * @param recipientId
+     * @param consentType
+     * @return ConsentEntity
+     */
+     public Mono<ConsentEntity> getConsentByType(String recipientId, ConsentTypeDto consentType) {
 
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
-                .key(getKeyBuild(recipientId, consentType.getValue()))
+                .key(getKeyBuild(ConsentEntity.getPk(recipientId), consentType.getValue()))
                 .build();
 
         return Mono.fromFuture(userAttributesTable.getItem(getReq));
-
     }
 
+    /*
+        Legge la lista (al massimo due elementi) di entity ConsentEntity associata a recipientId
+     */
     public Flux<ConsentEntity> getConsents(String recipientId) {
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(CONSENT_PK_PREFIX + recipientId)))
+                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(ConsentEntity.getPk(recipientId))))
                 .scanIndexForward(true)
                 .build();
-
 
         return Flux.from(userAttributesTable.query(qeRequest))
                 .flatMapIterable(mlist -> {
@@ -102,7 +92,6 @@ public class ConsentDao extends BaseDao {
                 });
 
     }
-
 
     protected Key getKeyBuild(String pk) {
         return getKeyBuild(pk, null);
