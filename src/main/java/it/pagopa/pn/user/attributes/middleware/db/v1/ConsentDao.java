@@ -19,10 +19,12 @@ import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 @Repository
 @Slf4j
 public class ConsentDao extends BaseDao {
+    private final static String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
+
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
 
     public ConsentDao(DynamoDbEnhancedAsyncClient dynamoDbAsyncClient,
-                      @Value("${pn.user-attributes.dynamodb.table-name}") String table) {
+                      @Value(DYNAMODB_TABLE_NAME) String table) {
         this.userAttributesTable = dynamoDbAsyncClient.table(table, TableSchema.fromBean(ConsentEntity.class));
     }
 
@@ -31,6 +33,11 @@ public class ConsentDao extends BaseDao {
     /**
      * Inserice o aggiorna un item di tipo ConsentEntity
      * setta i campi accepted, created, lastModified
+     *
+     * ATTENZIONE: il metodo esegue in sequenza un'operazione di lettura e una di scrittura in database.
+     * Non essendoci una transazione che le comprenda entrambe c'è il rischio che il consenso letto sia già stato modificato da un'altra istanza
+     * prima di essere salvato in database. Questa sezione di codice richiede un'ulteriore analisi e una revisione.
+     *
      * @param userAttributes
      * @return none
      */
@@ -75,8 +82,13 @@ public class ConsentDao extends BaseDao {
         return Mono.fromFuture(userAttributesTable.getItem(getReq));
     }
 
-    /*
-        Legge la lista (al massimo due elementi) di entity ConsentEntity associata a recipientId
+
+    /**
+     * Legge la lista di entity ConsentEntity associata a recipientId
+     * Per ogni recipientId esistono tanti consensi quante sono le tipologie di consenso (2): ConsentTypeDto.TOS e ConsentTypeDto.DATAPRIVACY
+     *
+     * @param recipientId
+     * @return Flux<ConsentEntity>  lista di ConsentEntity
      */
     public Flux<ConsentEntity> getConsents(String recipientId) {
 

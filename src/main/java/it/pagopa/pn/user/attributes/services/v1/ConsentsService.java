@@ -7,11 +7,9 @@ import it.pagopa.pn.user.attributes.mapper.v1.ConsentActionDtoToConsentEntityMap
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.v1.ConsentDao;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import utils.DateFormatUtils;
 
 import java.time.Instant;
 
@@ -35,7 +33,7 @@ public class ConsentsService {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
         .map(entity -> {
-            String strDate = DateFormatUtils.formatInstantToIso8601String(Instant.now());
+            String strDate = Instant.now().toString();
             // qui vengono impostate entrambe le date.
             // Nel metodo ConsentDao->consentAction vengono sovrascritte in modo che:
             //   alla creazione del consenso created != null e lastModified == null
