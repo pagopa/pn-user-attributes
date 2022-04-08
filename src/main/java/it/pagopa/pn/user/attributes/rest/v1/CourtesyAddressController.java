@@ -4,6 +4,8 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.services.v1.ConsentsService;
+import it.pagopa.pn.user.attributes.services.v1.CourtesyVerificationCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,13 @@ import javax.validation.ConstraintViolationException;
 @RestController
 @Slf4j
 public class CourtesyAddressController implements CourtesyApi {
+
+    CourtesyVerificationCodeService verifcationCodeService;
+
+    public CourtesyAddressController(CourtesyVerificationCodeService verifcationCodeService) {
+        this.verifcationCodeService = verifcationCodeService;
+    }
+
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
         Mono<Void> result = Mono.empty();
@@ -42,10 +51,12 @@ public class CourtesyAddressController implements CourtesyApi {
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
+        return this.verifcationCodeService.postRecipientCourtesyAddress(recipientId, senderId, channelType, addressVerificationDto)
+                .map(m -> ResponseEntity.status(HttpStatus.OK).body(null));
 
-        Mono<Void> result = Mono.empty();
-        exchange.getResponse().setStatusCode(HttpStatus.CREATED);
-        return result.then(Mono.empty());
+//        Mono<Void> result = Mono.empty();
+//        exchange.getResponse().setStatusCode(HttpStatus.CREATED);
+//        return result.then(Mono.empty());
     }
 
     // catch ConstraintViolationException
