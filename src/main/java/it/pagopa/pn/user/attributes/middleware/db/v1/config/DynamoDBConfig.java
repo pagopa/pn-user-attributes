@@ -12,8 +12,8 @@ import java.net.URI;
 
 @Configuration
 public class DynamoDBConfig {
-    private final static String AWS_REGION_CODE = "${aws.region-code}";
-    private final static String AWS_ENDPOINT_URL = "${aws.endpoint-url}";
+    private static final String AWS_REGION_CODE = "${aws.region-code}";
+    private static final String AWS_ENDPOINT_URL = "${aws.endpoint-url}";
 
     @Bean
     public DynamoDbAsyncClient dynamoDbAsyncClient(

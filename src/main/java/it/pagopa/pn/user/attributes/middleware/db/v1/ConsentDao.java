@@ -11,15 +11,12 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.GetItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 @Repository
 @Slf4j
 public class ConsentDao extends BaseDao {
-    private final static String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
+    private static final  String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
 
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
 
@@ -100,16 +97,16 @@ public class ConsentDao extends BaseDao {
                 .build();
 
         return Flux.from(userAttributesTable.query(qeRequest))
-                .flatMapIterable(mlist -> {
-                    return mlist.items();
-                });
+                .flatMapIterable(Page::items);
 
     }
 
+    @Override
     protected Key getKeyBuild(String pk) {
         return getKeyBuild(pk, null);
     }
 
+    @Override
     protected Key getKeyBuild(String pk, String sk) {
         if (sk == null)
             return Key.builder().partitionValue(pk).build();
