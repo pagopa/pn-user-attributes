@@ -15,7 +15,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 @Repository
 @Slf4j
-public class ConsentDao extends BaseDao {
+public class ConsentDao extends BaseDao implements IConsentDao {
     private static final  String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
 
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
@@ -39,6 +39,7 @@ public class ConsentDao extends BaseDao {
      * @param userAttributes
      * @return none
      */
+    @Override
     public Mono<Object> consentAction(ConsentEntity userAttributes){
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
                 .key(getKeyBuild(userAttributes.getRecipientId(), userAttributes.getConsentType()))
@@ -71,6 +72,7 @@ public class ConsentDao extends BaseDao {
      * @param consentType
      * @return ConsentEntity
      */
+    @Override
      public Mono<ConsentEntity> getConsentByType(String recipientId, ConsentTypeDto consentType) {
 
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
@@ -88,6 +90,7 @@ public class ConsentDao extends BaseDao {
      * @param recipientId
      * @return Flux<ConsentEntity>  lista di ConsentEntity
      */
+    @Override
     public Flux<ConsentEntity> getConsents(String recipientId) {
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
