@@ -37,6 +37,7 @@ public class ConsentDao extends BaseDao {
      * ATTENZIONE: il metodo esegue in sequenza un'operazione di lettura e una di scrittura in database.
      * Non essendoci una transazione che le comprenda entrambe c'è il rischio che il consenso letto sia già stato modificato da un'altra istanza
      * prima di essere salvato in database. Questa sezione di codice richiede un'ulteriore analisi e una revisione.
+     * N.B: La race condition si verifica solo se l'utente utilizza due finestre del browser dfferenti. Eventualità poco probabile.
      *
      * @param userAttributes
      * @return none
