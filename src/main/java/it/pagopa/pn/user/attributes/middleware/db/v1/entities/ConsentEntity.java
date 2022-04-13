@@ -7,6 +7,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
+import java.time.Instant;
+
 @DynamoDbBean
 @Data
 public class ConsentEntity {
@@ -23,8 +25,8 @@ public class ConsentEntity {
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String recipientId;
     @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute("sk")}))  private String consentType;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private String created;
-    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private String lastModified;
+    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("accepted")}))  private boolean accepted;
 }

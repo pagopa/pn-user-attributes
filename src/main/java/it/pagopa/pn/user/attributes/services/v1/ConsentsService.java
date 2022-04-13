@@ -33,7 +33,7 @@ public class ConsentsService {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
         .map(entity -> {
-            String strDate = Instant.now().toString();
+            Instant strDate = Instant.now();
             // qui vengono impostate entrambe le date.
             // Nel metodo ConsentDao->consentAction vengono sovrascritte in modo che:
             //   alla creazione del consenso created != null e lastModified == null
