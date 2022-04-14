@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.services.v1;
 
+import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentActionDtoToConsentEntityMapper;
@@ -40,20 +41,52 @@ class ConsentsServiceTest {
     }
 
     @Test
-    void consentAction() {
+    void consentAction_Accept() {
 
         String recipientId = "recipientid";
         ConsentTypeDto consentTypeDto = ConsentTypeDto.DATAPRIVACY;
 
+        ConsentActionDto consentActionDto = new ConsentActionDto();
+        consentActionDto.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+
         ConsentEntity ce = new ConsentEntity();
         ce.setRecipientId(ConsentEntity.getPk(recipientId));
         ce.setConsentType(consentTypeDto.getValue());
-        ce.setAccepted(false);
+        ce.setAccepted(consentActionDto.getAction().equals(ConsentActionDto.ActionEnum.ACCEPT));
 
         ConsentDto consentDto = consentEntityConsentDtoMapper.toDto(ce);
 
-        Mono<Object> ret = consentDao.consentAction(ce);
-        assertEquals(Mono.empty(), ret);
+        consentsService.consentAction(recipientId, consentTypeDto, Mono.just(consentActionDto)).block(Duration.ofMillis(3000));
+
+        ConsentDto consentDtoRead = new ConsentDto();
+        consentsService.getConsentByType(recipientId, consentTypeDto)
+                .map(dto -> {
+                    consentDtoRead.setRecipientId(dto.getRecipientId());
+                    consentDtoRead.setConsentType(dto.getConsentType());
+                    consentDtoRead.setAccepted(dto.getAccepted());
+                    return dto;
+                }).block(Duration.ofMillis(3000));
+
+        assertEquals( consentDto, consentDtoRead );
+    }
+
+    @Test
+    void consentAction_Decline() {
+
+        String recipientId = "recipientid";
+        ConsentTypeDto consentTypeDto = ConsentTypeDto.DATAPRIVACY;
+
+        ConsentActionDto consentActionDto = new ConsentActionDto();
+        consentActionDto.setAction(ConsentActionDto.ActionEnum.DECLINE);
+
+        ConsentEntity ce = new ConsentEntity();
+        ce.setRecipientId(ConsentEntity.getPk(recipientId));
+        ce.setConsentType(consentTypeDto.getValue());
+        ce.setAccepted(consentActionDto.getAction().equals(ConsentActionDto.ActionEnum.ACCEPT));
+
+        ConsentDto consentDto = consentEntityConsentDtoMapper.toDto(ce);
+
+        consentsService.consentAction(recipientId, consentTypeDto, Mono.just(consentActionDto)).block(Duration.ofMillis(3000));
 
         ConsentDto consentDtoRead = new ConsentDto();
         consentsService.getConsentByType(recipientId, consentTypeDto)

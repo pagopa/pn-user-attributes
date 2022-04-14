@@ -15,6 +15,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "PA_ID";
@@ -43,7 +45,6 @@ class ConsentsControllerTest {
         // When
         Mockito.when(svc.consentAction(RECIPIENTID, ConsentTypeDto.TOS, Mono.just(consentAction)))
                 .thenReturn(Mono.empty());
-
         // Then
         webTestClient.put()
                 .uri(url)
