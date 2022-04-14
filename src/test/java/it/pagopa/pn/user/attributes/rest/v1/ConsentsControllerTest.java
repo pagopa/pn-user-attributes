@@ -104,4 +104,28 @@ class ConsentsControllerTest {
                 .exchange()
                 .expectStatus().isOk();
     }
+
+    @Test
+    void getConsents_NotFound() {
+        String url = "/user-consents/v1/consents/{recipientId}"
+                .replace("{recipientId}", RECIPIENTID);
+
+        // Given
+        ConsentDto consentDto = new ConsentDto();
+        consentDto.setRecipientId(RECIPIENTID);
+        consentDto.setAccepted(true);
+        consentDto.setConsentType(ConsentTypeDto.TOS);
+
+        // When
+        Mockito.when(svc.getConsents(RECIPIENTID))
+                .thenReturn( Flux.empty() );
+
+        // Then
+        webTestClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(PA_ID)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
 }
