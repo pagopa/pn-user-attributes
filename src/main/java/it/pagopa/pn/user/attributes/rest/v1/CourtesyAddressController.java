@@ -5,7 +5,6 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,19 +50,6 @@ public class CourtesyAddressController implements CourtesyApi {
     // catch ConstraintViolationException
     @ExceptionHandler({ConstraintViolationException.class})
     public ResponseEntity<String> handleValidationException(ConstraintViolationException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
-
-    // catch TypeMismatchException
-    @ExceptionHandler({TypeMismatchException.class})
-    public ResponseEntity<String> handleIllegalArgumentException(TypeMismatchException ex) {
-
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
-
-    // catch IllegalArgumentException
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String>  handleException(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
