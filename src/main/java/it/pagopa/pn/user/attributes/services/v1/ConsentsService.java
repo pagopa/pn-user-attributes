@@ -5,7 +5,6 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentEntityConsentDtoMapper;
-import it.pagopa.pn.user.attributes.middleware.db.v1.ConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.v1.IConsentDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
