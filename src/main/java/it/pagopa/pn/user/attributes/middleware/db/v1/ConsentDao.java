@@ -104,17 +104,4 @@ public class ConsentDao extends BaseDao implements IConsentDao {
 
     }
 
-    @Override
-    protected Key getKeyBuild(String pk) {
-        return getKeyBuild(pk, null);
-    }
-
-    @Override
-    protected Key getKeyBuild(String pk, String sk) {
-        if (sk == null)
-            return Key.builder().partitionValue(pk).build();
-        else
-            return Key.builder().partitionValue(pk).sortValue(sk).build();
-    }
-
 }
