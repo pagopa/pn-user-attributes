@@ -15,7 +15,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.*;
 @Repository
 @Slf4j
 public class ConsentDao extends BaseDao implements IConsentDao {
-    private static final  String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
+    public static final  String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
 
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
 
