@@ -1,7 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -10,7 +9,10 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 import java.time.Instant;
 
 @DynamoDbBean
-@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ConsentEntity {
     private static final String PK_PREFIX = "CO#";
 
@@ -22,11 +24,58 @@ public class ConsentEntity {
         return this.recipientId.substring(PK_PREFIX.length());
     }
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String recipientId;
-    @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute("sk")}))  private String consentType;
+    private String recipientId;
+    private String consentType;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
-    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
+    private Instant created;
+    private Instant lastModified;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("accepted")}))  private boolean accepted;
+    private boolean accepted;
+
+    @DynamoDbPartitionKey
+    @DynamoDbAttribute("pk")
+    public String getRecipientId() {
+        return recipientId;
+    }
+
+    public void setRecipientId(String recipientId) {
+        this.recipientId = recipientId;
+    }
+
+    @DynamoDbSortKey
+    @DynamoDbAttribute("sk")
+    public String getConsentType() {
+        return consentType;
+    }
+
+    public void setConsentType(String consentType) {
+        this.consentType = consentType;
+    }
+
+    @DynamoDbAttribute("created")
+    public Instant getCreated() {
+        return created;
+    }
+
+    public void setCreated(Instant created) {
+        this.created = created;
+    }
+
+    @DynamoDbAttribute("lastModified")
+    public Instant getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Instant lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    @DynamoDbAttribute("accepted")
+    public boolean isAccepted() {
+        return accepted;
+    }
+
+    public void setAccepted(boolean accepted) {
+        this.accepted = accepted;
+    }
 }
