@@ -4,9 +4,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ConsentEntityTest {
     private static final String PA_ID = "PA_ID";
@@ -20,10 +18,6 @@ class ConsentEntityTest {
 
     @Test
     void getPk() {
-//        ConsentEntity ce = new ConsentEntity();
-//        ce.setRecipientId(RECIPIENTID);
-//        ce.setConsentType(CONSENTTYPE);
-//        ce.get
         String pk = ConsentEntity.getPk(RECIPIENTID);
         String pkExpected = "CO#" + RECIPIENTID;
 
@@ -37,96 +31,5 @@ class ConsentEntityTest {
         ce.setRecipientId(pk);
         String recIdRead = ce.getRecipientIdNoPrefix();
         assertEquals(RECIPIENTID, recIdRead);
-    }
-
-    @Test
-    void setRecipientId() {
-        String pk = ConsentEntity.getPk(RECIPIENTID);
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(pk);
-        String recIdExpected = ce.getRecipientId();
-        assertEquals(recIdExpected, pk);
-    }
-
-    @Test
-    void setConsentType() {
-        ConsentEntity ce = new ConsentEntity();
-        ce.setConsentType(CONSENTTYPE);
-        String typeRead = ce.getConsentType();
-        assertEquals(CONSENTTYPE, typeRead);
-    }
-
-    @Test
-    void setCreated() {
-        Instant time = Instant.now();
-
-        ConsentEntity ce = new ConsentEntity();
-        ce.setCreated(time);
-        Instant timeExpected = ce.getCreated();
-        assertEquals(timeExpected, time);
-    }
-
-    @Test
-    void setLastModified() {
-        Instant time = Instant.now();
-
-        ConsentEntity ce = new ConsentEntity();
-        ce.setLastModified(time);
-        Instant timeExpected = ce.getLastModified();
-        assertEquals(timeExpected, time);
-    }
-
-    @Test
-    void setAccepted() {
-        boolean accepted = true;
-        ConsentEntity ce = new ConsentEntity();
-        ce.setAccepted(accepted);
-        boolean acceptedExpected = ce.isAccepted();
-        assertEquals(acceptedExpected, accepted);
-    }
-
-    @Test
-    void getRecipientId() {
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(RECIPIENTID);
-        String recidRead = ce.getRecipientId();
-        assertEquals(RECIPIENTID, recidRead);
-    }
-
-    @Test
-    void getConsentType() {
-        ConsentEntity ce = new ConsentEntity();
-        ce.setConsentType(CONSENTTYPE);
-        String ctypeRead = ce.getConsentType();
-        assertEquals(CONSENTTYPE, ctypeRead);
-    }
-
-    @Test
-    void getCreated() {
-        Instant time = Instant.now();
-
-        ConsentEntity ce = new ConsentEntity();
-        ce.setCreated(time);
-        Instant timeExpected = ce.getCreated();
-        assertEquals(timeExpected, time);
-    }
-
-    @Test
-    void getLastModified() {
-        Instant time = Instant.now();
-
-        ConsentEntity ce = new ConsentEntity();
-        ce.setLastModified(time);
-        Instant timeExpected = ce.getLastModified();
-        assertEquals(timeExpected, time);
-    }
-
-    @Test
-    void isAccepted() {
-        boolean accepted = false;
-        ConsentEntity ce = new ConsentEntity();
-        ce.setAccepted(accepted);
-        boolean acceptedExpected = ce.isAccepted();
-        assertEquals(acceptedExpected, accepted);
     }
 }
