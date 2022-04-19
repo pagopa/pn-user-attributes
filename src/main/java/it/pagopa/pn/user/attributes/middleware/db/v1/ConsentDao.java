@@ -44,24 +44,25 @@ public class ConsentDao extends BaseDao implements IConsentDao {
                 .key(getKeyBuild(userAttributes.getRecipientId(), userAttributes.getConsentType()))
                 .build();
 
-        return  Mono.fromFuture(userAttributesTable.getItem(getReq).thenApply(r -> {
-                    if (r != null) {
-                        // update -> don't modify created
-                        userAttributes.setCreated(null);
-                        if (r.isAccepted() == userAttributes.isAccepted())
-                            // se il consenso non cambia non modifico lastModified
-                            userAttributes.setLastModified(null);
-                    }
-                    else
-                        // create -> don't set lastModified
-                        userAttributes.setLastModified(null);
+        return  Mono.fromFuture(userAttributesTable.getItem(getReq)
+                        .thenCompose(r -> {
+                            if (r != null) {
+                                // update -> don't modify created
+                                userAttributes.setCreated(null);
+                                if (r.isAccepted() == userAttributes.isAccepted())
+                                    // se il consenso non cambia non modifico lastModified
+                                    userAttributes.setLastModified(null);
+                            }
+                            else
+                                // create -> don't set lastModified
+                                userAttributes.setLastModified(null);
 
-                    UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
-                            .item(userAttributes)
-                            .ignoreNulls(true)
-                            .build();
-                    return userAttributesTable.updateItem(updRequest);
-                }));
+                            UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
+                                    .item(userAttributes)
+                                    .ignoreNulls(true)
+                                    .build();
+                            return userAttributesTable.updateItem(updRequest);
+                        }));
     }
 
     /**
