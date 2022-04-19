@@ -32,7 +32,7 @@ class ConsentsControllerTest {
     /**
      * Test commentato perchè da revisionare (genera una NullPointerException)
      */
-    //@Test
+    @Test
     void consentAction() {
         // Given
         String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
@@ -41,6 +41,7 @@ class ConsentsControllerTest {
 
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+        Mono<ConsentActionDto> consentActionDtoMono = Mono.just(consentAction);
 
         ConsentEntity ce = ConsentEntity.builder()
                 .consentType(CONSENTTYPE)
@@ -51,16 +52,15 @@ class ConsentsControllerTest {
 
         // When
         Mono<Void> voidReturn  = Mono.empty();
-        Mockito.when(svc.consentAction(RECIPIENTID, ConsentTypeDto.TOS, Mono.just(consentAction)))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any()))
                 .thenReturn(voidReturn);
-
 
         // Then
         webTestClient.put()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(consentAction), ConsentActionDto.class)
+                .body(consentActionDtoMono, ConsentActionDto.class)
                 .header(PA_ID)
                 .exchange()
                 .expectStatus().isOk();
