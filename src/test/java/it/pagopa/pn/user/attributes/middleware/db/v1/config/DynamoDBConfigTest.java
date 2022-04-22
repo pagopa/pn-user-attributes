@@ -12,31 +12,34 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
-@TestPropertySource("/application.properties")
+//@SpringBootTest
+//@TestPropertySource("/application.properties")
 class DynamoDBConfigTest {
 
-    @Value(DynamoDBConfig.AWS_REGION_CODE)
-    private String awsRegion;
-    @Value(DynamoDBConfig.AWS_ENDPOINT_URL)
-    private String dynamoDBEndpoint;
+    //@Value(DynamoDBConfig.AWS_REGION_CODE)
+    //private String awsRegion;
+    //@Value(DynamoDBConfig.AWS_ENDPOINT_URL)
+    //private String dynamoDBEndpoint;
 
-    private DynamoDBConfig dbConfig;
+    private AwsServicesClientsConfig dbConfig;
 
     @BeforeEach
     void setUp() {
-        dbConfig = new DynamoDBConfig();
+        AwsConfigs awsCfg = new AwsConfigs();
+        awsCfg.setEndpointUrl("");
+        awsCfg.setRegionCode("");
+        dbConfig = new AwsServicesClientsConfig( awsCfg );
     }
 
     @Test
     void dynamoDbAsyncClient() {
-        DynamoDbAsyncClient client = dbConfig.dynamoDbAsyncClient(awsRegion, dynamoDBEndpoint);
+        DynamoDbAsyncClient client = dbConfig.dynamoDbAsyncClient();
         assertNotNull(client);
     }
 
     @Test
     void getDynamoDbEnhancedAsyncClient() {
-        DynamoDbEnhancedAsyncClient client = dbConfig.getDynamoDbEnhancedAsyncClient(awsRegion, dynamoDBEndpoint);
+        DynamoDbEnhancedAsyncClient client = dbConfig.dynamoDbEnhancedAsyncClient( dbConfig.dynamoDbAsyncClient() );
         assertNotNull(client);
     }
 }
