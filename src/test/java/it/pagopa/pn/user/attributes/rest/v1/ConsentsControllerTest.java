@@ -15,6 +15,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "PA_ID";
@@ -30,7 +32,7 @@ class ConsentsControllerTest {
     /**
      * Test commentato perchè da revisionare (genera una NullPointerException)
      */
-    //@Test
+    @Test
     void consentAction() {
         // Given
         String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
@@ -39,17 +41,26 @@ class ConsentsControllerTest {
 
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+        Mono<ConsentActionDto> consentActionDtoMono = Mono.just(consentAction);
+
+        ConsentEntity ce = ConsentEntity.builder()
+                .consentType(CONSENTTYPE)
+                .recipientId(RECIPIENTID)
+                .accepted(true)
+                .build();
+
 
         // When
-        Mockito.when(svc.consentAction(RECIPIENTID, ConsentTypeDto.TOS, Mono.just(consentAction)))
-                .thenReturn(Mono.empty());
+        Mono<Void> voidReturn  = Mono.empty();
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any()))
+                .thenReturn(voidReturn);
 
         // Then
         webTestClient.put()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(consentAction), ConsentActionDto.class)
+                .body(consentActionDtoMono, ConsentActionDto.class)
                 .header(PA_ID)
                 .exchange()
                 .expectStatus().isOk();
@@ -102,5 +113,29 @@ class ConsentsControllerTest {
                 .header(PA_ID)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void getConsents_NotFound() {
+        String url = "/user-consents/v1/consents/{recipientId}"
+                .replace("{recipientId}", RECIPIENTID);
+
+        // Given
+        ConsentDto consentDto = new ConsentDto();
+        consentDto.setRecipientId(RECIPIENTID);
+        consentDto.setAccepted(true);
+        consentDto.setConsentType(ConsentTypeDto.TOS);
+
+        // When
+        Mockito.when(svc.getConsents(RECIPIENTID))
+                .thenReturn( Flux.empty() );
+
+        // Then
+        webTestClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(PA_ID)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }
