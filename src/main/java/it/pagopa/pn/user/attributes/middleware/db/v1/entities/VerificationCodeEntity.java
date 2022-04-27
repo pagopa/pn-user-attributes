@@ -1,13 +1,14 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
-import it.pagopa.pn.user.attributes.utils.EncodingUtils;
 import lombok.Data;
 import lombok.Getter;
+import org.apache.commons.codec.digest.DigestUtils;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +21,8 @@ import java.util.List;
 @DynamoDbBean
 @Data
 public class VerificationCodeEntity {
-    public final static String SK_VALUE = "*";
     private static final String PK_PREFIX = "VC#";
+    public static final String SK_VALUE = "*";
     private static final String PK_ITEMS_SEPARATOR = "#";
     private static final int PK_ITEMS_RECIPIENTID = 1;
     private static final int PK_ITEMS_CHANNEL_TYPE = 2;
@@ -37,13 +38,13 @@ public class VerificationCodeEntity {
      * @return List<String> ret
      */
     private static List<String> getPkSplitParts(String pk) {
-        return new ArrayList<String>(Arrays.asList(pk.split(PK_ITEMS_SEPARATOR)));
+        return new ArrayList<>(Arrays.asList(pk.split(PK_ITEMS_SEPARATOR)));
     }
 
     public static String getPk(String recipientId, String channelType, String address) {
         return PK_PREFIX + recipientId
                 + PK_ITEMS_SEPARATOR + channelType
-                + PK_ITEMS_SEPARATOR + EncodingUtils.base64Encoding(address);
+                + PK_ITEMS_SEPARATOR + DigestUtils.sha256Hex(address);
     }
 
 
@@ -60,8 +61,8 @@ public class VerificationCodeEntity {
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String pk;
     @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute("sk")}))  private String sk;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private String created;
-    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private String lastModified;
+    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("validationCode")}))  private String validationCode;
+    @Getter(onMethod=@__({@DynamoDbAttribute("verificationCode")}))  private String verificationCode;
 }
