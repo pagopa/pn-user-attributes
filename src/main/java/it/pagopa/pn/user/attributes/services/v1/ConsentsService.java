@@ -5,7 +5,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.ConsentEntityConsentDtoMapper;
-import it.pagopa.pn.user.attributes.middleware.db.v1.ConsentDao;
+import it.pagopa.pn.user.attributes.middleware.db.v1.IConsentDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -16,14 +16,13 @@ import java.time.Instant;
 @Service
 @Slf4j
 public class ConsentsService {
-
-    private ConsentDao consentDao;
+    private IConsentDao consentDao;
     private ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper;
     private ConsentActionDtoToConsentEntityMapper dtosToConsentEntityMapper;
 
-    public ConsentsService(ConsentDao consentDao,
-                       ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper,
-                       ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper) {
+    public ConsentsService(IConsentDao consentDao,
+                           ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper,
+                           ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper) {
         this.consentDao = consentDao;
         this.consentEntityConsentDtoMapper = consentEntityConsentDtoMapper;
         this.dtosToConsentEntityMapper = consentActionDtoToConsentEntityMapper;
@@ -33,7 +32,7 @@ public class ConsentsService {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
         .map(entity -> {
-            String strDate = Instant.now().toString();
+            Instant strDate = Instant.now();
             // qui vengono impostate entrambe le date.
             // Nel metodo ConsentDao->consentAction vengono sovrascritte in modo che:
             //   alla creazione del consenso created != null e lastModified == null
