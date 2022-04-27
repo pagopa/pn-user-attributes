@@ -1,12 +1,20 @@
 package it.pagopa.pn.user.attributes.exceptions;
 
-public class PnInternalException extends RuntimeException {
+import org.springframework.http.HttpStatus;
 
-    public PnInternalException(String message) {
-        super(message);
+public class PnInternalException extends RuntimeException implements IPnInternalException {
+    private final PnError pnError;
+
+    public PnInternalException(String message, HttpStatus status) {
+        this.pnError = new PnError(message, status);
     }
 
-    public PnInternalException(String message, Throwable cause) {
-        super(message, cause);
+    public PnInternalException(PnError pnError) {
+        this.pnError = pnError;
+    }
+
+    @Override
+    public PnError getPnError() {
+        return pnError;
     }
 }
