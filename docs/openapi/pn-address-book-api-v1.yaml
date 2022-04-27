@@ -259,7 +259,7 @@ components:
         value:
           type: string
         verificationCode: 
-          type: string
+          $ref: '#/components/schemas/VerificationCode'
 
     BaseDigitalAddress:
       type: object
@@ -338,12 +338,10 @@ components:
         legal:
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/LegalDigitalAddress'
         courtesy:
           type: array
           items:
-            type: object
             $ref: '#/components/schemas/CourtesyDigitalAddress'
     
     VerificationCode:
