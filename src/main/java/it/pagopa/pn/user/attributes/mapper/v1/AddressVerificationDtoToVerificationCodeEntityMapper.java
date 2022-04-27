@@ -16,7 +16,7 @@ public class AddressVerificationDtoToVerificationCodeEntityMapper {
         VerificationCodeEntity entity = new VerificationCodeEntity();
         entity.setPk(VerificationCodeEntity.getPk(recipientId, channelType.getValue(), dto.getValue()));
         entity.setSk(VerificationCodeEntity.SK_VALUE);
-        entity.setValidationCode(dto.getVerificationCode()); // pk
+        entity.setVerificationCode(dto.getVerificationCode()); // pk
         return entity;
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConsentEntityConsentDtoMapper {
 
-    private ConsentEntityConsentDtoMapper(){
+    public ConsentEntityConsentDtoMapper(){
         super();
     }     
 
