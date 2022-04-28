@@ -23,46 +23,20 @@ public class AddressBookService {
     public static final String VERIFICATION_CODE_MISMATCH = "Verification code mismatch";
 
     private AddressBookDao dao;
-    private AddressVerificationDtoToAddressBookEntityMapper dtoToEntityMapper;
     private AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
     private AddressBookEntityListToUserAddressDtoMapper addressBookEntityListToDto;
 
     public AddressBookService(AddressBookDao dao,
-                              AddressVerificationDtoToAddressBookEntityMapper dtoToEntityMapper,
                               AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto,
                               AddressBookEntityListToUserAddressDtoMapper addressBookEntityListToDto) {
         this.dao = dao;
-        this.dtoToEntityMapper = dtoToEntityMapper;
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
         this.addressBookEntityListToDto = addressBookEntityListToDto;
     }
 
-//    public Mono<Object> saveAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType, Mono<AddressVerificationDto> addressVerificationDto) {
-//        return addressVerificationDto
-//        .map(dto -> dtoToEntityMapper.toEntity(recipientId, senderId, isLegal, channelType, dto))
-//        .map(entity -> {
-//            // Nel branch feature/PN-1283 il controllo del codice di verifica viene fatto confrontando il codice immesso con una stringa costante
-//            if (!AddressBookService.VERIFICATION_CODE_OK.equals(entity.getVerificationCode())) {
-//                log.info("saveAddressBook - recipientId: {} - senderId: {} - isLegal: {} - channelType: {} - verificationCode: {} - {}",
-//                        recipientId, senderId, isLegal, channelType, entity.getVerificationCode(), VERIFICATION_CODE_MISMATCH);
-//                throw new PnInternalException(VERIFICATION_CODE_MISMATCH, HttpStatus.NOT_ACCEPTABLE);
-//            }
-//
-//            Instant strDate = Instant.now();
-//            // qui vengono impostate entrambe le date.
-//            // Nel metodo VerificationCodeDao->saveVerificationCode vengono sovrascritte in modo che:
-//            //   alla creazione del verificationCode created != null e lastModified == null
-//            //   alla modifica del verificationCode created non viene alterato e lastModified viene aggiornato
-//
-//            entity.setCreated(strDate);
-//            entity.setLastModified(strDate);
-//            return entity;
-//        })
-//        .map(entity -> dao.saveAddressBook(entity));
-//    }
 
     public Mono<Boolean> saveAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType, Mono<AddressVerificationDto> addressVerificationDto) {
         return addressVerificationDto

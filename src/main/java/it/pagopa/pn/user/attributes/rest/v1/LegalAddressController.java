@@ -57,7 +57,6 @@ public class LegalAddressController implements LegalApi {
         log.debug("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
         return this.addressBookService.saveAddressBook(recipientId, senderId, true, channelType.getValue(), addressVerificationDto)
                 .map(m -> {
-                    log.info("fine addressBookService.saveAddressBookEx - {}", m.booleanValue());
                     if (m.booleanValue())
                         return ResponseEntity.status(HttpStatus.OK).body(null);
                     else

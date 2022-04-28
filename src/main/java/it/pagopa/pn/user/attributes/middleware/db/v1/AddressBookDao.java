@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
-import it.pagopa.pn.user.attributes.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnVerificationCodeInvalid;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
@@ -11,7 +11,6 @@ import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerifiedAddressEnt
 import it.pagopa.pn.user.attributes.services.v1.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +33,6 @@ import static it.pagopa.pn.user.attributes.exceptions.RestWebExceptionHandler.fi
 @Slf4j
 public class AddressBookDao extends BaseDao {
     private static final String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
-    private static final String ERROR_ADDRESSES_NOT_FOUND = "Digital Addresses not found";
 
     DynamoDbAsyncTable<AddressBookEntity> addressBookTable;
     DynamoDbAsyncTable<VerificationCodeEntity> verificationCodeTable;
@@ -107,7 +105,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnInternalException(ERROR_ADDRESSES_NOT_FOUND, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
     }
 
     public Flux<AddressBookEntity> getCourtesyAddressByRecipient(String recipientId) {
@@ -124,7 +122,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnInternalException(ERROR_ADDRESSES_NOT_FOUND, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
     }
 
     public Flux<AddressBookEntity> getLegalAddressBySender(String recipientId, String senderId) {
@@ -141,7 +139,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnInternalException(ERROR_ADDRESSES_NOT_FOUND, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
 
     }
 
@@ -159,7 +157,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnInternalException(ERROR_ADDRESSES_NOT_FOUND, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
 
     }
 
@@ -176,7 +174,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnInternalException(ERROR_ADDRESSES_NOT_FOUND, HttpStatus.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
 
     }
 
@@ -218,11 +216,6 @@ public class AddressBookDao extends BaseDao {
                                            String channelType,
                                            String address,
                                            final String verificationCode) {
-        if (address == null || address.isEmpty())
-            throw new PnInternalException("addressVerification.value is null", HttpStatus.BAD_REQUEST);
-
-        //String addressHash = DigestUtils.sha256Hex(address);
-
         return getVerifiedAddress(recipientId, channelType, address).zipWhen(r -> {
             if (r.getPk() == null) {
                 log.debug("address not verified - recipientId: {} - channelType: {}", recipientId, channelType);
@@ -233,6 +226,7 @@ public class AddressBookDao extends BaseDao {
                     return getVerificationCode(recipientId, channelType, address).zipWhen(xr -> {
                         if (xr.getPk() == null) {
                             log.debug("VerificationCodeEntity not found");
+                            throw new PnVerificationCodeInvalid();
                         } else {
                             log.debug("VerificationCodeEntity found");
 
@@ -252,7 +246,6 @@ public class AddressBookDao extends BaseDao {
                                 throw new PnVerificationCodeInvalid();
                             }
                         }
-                        return null;
                     }, (xr, xr1) -> {
 //                        if (xr != null) {
 //                            // Address not verified
@@ -267,7 +260,7 @@ public class AddressBookDao extends BaseDao {
                 } else {
                     log.debug("verificationCode is empty");
                     // genera provvisoriamente un codice di verifica e scrive su VerificationCodeTable
-                    String newVerificationCode = AddressBookService.VERIFICATION_CODE_OK;
+                    String newVerificationCode = getNewVerificationCode();
 
                     VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity();
                     verificationCodeEntity.setPk(VerificationCodeEntity.getPk(recipientId, channelType, address));
@@ -358,38 +351,10 @@ public class AddressBookDao extends BaseDao {
         }
 
 
-        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.transactWriteItems(transaction).thenApply(x -> {
-            return ab;
-        }));
+        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.transactWriteItems(transaction).thenApply(x -> ab));
     }
 
 
-/*
-    private Mono<AddressBookEntity> updateAddressBook(AddressBookEntity addressBook) {
-        GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
-                .key(getKeyBuild(addressBook.getPk(), addressBook.getSk()))
-                .build();
-
-        return  Mono.fromFuture(addressBookTable.getItem(getReq).thenCompose(r -> {
-            if (r != null) {
-                // update -> don't modify created
-                addressBook.setCreated(null);
-                if (r.getAddress().equals(addressBook.getAddress()))
-                    // se address non cambia non modifico lastModified
-                    addressBook.setLastModified(null);
-            }
-            else
-                // create -> don't set lastModified
-                addressBook.setLastModified(null);
-
-            UpdateItemEnhancedRequest<AddressBookEntity> updRequest = UpdateItemEnhancedRequest.builder(AddressBookEntity.class)
-                    .item(addressBook)
-                    .ignoreNulls(true)
-                    .build();
-            return addressBookTable.updateItem(updRequest);
-        }));
-    }
-*/
     private Mono<VerificationCodeEntity> updateVerificationCode(VerificationCodeEntity verificationCode) {
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
                 .key(getKeyBuild(verificationCode.getPk(), verificationCode.getSk()))
@@ -452,6 +417,11 @@ public class AddressBookDao extends BaseDao {
         }));
 
 
+    }
+
+    private String getNewVerificationCode() {
+        log.info("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
+        return AddressBookService.VERIFICATION_CODE_OK;
     }
 
 }
