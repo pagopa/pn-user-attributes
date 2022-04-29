@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.exceptions;
 
+import io.netty.channel.ConnectTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.core.annotation.Order;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebExceptionHandler;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Objects;
@@ -22,7 +24,17 @@ class RestWebExceptionHandler implements WebExceptionHandler {
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         Throwable rootCause = findExceptionRootCause(ex);
 
-        if (rootCause instanceof ConstraintViolationException ||
+        if (rootCause instanceof ConnectTimeoutException) {
+            log.error("ConnectTimeoutException: {}", ex.getMessage());
+            log.error("Check DynamoDB configuration params");
+            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            return Mono.empty();
+        } else if (rootCause instanceof ResourceNotFoundException) {
+            log.error("ResourceNotFoundException: {}", ex.getMessage());
+            log.error("Check DynamoDB table UserAttributes");
+            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            return Mono.empty();
+        } else if (rootCause instanceof ConstraintViolationException ||
             rootCause instanceof TypeMismatchException ||
             rootCause instanceof IllegalArgumentException ||
             rootCause instanceof WebExchangeBindException) {

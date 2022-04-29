@@ -7,7 +7,6 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityListToUserAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToLegalDigitalAddressDtoMapper;
-import it.pagopa.pn.user.attributes.mapper.v1.AddressVerificationDtoToAddressBookEntityMapper;
 import it.pagopa.pn.user.attributes.middleware.db.v1.AddressBookDao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

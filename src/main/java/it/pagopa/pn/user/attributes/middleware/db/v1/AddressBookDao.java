@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1;
 
+import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressDeletionFailure;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnVerificationCodeInvalid;
@@ -55,7 +56,7 @@ public class AddressBookDao extends BaseDao {
 
     // Crea o modifica l'entity VerificationCodeEntity
 
-    public Mono<Object> deleteAddressBook(String recipientId, String senderId, boolean isLegal, String channelType) throws RuntimeException {
+    public Mono<Object> deleteAddressBook(String recipientId, String senderId, boolean isLegal, String channelType) {
         String pk = AddressBookEntity.getPk(recipientId);
         String sk = AddressBookEntity.getSk(isLegal?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue(),
                 senderId,
@@ -80,12 +81,9 @@ public class AddressBookDao extends BaseDao {
                     Throwable rootCause = findExceptionRootCause(throwable);
                     if (rootCause instanceof ConditionalCheckFailedException)
                         throw new PnDigitalAddressNotFound();
-                    else
-                        try {
-                            throw throwable;
-                        } catch (Throwable e) {
-                            throw new RuntimeException(e);
-                        }
+                    else {
+                        throw new PnDigitalAddressDeletionFailure();
+                    }
                 }));
 
     }
@@ -222,7 +220,6 @@ public class AddressBookDao extends BaseDao {
 
                 if (verificationCode != null && !verificationCode.isEmpty()) {
                     log.debug("verificationCode is not empty");
-                    ///
                     return getVerificationCode(recipientId, channelType, address).zipWhen(xr -> {
                         if (xr.getPk() == null) {
                             log.debug("VerificationCodeEntity not found");
@@ -246,16 +243,7 @@ public class AddressBookDao extends BaseDao {
                                 throw new PnVerificationCodeInvalid();
                             }
                         }
-                    }, (xr, xr1) -> {
-//                        if (xr != null) {
-//                            // Address not verified
-//                            return true;
-//                        } else
-//                            // scrivi su VerifiedAddress
-//                            return false;
-                        return xr1;
-                    });
-                    ///
+                    }, (xr, xr1) -> xr1);
 
                 } else {
                     log.debug("verificationCode is empty");
@@ -282,14 +270,7 @@ public class AddressBookDao extends BaseDao {
                         ,verificationCode);
 
             }
-        }, (r,r1) -> {
-            if (r1 instanceof VerificationCodeEntity) {
-                // Address not verified
-                return true;
-            } else
-                // Address verified
-                return false;
-        });
+        }, (r,r1) -> r1 instanceof VerificationCodeEntity);
     }
 
 
@@ -305,8 +286,8 @@ public class AddressBookDao extends BaseDao {
     {
         VerifiedAddressEntity vae = null;
         TransactWriteItemsEnhancedRequest transaction = null;
-        UpdateItemEnhancedRequest req1 = null;
-        UpdateItemEnhancedRequest req2 = null;
+        UpdateItemEnhancedRequest<VerifiedAddressEntity> req1 = null;
+        UpdateItemEnhancedRequest<AddressBookEntity> req2 = null;
 
         if (!verified) {
             vae = new VerifiedAddressEntity();
