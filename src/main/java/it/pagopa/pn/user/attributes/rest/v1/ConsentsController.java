@@ -24,7 +24,7 @@ public class ConsentsController implements ConsentsApi  {
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        log.debug("consentAction - recipientId: {} - consentType: {} - consentActionDto: {}", recipientId, consentType, consentActionDto);
+        log.debug("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
 
         return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
                 .then(Mono.just(new ResponseEntity<Void>(HttpStatus.OK)));
