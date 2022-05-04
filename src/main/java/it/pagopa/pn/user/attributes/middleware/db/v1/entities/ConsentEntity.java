@@ -1,81 +1,43 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
 import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
 
 @DynamoDbBean
-@Builder
+@Data
 @NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
 public class ConsentEntity {
     private static final String PK_PREFIX = "CO#";
+    private static final String ITEMS_SEPARATOR = "#";
+    private static final int PK_ITEMS_RECIPIENTID = 1;
 
-    public static String getPk(String recipientId) {
-        return PK_PREFIX + recipientId;
+    private static final String COL_PK = "pk";
+    private static final String COL_SK = "sk";
+
+
+    public ConsentEntity(String recipientId, String consentType){
+        this.setPk(PK_PREFIX + recipientId);
+        this.setSk(consentType);
     }
 
-    public String getRecipientIdNoPrefix() {
-        return this.recipientId.substring(PK_PREFIX.length());
-    }
-
-    private String recipientId;
-    private String consentType;
-
-    private Instant created;
-    private Instant lastModified;
-
-    private boolean accepted;
-
-    @DynamoDbPartitionKey
-    @DynamoDbAttribute("pk")
+    @DynamoDbIgnore
     public String getRecipientId() {
-        return recipientId;
+        return pk.split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
     }
 
-    public void setRecipientId(String recipientId) {
-        this.recipientId = recipientId;
-    }
-
-    @DynamoDbSortKey
-    @DynamoDbAttribute("sk")
+    @DynamoDbIgnore
     public String getConsentType() {
-        return consentType;
+        return sk;
     }
 
-    public void setConsentType(String consentType) {
-        this.consentType = consentType;
-    }
+    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String pk;
+    @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute("sk")}))  private String sk;
 
-    @DynamoDbAttribute("created")
-    public Instant getCreated() {
-        return created;
-    }
+    @Getter(onMethod=@__({@DynamoDbAttribute("accepted")}))  private boolean accepted;
 
-    public void setCreated(Instant created) {
-        this.created = created;
-    }
+    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
-    @DynamoDbAttribute("lastModified")
-    public Instant getLastModified() {
-        return lastModified;
-    }
-
-    public void setLastModified(Instant lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    @DynamoDbAttribute("accepted")
-    public boolean isAccepted() {
-        return accepted;
-    }
-
-    public void setAccepted(boolean accepted) {
-        this.accepted = accepted;
-    }
 }

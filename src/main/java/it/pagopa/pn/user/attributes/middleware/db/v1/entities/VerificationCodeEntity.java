@@ -2,16 +2,9 @@ package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
 import lombok.Data;
 import lombok.Getter;
-import org.apache.commons.codec.digest.DigestUtils;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -22,40 +15,28 @@ import java.util.List;
 @Data
 public class VerificationCodeEntity {
     private static final String PK_PREFIX = "VC#";
-    public static final String SK_VALUE = "*";
-    private static final String PK_ITEMS_SEPARATOR = "#";
+    private static final String ITEMS_SEPARATOR = "#";
     private static final int PK_ITEMS_RECIPIENTID = 1;
-    private static final int PK_ITEMS_CHANNEL_TYPE = 2;
-    private static final int PK_ITEMS_HASHED_ADDRESS = 3;
+    private static final int SK_ITEMS_HASHED_ADDRESS = 0;
+    private static final int SK_ITEMS_CHANNEL_TYPE = 1;
 
-    /**
-     * Return an array of Strings from pk
-     * @param pk
-     *  example: VC#123e4567-e89b-12d3-a456-426614174000#EMAIL#bm9tZS5jb2dub21lQGRvbWluaW8uaXQ=
-     *  ret.get(1) = "123e4567-e89b-12d3-a456-426614174000"     recipientId
-     *  ret.get(2) = "EMAIL"    channelType
-     *  ret.get(3) = "bm9tZS5jb2dub21lQGRvbWluaW8uaXQ="     hashed address   (decoded: nome.cognome@dominio.it)
-     * @return List<String> ret
-     */
-    private static List<String> getPkSplitParts(String pk) {
-        return new ArrayList<>(Arrays.asList(pk.split(PK_ITEMS_SEPARATOR)));
+
+    public VerificationCodeEntity(String recipientId, String address, String channelType){
+        this.setPk(PK_PREFIX + recipientId);
+        this.setSk(address + ITEMS_SEPARATOR + (channelType==null?"":channelType));
     }
 
-    public static String getPk(String recipientId, String channelType, String address) {
-        return PK_PREFIX + recipientId
-                + PK_ITEMS_SEPARATOR + channelType
-                + PK_ITEMS_SEPARATOR + DigestUtils.sha256Hex(address);
-    }
-
-
+    @DynamoDbIgnore
     public String getRecipientId() {
-        return getPkSplitParts(pk).get(PK_ITEMS_RECIPIENTID);
+        return pk.split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
     }
+    @DynamoDbIgnore
     public String getChannelType() {
-        return getPkSplitParts(pk).get(PK_ITEMS_CHANNEL_TYPE);
+        return sk.split(ITEMS_SEPARATOR)[SK_ITEMS_CHANNEL_TYPE];
     }
+    @DynamoDbIgnore
     public String getHashedAddress() {
-        return getPkSplitParts(pk).get(PK_ITEMS_HASHED_ADDRESS);
+        return sk.split(ITEMS_SEPARATOR)[SK_ITEMS_HASHED_ADDRESS];
     }
 
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String pk;
@@ -65,4 +46,6 @@ public class VerificationCodeEntity {
     @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("verificationCode")}))  private String verificationCode;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
 }

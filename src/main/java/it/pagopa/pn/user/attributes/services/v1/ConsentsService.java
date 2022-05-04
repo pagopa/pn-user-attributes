@@ -16,9 +16,9 @@ import java.time.Instant;
 @Service
 @Slf4j
 public class ConsentsService {
-    private IConsentDao consentDao;
-    private ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper;
-    private ConsentActionDtoToConsentEntityMapper dtosToConsentEntityMapper;
+    private final IConsentDao consentDao;
+    private final ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper;
+    private final ConsentActionDtoToConsentEntityMapper dtosToConsentEntityMapper;
 
     public ConsentsService(IConsentDao consentDao,
                            ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper,
@@ -28,7 +28,7 @@ public class ConsentsService {
         this.dtosToConsentEntityMapper = consentActionDtoToConsentEntityMapper;
     }
 
-    public Mono<Void> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto) {
+    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto) {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
         .map(entity -> {
@@ -42,18 +42,17 @@ public class ConsentsService {
             entity.setLastModified(strDate);
             return entity;
         })
-        .map(entity -> consentDao.consentAction(entity))
-                .then();
+        .map(consentDao::consentAction);
     }
 
     public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType) {
-        return consentDao.getConsentByType(recipientId, consentType)
-                .map(ent -> consentEntityConsentDtoMapper.toDto(ent));
+        return consentDao.getConsentByType(recipientId, consentType.getValue())
+                .map(consentEntityConsentDtoMapper::toDto);
     }
 
 
     public Flux<ConsentDto> getConsents(String recipientId) {
         return consentDao.getConsents(recipientId)
-                .map(ent -> consentEntityConsentDtoMapper.toDto(ent));
+                .map(consentEntityConsentDtoMapper::toDto);
     }
 }

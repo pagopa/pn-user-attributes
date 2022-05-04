@@ -15,8 +15,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.mockito.ArgumentMatchers.any;
-
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "PA_ID";
@@ -43,17 +41,12 @@ class ConsentsControllerTest {
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
         Mono<ConsentActionDto> consentActionDtoMono = Mono.just(consentAction);
 
-        ConsentEntity ce = ConsentEntity.builder()
-                .consentType(CONSENTTYPE)
-                .recipientId(RECIPIENTID)
-                .accepted(true)
-                .build();
-
+        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE);
+        ce.setAccepted(true);
 
         // When
-        Mono<Void> voidReturn  = Mono.empty();
         Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any()))
-                .thenReturn(voidReturn);
+                .thenReturn(Mono.just(new Object()));
 
         // Then
         webTestClient.put()

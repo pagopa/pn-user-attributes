@@ -1,9 +1,8 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,13 +14,12 @@ import software.amazon.awssdk.enhanced.dynamodb.model.*;
 @Repository
 @Slf4j
 public class ConsentDao extends BaseDao implements IConsentDao {
-    public static final  String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
 
     DynamoDbAsyncTable<ConsentEntity> userAttributesTable;
 
     public ConsentDao(DynamoDbEnhancedAsyncClient dynamoDbAsyncClient,
-                      @Value(DYNAMODB_TABLE_NAME) String table) {
-        this.userAttributesTable = dynamoDbAsyncClient.table(table, TableSchema.fromBean(ConsentEntity.class));
+                      PnUserattributesConfig pnUserattributesConfig) {
+        this.userAttributesTable = dynamoDbAsyncClient.table(pnUserattributesConfig.getDynamodbTableName(), TableSchema.fromBean(ConsentEntity.class));
     }
 
     // Crea o modifica l'entity ConsentEntity
@@ -73,10 +71,10 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      * @return ConsentEntity
      */
     @Override
-     public Mono<ConsentEntity> getConsentByType(String recipientId, ConsentTypeDto consentType) {
-
+     public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType) {
+        ConsentEntity ce = new ConsentEntity(recipientId, consentType);
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
-                .key(getKeyBuild(ConsentEntity.getPk(recipientId), consentType.getValue()))
+                .key(getKeyBuild(ce.getPk(), ce.getSk()))
                 .build();
 
         return Mono.fromFuture(userAttributesTable.getItem(getReq));
@@ -92,10 +90,11 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      */
     @Override
     public Flux<ConsentEntity> getConsents(String recipientId) {
+        ConsentEntity ce = new ConsentEntity(recipientId, "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(ConsentEntity.getPk(recipientId))))
+                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(ce.getPk())))
                 .scanIndexForward(true)
                 .build();
 

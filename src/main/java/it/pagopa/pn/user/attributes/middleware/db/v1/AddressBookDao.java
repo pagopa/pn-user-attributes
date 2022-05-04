@@ -1,18 +1,16 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1;
 
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressDeletionFailure;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnVerificationCodeInvalid;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerifiedAddressEntity;
-import it.pagopa.pn.user.attributes.services.v1.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -33,7 +31,6 @@ import static it.pagopa.pn.user.attributes.exceptions.RestWebExceptionHandler.fi
 @Repository
 @Slf4j
 public class AddressBookDao extends BaseDao {
-    private static final String DYNAMODB_TABLE_NAME = "${pn.user-attributes.dynamodb.table-name}";
 
     DynamoDbAsyncTable<AddressBookEntity> addressBookTable;
     DynamoDbAsyncTable<VerificationCodeEntity> verificationCodeTable;
@@ -44,26 +41,23 @@ public class AddressBookDao extends BaseDao {
 
     public AddressBookDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                           DynamoDbAsyncClient dynamoDbAsyncClient,
-                          @Value(DYNAMODB_TABLE_NAME) String table
+                          PnUserattributesConfig pnUserattributesConfig
                           ) {
         this.dynamoDbAsyncClient = dynamoDbAsyncClient;
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
+        this.table = pnUserattributesConfig.getDynamodbTableName();
         this.addressBookTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(AddressBookEntity.class));
         this.verificationCodeTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerificationCodeEntity.class));
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
-        this.table = table;
     }
 
     // Crea o modifica l'entity VerificationCodeEntity
 
-    public Mono<Object> deleteAddressBook(String recipientId, String senderId, boolean isLegal, String channelType) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = AddressBookEntity.getSk(isLegal?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue(),
-                senderId,
-                channelType);
+    public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":pk",  AttributeValue.builder().s(pk).build());
+        expressionValues.put(":pk",  AttributeValue.builder().s(addressBook.getPk()).build());
 
         Expression exp = Expression.builder()
                 .expression(AddressBookEntity.COL_PK + " = :pk")
@@ -71,7 +65,7 @@ public class AddressBookDao extends BaseDao {
                 .build();
 
         DeleteItemEnhancedRequest delRequest = DeleteItemEnhancedRequest.builder()
-                .key(getKeyBuild(pk, sk))
+                .key(getKeyBuild(addressBook.getPk(), addressBook.getSk()))
                 .conditionExpression(exp)
                 .build();
 
@@ -88,52 +82,31 @@ public class AddressBookDao extends BaseDao {
 
     }
 
+    public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legalType, senderId, null);
 
-    public Flux<AddressBookEntity> getCourtesyAddressBySender(String recipientId, String senderId) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = AddressBookEntity.getSk(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue(),
-                                      senderId,
-                                       null);
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(pk, sk)))
+                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(addressBook.getPk(), addressBook.getSk())))
                 .scanIndexForward(true)
                 .build();
 
         return Flux.from(addressBookTable.query(qeRequest)
-                .items())
+                        .items())
                 .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
     }
 
-    public Flux<AddressBookEntity> getCourtesyAddressByRecipient(String recipientId) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = AddressBookEntity.getSk(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue(),
-                null,
-                null);
+
+    public Flux<AddressBookEntity> getAllAddressesByRecipient(String recipientId) {
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, null, null, null);
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(pk, sk)))
+                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(addressBook.getPk())))
                 .scanIndexForward(true)
                 .build();
 
-        return Flux.from(addressBookTable.query(qeRequest)
-                .items())
-                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
-    }
-
-    public Flux<AddressBookEntity> getLegalAddressBySender(String recipientId, String senderId) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = AddressBookEntity.getSk(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue(),
-                senderId,
-                null);
-
-        QueryEnhancedRequest qeRequest = QueryEnhancedRequest
-                .builder()
-                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(pk, sk)))
-                .scanIndexForward(true)
-                .build();
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
@@ -141,39 +114,25 @@ public class AddressBookDao extends BaseDao {
 
     }
 
-    public Flux<AddressBookEntity> getLegalAddressByRecipient(String recipientId) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = AddressBookEntity.getSk(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue(),
-                null,
-                null);
-
-        QueryEnhancedRequest qeRequest = QueryEnhancedRequest
-                .builder()
-                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(pk, sk)))
-                .scanIndexForward(true)
-                .build();
-
-        return Flux.from(addressBookTable.query(qeRequest)
-                .items())
-                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
-
+    public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
+    {
+        return Mono.fromFuture(verificationCodeTable.updateItem(entity));
     }
 
-    public Flux<AddressBookEntity> getAddressesByRecipient(String recipientId) {
-        String pk = AddressBookEntity.getPk(recipientId);
-        String sk = null;
+    public Mono<VerifiedAddressEntity> getVerifiedAddress(String recipientId, String hashedAddress)
+    {
+        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(pk, sk)))
+                .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(verifiedAddressEntity.getPk(), verifiedAddressEntity.getSk())))
                 .scanIndexForward(true)
                 .build();
 
 
-        return Flux.from(addressBookTable.query(qeRequest)
-                .items())
-                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
-
+        return Flux.from(verifiedAddressTable.query(qeRequest)
+                        .items()).collectList()
+                .map(list -> list.isEmpty()?null:list.get(0));
     }
 
     /**
@@ -207,18 +166,20 @@ public class AddressBookDao extends BaseDao {
             return addressBookTable.updateItem(updRequest);
         }));
     }
-
+/*
     public Mono<Boolean> saveAddressBookEx(String recipientId,
                                            String senderId,
-                                           boolean isLegal,
+                                           String legalType,
                                            String channelType,
                                            String address,
                                            final String verificationCode) {
+
+
         return getVerifiedAddress(recipientId, channelType, address).zipWhen(r -> {
             if (r.getPk() == null) {
                 log.debug("address not verified - recipientId: {} - channelType: {}", recipientId, channelType);
 
-                if (verificationCode != null && !verificationCode.isEmpty()) {
+                if (StringUtils.hasText(verificationCode)) {
                     log.debug("verificationCode is not empty");
                     return getVerificationCode(recipientId, channelType, address).zipWhen(xr -> {
                         if (xr.getPk() == null) {
@@ -233,7 +194,7 @@ public class AddressBookDao extends BaseDao {
                                  return updateAddressBook(false
                                                          ,recipientId
                                                          ,senderId
-                                                         ,isLegal
+                                                         ,legalType
                                                          ,channelType
                                                          ,address
                                                          ,verificationCode);
@@ -264,7 +225,7 @@ public class AddressBookDao extends BaseDao {
                 return updateAddressBook(true
                         ,recipientId
                         ,senderId
-                        ,isLegal
+                        ,legalType
                         ,channelType
                         ,address
                         ,verificationCode);
@@ -272,6 +233,73 @@ public class AddressBookDao extends BaseDao {
             }
         }, (r,r1) -> r1 instanceof VerificationCodeEntity);
     }
+*/
+/*
+    public Mono<Boolean> saveAddressBookEx1(String recipientId,
+                                           String senderId,
+                                           String legalType,
+                                           String channelType,
+                                           String address,
+                                           final String verificationCode) {
+
+        return getVerifiedAddress(recipientId, channelType, address).zipWhen(r -> {
+            if (r.getPk() == null) {
+                log.debug("address not verified - recipientId: {} - channelType: {}", recipientId, channelType);
+
+                if (verificationCode != null && !verificationCode.isEmpty()) {
+                    log.debug("verificationCode is not empty");
+                    return getVerificationCode(recipientId, channelType, address).zipWhen(xr -> {
+                        if (xr.getPk() == null) {
+                            log.debug("VerificationCodeEntity not found");
+                            throw new PnVerificationCodeInvalid();
+                        } else {
+                            log.debug("VerificationCodeEntity found");
+
+                            if (xr.getVerificationCode().equals(verificationCode)) {
+                                log.debug("verificationCode matched");
+
+                                return updateAddressBook(false
+                                        ,recipientId
+                                        ,senderId
+                                        ,legalType
+                                        ,channelType
+                                        ,address
+                                        ,verificationCode);
+
+                            } else {
+                                log.debug("verificationCode NOT matched");
+                                throw new PnVerificationCodeInvalid();
+                            }
+                        }
+                    }, (xr, xr1) -> xr1);
+
+                } else {
+                    log.debug("verificationCode is empty");
+                    // genera provvisoriamente un codice di verifica e scrive su VerificationCodeTable
+                    String newVerificationCode = getNewVerificationCode();
+
+                    VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity();
+                    verificationCodeEntity.setPk(VerificationCodeEntity.getPk(recipientId, channelType, address));
+                    verificationCodeEntity.setSk(VerificationCodeEntity.SK_VALUE);
+                    verificationCodeEntity.setVerificationCode(newVerificationCode);
+                    verificationCodeEntity.setCreated(Instant.now());
+                    verificationCodeEntity.setLastModified(verificationCodeEntity.getCreated());
+
+                    return updateVerificationCode(verificationCodeEntity);
+                }
+            } else {
+                log.debug("address verified - recipientId: {} - channelType: {}", recipientId, channelType);
+                return updateAddressBook(true
+                        ,recipientId
+                        ,senderId
+                        ,legalType
+                        ,channelType
+                        ,address
+                        ,verificationCode);
+
+            }
+        }, (r,r1) -> r1 instanceof VerificationCodeEntity);
+    }*/
 
 
     // Inizio metodi privati
@@ -279,12 +307,12 @@ public class AddressBookDao extends BaseDao {
     private Mono<AddressBookEntity> updateAddressBook(boolean verified,
                                                       String recipientId,
                                                       String senderId,
-                                                      boolean isLegal,
+                                                      String legalType,
                                                       String channelType,
                                                       String address,
                                                       String verificationCode )
     {
-        VerifiedAddressEntity vae = null;
+        /*VerifiedAddressEntity vae = null;
         TransactWriteItemsEnhancedRequest transaction = null;
         UpdateItemEnhancedRequest<VerifiedAddressEntity> req1 = null;
         UpdateItemEnhancedRequest<AddressBookEntity> req2 = null;
@@ -308,8 +336,7 @@ public class AddressBookDao extends BaseDao {
         ab.setCreated(Instant.now());
         ab.setLastModified(Instant.now());
         ab.setPk(AddressBookEntity.getPk(recipientId));
-        ab.setSk(AddressBookEntity.getSk(isLegal? LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue() : CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue()
-                ,senderId, channelType));
+        ab.setSk(AddressBookEntity.getSk(legalType,senderId, channelType));
         ab.setVerificationCode(verificationCode);
 
         req2 = UpdateItemEnhancedRequest
@@ -332,7 +359,8 @@ public class AddressBookDao extends BaseDao {
         }
 
 
-        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.transactWriteItems(transaction).thenApply(x -> ab));
+        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.transactWriteItems(transaction).thenApply(x -> ab));*/
+        return null;
     }
 
 
@@ -357,7 +385,7 @@ public class AddressBookDao extends BaseDao {
             return verificationCodeTable.updateItem(updRequest);
         }));
     }
-
+/*
     private Mono<VerifiedAddressEntity> getVerifiedAddress(String recipientId, String channelType, String addressHash) {
         String pk = VerifiedAddressEntity.getPk(recipientId, channelType, addressHash);
         String sk = VerifiedAddressEntity.SK_VALUE;
@@ -399,10 +427,5 @@ public class AddressBookDao extends BaseDao {
 
 
     }
-
-    private String getNewVerificationCode() {
-        log.info("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
-        return AddressBookService.VERIFICATION_CODE_OK;
-    }
-
+*/
 }
