@@ -21,18 +21,14 @@ public class AddressBookEntityListToUserAddressDtoMapper {
             if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
                 LegalDigitalAddressDto dto = new LegalDigitalAddressDto();
                 dto.setRecipientId(ent.getRecipientId());
-                dto.setCode(ent.getVerificationCode());
                 dto.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.fromValue(ent.getAddressType()));
-                dto.setValue(ent.getAddress());
                 dto.senderId(ent.getSenderId());
                 dto.setChannelType(LegalChannelTypeDto.fromValue(ent.getChannelType()));
                 uaDto.addLegalItem(dto);
             } else {
                 CourtesyDigitalAddressDto dto = new CourtesyDigitalAddressDto();
                 dto.setRecipientId(ent.getRecipientId());
-                dto.setCode(ent.getVerificationCode());
                 dto.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.fromValue(ent.getAddressType()));
-                dto.setValue(ent.getAddress());
                 dto.senderId(ent.getSenderId());
                 dto.setChannelType( CourtesyChannelTypeDto.fromValue(ent.getChannelType()));
                 uaDto.addCourtesyItem(dto);

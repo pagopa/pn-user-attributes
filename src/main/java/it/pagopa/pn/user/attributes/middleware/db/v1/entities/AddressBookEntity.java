@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
@@ -36,6 +37,8 @@ public class AddressBookEntity {
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(addressType + ITEMS_SEPARATOR + (senderId==null?SENDER_ID_DEFAULT:senderId) + ITEMS_SEPARATOR + (channelType==null?"":channelType));
+        this.setCreated(Instant.now());
+        this.setLastModified(this.getCreated());
     }
 
     @DynamoDbIgnore
@@ -59,11 +62,9 @@ public class AddressBookEntity {
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_PK)}))  private String pk;
     @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute(COL_SK)}))  private String sk;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("created"), @DynamoDbUpdateBehavior(UpdateBehavior.WRITE_IF_NOT_EXISTS) }))  private Instant created;
     @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("verificationCode")}))  private String verificationCode;
+    @Getter(onMethod=@__({@DynamoDbAttribute("addressId")}))  private String addressId;
 
-    // PROVVISORIO -> in futuro verrà eliminato il campo e salvato presso un servizio esterno
-    @Getter(onMethod=@__({@DynamoDbAttribute("address")}))  private String address;
 }

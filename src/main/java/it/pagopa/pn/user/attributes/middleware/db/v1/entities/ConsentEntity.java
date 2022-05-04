@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
 import lombok.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
@@ -20,6 +21,8 @@ public class ConsentEntity {
     public ConsentEntity(String recipientId, String consentType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(consentType);
+        this.setCreated(Instant.now());
+        this.setLastModified(this.getCreated());
     }
 
     @DynamoDbIgnore
@@ -37,7 +40,7 @@ public class ConsentEntity {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("accepted")}))  private boolean accepted;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("created"), @DynamoDbUpdateBehavior(UpdateBehavior.WRITE_IF_NOT_EXISTS)}))  private Instant created;
     @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
 
 }

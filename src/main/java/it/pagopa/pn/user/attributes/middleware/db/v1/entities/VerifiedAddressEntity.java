@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
@@ -21,6 +22,8 @@ public class VerifiedAddressEntity {
     public VerifiedAddressEntity(String recipientId, String address, String channelType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(address + ITEMS_SEPARATOR + (channelType==null?"":channelType));
+        this.setCreated(Instant.now());
+        this.setLastModified(this.getCreated());
     }
 
     @DynamoDbIgnore
@@ -39,6 +42,7 @@ public class VerifiedAddressEntity {
     @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute("pk")}))  private String pk;
     @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute("sk")}))  private String sk;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created")}))  private Instant created;
+    @Getter(onMethod=@__({@DynamoDbAttribute("created"), @DynamoDbUpdateBehavior(UpdateBehavior.WRITE_IF_NOT_EXISTS)}))  private Instant created;
     @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
+
 }

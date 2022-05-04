@@ -18,8 +18,6 @@ public class AddressBookEntityToLegalDigitalAddressDtoMapper {
         dto.setChannelType(LegalChannelTypeDto.fromValue(entity.getChannelType()));
         dto.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.fromValue(entity.getAddressType()));
         dto.senderId(entity.getSenderId());
-        dto.setValue(entity.getAddress());
-        dto.setCode(entity.getVerificationCode());
 
         return  dto;
     }

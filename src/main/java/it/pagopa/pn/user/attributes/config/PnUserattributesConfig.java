@@ -12,4 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class PnUserattributesConfig {
 
     private String dynamodbTableName;
+
+    private String clientDatavaultBasepath;
 }

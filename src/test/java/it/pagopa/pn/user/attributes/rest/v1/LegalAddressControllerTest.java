@@ -115,7 +115,7 @@ class LegalAddressControllerTest {
         addressVerification.setValue("value");
 
         // When
-        Mono<Boolean> voidReturn  = Mono.just(true);
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         Mockito.when(svc.saveAddressBook(Mockito.anyString(),
                         Mockito.anyString(),
                         Mockito.eq(true),

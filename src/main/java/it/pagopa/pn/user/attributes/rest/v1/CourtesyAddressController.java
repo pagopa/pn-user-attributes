@@ -61,7 +61,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         return this.addressBookService.saveAddressBook(recipientId, senderId, false, channelType.getValue(), addressVerificationDto)
                 .map(m -> {
-                    if (m.booleanValue())
+                    if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.status(HttpStatus.OK).body(null);
                     else
                         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
