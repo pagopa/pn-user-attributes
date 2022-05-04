@@ -14,7 +14,7 @@ public class ConsentEntityConsentDtoMapper {
 
     public ConsentDto toDto(ConsentEntity entity) {
         ConsentDto dto = new ConsentDto();
-        dto.setRecipientId(entity.getRecipientIdNoPrefix());
+        dto.setRecipientId(entity.getRecipientId());
         dto.setAccepted(entity.isAccepted());
         dto.setConsentType(ConsentTypeDto.fromValue(entity.getConsentType()));
         return  dto;

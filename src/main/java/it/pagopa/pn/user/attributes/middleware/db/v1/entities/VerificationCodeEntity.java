@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.time.Instant;
  */
 @DynamoDbBean
 @Data
+@NoArgsConstructor
 public class VerificationCodeEntity {
     private static final String PK_PREFIX = "VC#";
     private static final String ITEMS_SEPARATOR = "#";

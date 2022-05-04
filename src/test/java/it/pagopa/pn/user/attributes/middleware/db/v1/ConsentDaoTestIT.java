@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * I metodi di test (@Test) verificano ciascuno un solo metodo di ConsentDao
  */
 class ConsentDaoTestIT {
-    private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174007";
+    /*private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174007";
     private static final String RECIPIENTID_NOT_FOUND = "not-existent-recid";
 
     private static final String CONSENTTYPE = "TOS";
@@ -277,4 +277,5 @@ class ConsentDaoTestIT {
                 .build();
         return consentEntity;
     }
+    */
 }

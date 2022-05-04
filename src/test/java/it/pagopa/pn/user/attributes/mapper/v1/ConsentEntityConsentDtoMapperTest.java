@@ -18,10 +18,8 @@ class ConsentEntityConsentDtoMapperTest {
         boolean accepted = true;
 
         ConsentEntityConsentDtoMapper mapper = new ConsentEntityConsentDtoMapper();
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(ConsentEntity.getPk(recipientId));
+        ConsentEntity ce = new ConsentEntity(recipientId, type.getValue());
         ce.setAccepted(accepted);
-        ce.setConsentType(type.getValue());
         ce.setCreated(Instant.now());
 
         ConsentDto dtoExpected = new ConsentDto();

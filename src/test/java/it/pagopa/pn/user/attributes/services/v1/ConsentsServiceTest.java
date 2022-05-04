@@ -49,9 +49,7 @@ class ConsentsServiceTest {
         ConsentActionDto consentActionDto = new ConsentActionDto();
         consentActionDto.setAction(ConsentActionDto.ActionEnum.ACCEPT);
 
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(ConsentEntity.getPk(recipientId));
-        ce.setConsentType(consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
         ce.setAccepted(consentActionDto.getAction().equals(ConsentActionDto.ActionEnum.ACCEPT));
 
         ConsentDto consentDto = consentEntityConsentDtoMapper.toDto(ce);
@@ -79,9 +77,7 @@ class ConsentsServiceTest {
         ConsentActionDto consentActionDto = new ConsentActionDto();
         consentActionDto.setAction(ConsentActionDto.ActionEnum.DECLINE);
 
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(ConsentEntity.getPk(recipientId));
-        ce.setConsentType(consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
         ce.setAccepted(consentActionDto.getAction().equals(ConsentActionDto.ActionEnum.ACCEPT));
 
         ConsentDto consentDto = consentEntityConsentDtoMapper.toDto(ce);
@@ -105,9 +101,7 @@ class ConsentsServiceTest {
         String recipientId = "recipientid";
         ConsentTypeDto consentTypeDto = ConsentTypeDto.TOS;
 
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(ConsentEntity.getPk(recipientId));
-        ce.setConsentType(consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
         ce.setAccepted(true);
 
         ConsentDto consentDto = consentEntityConsentDtoMapper.toDto(ce);
@@ -136,9 +130,7 @@ class ConsentsServiceTest {
         consentDto.setConsentType(consentTypeDto);
         consentDto.setAccepted(true);
 
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(recipientId);
-        ce.setConsentType(consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
         ce.setAccepted(true);
 
         ConsentDto consentDtoRead = new ConsentDto();
@@ -158,9 +150,7 @@ class ConsentsServiceTest {
         String recipientId_read = "recipientid_2";
         ConsentTypeDto consentTypeDto1 = ConsentTypeDto.TOS;
 
-        ConsentEntity ce1 = new ConsentEntity();
-        ce1.setRecipientId(ConsentEntity.getPk(recipientId_inserted));
-        ce1.setConsentType(consentTypeDto1.getValue());
+        ConsentEntity ce1 = new ConsentEntity(recipientId_inserted, consentTypeDto1.getValue());
         ce1.setAccepted(true);
 
         ConsentDto consentDto1 = consentEntityConsentDtoMapper.toDto(ce1);
@@ -189,18 +179,14 @@ class ConsentsServiceTest {
         ConsentTypeDto consentTypeDto1 = ConsentTypeDto.TOS;
         ConsentTypeDto consentTypeDto2 = ConsentTypeDto.DATAPRIVACY;
 
-        ConsentEntity ce1 = new ConsentEntity();
-        ce1.setRecipientId(ConsentEntity.getPk(recipientId));
-        ce1.setConsentType(consentTypeDto1.getValue());
+        ConsentEntity ce1 = new ConsentEntity(recipientId, consentTypeDto1.getValue());
         ce1.setAccepted(true);
 
         ConsentDto consentDto1 = consentEntityConsentDtoMapper.toDto(ce1);
 
         consentDao.consentAction(ce1);
 
-        ConsentEntity ce2 = new ConsentEntity();
-        ce2.setRecipientId(ConsentEntity.getPk(recipientId));
-        ce2.setConsentType(consentTypeDto2.getValue());
+        ConsentEntity ce2 = new ConsentEntity(recipientId, consentTypeDto2.getValue());
         ce2.setAccepted(false);
 
         ConsentDto consentDto2 = consentEntityConsentDtoMapper.toDto(ce2);
@@ -254,10 +240,10 @@ class ConsentsServiceTest {
         }
 
         @Override
-        public Mono<ConsentEntity> getConsentByType(String recipientId, ConsentTypeDto consentType) {
+        public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType) {
             Key key = Key.builder()
-                    .partitionValue(ConsentEntity.getPk(recipientId))
-                    .sortValue(consentType.getValue())
+                    .partitionValue("CO#" + recipientId)
+                    .sortValue(consentType)
                     .build();
 
             ConsentEntity entity = get(key);
@@ -272,7 +258,7 @@ class ConsentsServiceTest {
             List<ConsentEntity> list = new ArrayList<>();
 
             for (var entry : store.entrySet()) {
-                if (entry.getValue().getRecipientId().equals(ConsentEntity.getPk(recipientId)))
+                if (entry.getValue().getRecipientId().equals("CO#" + recipientId))
                     list.add(entry.getValue());
             }
             if (list.isEmpty())

@@ -16,20 +16,8 @@ class ConsentEntityTest {
     void setUp() {
     }
 
-    @Test
-    void getPk() {
-        String pk = ConsentEntity.getPk(RECIPIENTID);
-        String pkExpected = "CO#" + RECIPIENTID;
-
-        assertEquals(pkExpected, pk);
-    }
 
     @Test
     void getRecipientIdNoPrefix() {
-        String pk = ConsentEntity.getPk(RECIPIENTID);
-        ConsentEntity ce = new ConsentEntity();
-        ce.setRecipientId(pk);
-        String recIdRead = ce.getRecipientIdNoPrefix();
-        assertEquals(RECIPIENTID, recIdRead);
     }
 }

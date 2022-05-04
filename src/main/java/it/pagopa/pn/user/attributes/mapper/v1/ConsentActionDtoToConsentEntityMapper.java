@@ -13,9 +13,7 @@ public class ConsentActionDtoToConsentEntityMapper {
     }
 
     public ConsentEntity toEntity(String recipientId, ConsentTypeDto consentType, ConsentActionDto dto) {
-        ConsentEntity entity = new ConsentEntity();
-        entity.setRecipientId(ConsentEntity.getPk(recipientId)); // pk
-        entity.setConsentType(consentType.getValue()); //sk
+        ConsentEntity entity = new ConsentEntity(recipientId, consentType.getValue());
         entity.setAccepted(dto.getAction().equals(ConsentActionDto.ActionEnum.ACCEPT));
         return entity;
     }
