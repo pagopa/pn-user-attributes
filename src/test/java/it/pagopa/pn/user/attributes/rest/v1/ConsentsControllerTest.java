@@ -15,7 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@WebFluxTest(controllers = {ConsentsController.class})
+@WebFluxTest(controllers = {ntroller.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "PA_ID";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
