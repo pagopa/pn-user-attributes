@@ -140,7 +140,7 @@ public class AddressBookDao extends BaseDao {
     }
 
     /**
-     * Inserice o aggiorna un item di tipo AddressBookEntity e VerifiedAddress
+     * Inserisce o aggiorna un item di tipo AddressBookEntity e VerifiedAddress
      *
      * @param addressBook indirizzo da salvare
      * @param verifiedAddress verifiedaddress da salvare
