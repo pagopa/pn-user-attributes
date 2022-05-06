@@ -4,7 +4,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.services.v1.AddressBookService;
+import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +61,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         return this.addressBookService.saveAddressBook(recipientId, senderId, false, channelType.getValue(), addressVerificationDto)
                 .map(m -> {
+                    log.debug("postRecipientCourtesyAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.status(HttpStatus.OK).body(null);
                     else

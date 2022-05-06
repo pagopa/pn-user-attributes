@@ -1,16 +1,16 @@
-package it.pagopa.pn.user.attributes.services.v1;
+package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.UserAddressesDto;
-import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
-import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToLegalDigitalAddressDtoMapper;
-import it.pagopa.pn.user.attributes.middleware.db.v1.AddressBookDao;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.AddressBookEntity;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerificationCodeEntity;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
+import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -81,16 +80,14 @@ public class AddressBookService {
     public Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType, Mono<AddressVerificationDto> addressVerificationDto) {
         String legal = isLegal?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
         return addressVerificationDto
-                .zipWhen(r -> dao.getVerifiedAddress(recipientId, hashAddress(r.getValue()))
-                        .map(v -> true)
-                        .defaultIfEmpty(false)
-                ,(r, isalreadyverified) -> new Object(){
+                .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
+                ,(r, alreadyverifiedoutcome) -> new Object(){
                     public final String verificationCode = r.getVerificationCode();
                     public final String realaddress = r.getValue();
-                    public final boolean isAlreadyverified = isalreadyverified;
+                    public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
                 })
                 .flatMap(res -> {
-                    if (res.isAlreadyverified)
+                    if (res.alreadyverifiedOutcome == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED)
                     {
                         // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                         // senza dover passare per la creazione di un VC
@@ -118,7 +115,9 @@ public class AddressBookService {
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType) {
         String legal = isLegal?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
-        return dao.deleteAddressBook(recipientId, senderId, legal, channelType);
+        AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
+        return  dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
+                        .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
     }
 
     public Flux<CourtesyDigitalAddressDto> getCourtesyAddressBySender(String recipientId, String senderId) {
@@ -237,7 +236,7 @@ public class AddressBookService {
 
     private Mono<SAVE_ADDRESS_RESULT> validateVerificationCodeAndSendToDataVault(String recipientId, String verificationCode, String realaddress, String legal, String senderId, String channelType) {
         String hashedaddress = hashAddress(realaddress);
-        log.info("validanting code uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
+        log.info("validating code uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
         VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
         return dao.getVerificationCode(verificationCodeEntity)
                 .flatMap(r -> {
@@ -246,7 +245,8 @@ public class AddressBookService {
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
                     return sendToDataVaultAndSaveInDynamodb(recipientId, realaddress, legal, senderId, channelType);
-                });
+                })
+                .switchIfEmpty(Mono.error(new InvalidVerificationCodeException()));
     }
 
     private Mono<SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress, String channelType) {
@@ -259,6 +259,7 @@ public class AddressBookService {
 
         return dao.saveVerificationCode(verificationCode)
                 .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(realaddress, channelType, verificationCode.getVerificationCode())
+                                .thenReturn("OK")
                         ,(r, a) -> SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }
 
@@ -275,16 +276,20 @@ public class AddressBookService {
     private Mono<SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(String recipientId, String realaddress, String legal, String senderId, String channelType)
     {
         String hashedaddress = hashAddress(realaddress);
-        String addressId = UUID.randomUUID().toString();
-        log.info("saving address in datavault and db uid:{} hashedaddress:{} channel:{} legal:{} addressid:{}", recipientId, hashedaddress, channelType, legal, addressId);
-        return this.dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress).zipWhen(r -> {
-            AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
-            addressBook.setAddressId(addressId);
+        AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
+        String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
+        log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
+        return this.dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress)
+                .then(saveInDynamodb(recipientId, hashedaddress, legal, senderId, channelType))
+                .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+    }
 
-            VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashAddress(realaddress), channelType);
+    private Mono<Void> saveInDynamodb(String recipientId, String hashedaddress, String legal, String senderId, String channelType){
+        log.info("saving address in db uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
-            return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity);
-        })
-        .map(r -> SAVE_ADDRESS_RESULT.SUCCESS);
+        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedaddress, channelType);
+
+        return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity);
     }
 }

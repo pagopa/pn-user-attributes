@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1;
+package it.pagopa.pn.user.attributes.middleware.db;
 
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 

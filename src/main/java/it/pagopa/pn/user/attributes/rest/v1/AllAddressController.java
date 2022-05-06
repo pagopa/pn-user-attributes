@@ -2,7 +2,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.api.AllApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.UserAddressesDto;
-import it.pagopa.pn.user.attributes.services.v1.AddressBookService;
+import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

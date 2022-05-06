@@ -1,10 +1,7 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
+package it.pagopa.pn.user.attributes.middleware.db.entities;
 
 import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
-
-import java.time.Instant;
 
 @DynamoDbBean
 @Data

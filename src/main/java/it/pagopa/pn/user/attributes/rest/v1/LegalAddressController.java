@@ -4,9 +4,8 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
-import it.pagopa.pn.user.attributes.services.v1.AddressBookService;
+import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -35,9 +34,9 @@ public class LegalAddressController implements LegalApi {
         log.debug("getLegalAddressByRecipient - recipientId: {}", recipientId);
         return this.addressBookService.getLegalAddressByRecipient(recipientId).collectList().map(dtos -> {
             if (dtos.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                return ResponseEntity.notFound().build();
             else
-                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(dtos));
+                return ResponseEntity.ok(Flux.fromIterable(dtos));
         });
     }
 
@@ -46,21 +45,22 @@ public class LegalAddressController implements LegalApi {
         log.debug("getLegalAddressBySender - recipientId: {} - senderId: {}", recipientId, senderId);
         return this.addressBookService.getLegalAddressBySender(recipientId, senderId).collectList().map(dtos -> {
             if (dtos.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                return ResponseEntity.notFound().build();
             else
-                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(dtos));
+                return ResponseEntity.ok(Flux.fromIterable(dtos));
         });
     }
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        log.debug("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
+        log.info("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
         return this.addressBookService.saveAddressBook(recipientId, senderId, true, channelType.getValue(), addressVerificationDto)
                 .map(m -> {
+                    log.debug("postRecipientLegalAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
-                        return ResponseEntity.status(HttpStatus.OK).body(null);
+                        return ResponseEntity.ok().build();
                     else
-                        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+                        return ResponseEntity.noContent().build();
                 });
 
     }

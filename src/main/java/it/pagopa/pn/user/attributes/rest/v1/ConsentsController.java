@@ -4,7 +4,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
-import it.pagopa.pn.user.attributes.services.v1.ConsentsService;
+import it.pagopa.pn.user.attributes.services.ConsentsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

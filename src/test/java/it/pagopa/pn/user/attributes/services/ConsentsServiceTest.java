@@ -1,18 +1,15 @@
-package it.pagopa.pn.user.attributes.services.v1;
+package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
-import it.pagopa.pn.user.attributes.mapper.v1.ConsentActionDtoToConsentEntityMapper;
-import it.pagopa.pn.user.attributes.mapper.v1.ConsentEntityConsentDtoMapper;
-import it.pagopa.pn.user.attributes.middleware.db.v1.ConsentDao;
-import it.pagopa.pn.user.attributes.middleware.db.v1.IConsentDao;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
+import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
+import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
+import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -21,7 +18,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 

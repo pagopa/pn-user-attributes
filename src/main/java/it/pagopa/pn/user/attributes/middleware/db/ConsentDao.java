@@ -1,7 +1,7 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1;
+package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;

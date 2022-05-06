@@ -1,13 +1,13 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1;
+package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressDeletionFailure;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.AddressBookEntity;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.BaseEntity;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerificationCodeEntity;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -36,6 +36,11 @@ public class AddressBookDao extends BaseDao {
     DynamoDbAsyncClient dynamoDbAsyncClient;
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     String table;
+
+    public enum CHECK_RESULT {
+        NOT_EXISTS,
+        ALREADY_VALIDATED
+    }
 
     public AddressBookDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                           DynamoDbAsyncClient dynamoDbAsyncClient,
@@ -68,7 +73,7 @@ public class AddressBookDao extends BaseDao {
                 .build();
 
 
-        return Mono.fromFuture(addressBookTable.deleteItem(delRequest)
+        return Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
                 .exceptionally(throwable -> {
                     Throwable rootCause = findExceptionRootCause(throwable);
                     if (rootCause instanceof ConditionalCheckFailedException)
@@ -79,6 +84,7 @@ public class AddressBookDao extends BaseDao {
                 }));
 
     }
+
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legalType, senderId, null);
@@ -114,16 +120,16 @@ public class AddressBookDao extends BaseDao {
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
     {
-        return Mono.fromFuture(verificationCodeTable.updateItem(entity));
+        return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
     }
 
 
     public Mono<VerificationCodeEntity> getVerificationCode(VerificationCodeEntity entity)
     {
-        return Mono.fromFuture(verificationCodeTable.getItem(entity));
+        return Mono.fromFuture(() -> verificationCodeTable.getItem(entity));
     }
 
-    public Mono<VerifiedAddressEntity> getVerifiedAddress(String recipientId, String hashedAddress)
+    public Mono<CHECK_RESULT> validateHashedAddress(String recipientId, String hashedAddress)
     {
         VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, "");
 
@@ -134,9 +140,14 @@ public class AddressBookDao extends BaseDao {
                 .build();
 
 
-        return Flux.from(verifiedAddressTable.query(qeRequest)
-                        .items()).collectList()
-                .map(list -> list.isEmpty()?null:list.get(0));
+        return Flux.from(verifiedAddressTable.query(qeRequest).items())
+                .collectList()
+                .map(list -> {
+                    if (list.isEmpty())
+                        return CHECK_RESULT.NOT_EXISTS;
+
+                    return CHECK_RESULT.ALREADY_VALIDATED;
+                });
     }
 
     /**
@@ -161,7 +172,7 @@ public class AddressBookDao extends BaseDao {
                 .addUpdateItem(verifiedAddressTable, updVARequest)
                 .build();
 
-        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest));
+        return Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest));
     }
 
 }

@@ -1,8 +1,8 @@
-package it.pagopa.pn.user.attributes.mapper.v1;
+package it.pagopa.pn.user.attributes.mapper;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import org.springframework.stereotype.Component;
 
 @Component

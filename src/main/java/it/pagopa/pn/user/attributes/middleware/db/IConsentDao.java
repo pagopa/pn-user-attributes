@@ -1,6 +1,6 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1;
+package it.pagopa.pn.user.attributes.middleware.db;
 
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

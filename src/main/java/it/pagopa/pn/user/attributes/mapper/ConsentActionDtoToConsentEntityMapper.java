@@ -1,8 +1,8 @@
-package it.pagopa.pn.user.attributes.mapper.v1;
+package it.pagopa.pn.user.attributes.mapper;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
-import it.pagopa.pn.user.attributes.middleware.db.v1.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import org.springframework.stereotype.Component;
 
 @Component

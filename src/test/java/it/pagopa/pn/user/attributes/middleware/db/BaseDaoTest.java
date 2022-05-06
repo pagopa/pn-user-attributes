@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1;
+package it.pagopa.pn.user.attributes.middleware.db;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

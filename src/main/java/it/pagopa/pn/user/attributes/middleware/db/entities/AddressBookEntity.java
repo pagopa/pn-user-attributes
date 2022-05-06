@@ -1,13 +1,9 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
+package it.pagopa.pn.user.attributes.middleware.db.entities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
-
-import java.time.Instant;
 
 
 /**
@@ -32,12 +28,12 @@ public class AddressBookEntity extends BaseEntity {
     private static final int SK_ITEMS_SENDER_ID = 1;
     private static final int SK_ITEMS_CHANNEL_TYPE = 2;
 
-    public static final String COL_ADDRESS_ID = "addressId";
-
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(addressType + ITEMS_SEPARATOR + (senderId==null?SENDER_ID_DEFAULT:senderId) + ITEMS_SEPARATOR + (channelType==null?"":channelType));
     }
+
+    public String getAddressId() { return getSk();}
 
     @DynamoDbIgnore
     public String getRecipientId() {
@@ -57,6 +53,4 @@ public class AddressBookEntity extends BaseEntity {
         return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_SENDER_ID];
     }
 
-
-    @Getter(onMethod=@__({@DynamoDbAttribute(COL_ADDRESS_ID)}))  private String addressId;
 }

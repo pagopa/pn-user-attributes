@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
+package it.pagopa.pn.user.attributes.middleware.db.entities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

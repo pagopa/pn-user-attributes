@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
+package it.pagopa.pn.user.attributes.middleware.db.entities;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
 import org.junit.jupiter.api.BeforeEach;
