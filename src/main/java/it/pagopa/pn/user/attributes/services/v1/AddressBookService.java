@@ -5,7 +5,6 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.UserAddressesDto;
-import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityListToUserAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.v1.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.v1.AddressBookDao;
@@ -24,6 +23,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,14 +33,12 @@ public class AddressBookService {
     // Nel branch feature/PN-1283 il controllo del codice di verifica tramite external channell non viene fatto.
     // Temporaneamente il controllo viene fatto confrontando il codice immesso con una stringa costante
     public static final String VERIFICATION_CODE_OK = "12345";
-    public static final String VERIFICATION_CODE_MISMATCH = "Verification code mismatch";
 
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
-    private final AddressBookEntityListToUserAddressDtoMapper addressBookEntityListToDto;
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
@@ -50,14 +49,12 @@ public class AddressBookService {
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
                               PnExternalChannelClient pnExternalChannelClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
-                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto,
-                              AddressBookEntityListToUserAddressDtoMapper addressBookEntityListToDto) {
+                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.pnExternalChannelClient = pnExternalChannelClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
-        this.addressBookEntityListToDto = addressBookEntityListToDto;
     }
 
 
@@ -126,37 +123,112 @@ public class AddressBookService {
 
     public Flux<CourtesyDigitalAddressDto> getCourtesyAddressBySender(String recipientId, String senderId) {
         return dao.getAddresses(recipientId, senderId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
-                .map(addressBookEntityToDto::toDto);
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<CourtesyDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
+
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
     }
 
     public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
         return dao.getAddresses(recipientId, null, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
-                .map(addressBookEntityToDto::toDto);
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<CourtesyDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
+
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
     }
 
     public Flux<LegalDigitalAddressDto> getLegalAddressBySender(String recipientId, String senderId) {
         return dao.getAddresses(recipientId, senderId, LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())
-                .map(legalDigitalAddressToDto::toDto);
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<LegalDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
+
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
 
     }
 
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipient(String recipientId) {
         return dao.getAddresses(recipientId, null, LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())
-                .map(legalDigitalAddressToDto::toDto);
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<LegalDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
 
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
     }
 
     public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId).collectList()
-                .map(addressBookEntityListToDto::toDto);
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                (list, addresses) -> {
+                    UserAddressesDto dto = new UserAddressesDto();
+
+                    list.forEach(ent -> {
+                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+                        if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
+                            LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
+                            add.setValue(realaddress);
+                            dto.addLegalItem(add);
+                        }
+                        else {
+                            CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
+                            add.setValue(realaddress);
+                            dto.addCourtesyItem(add);
+                        }
+                    });
+                    return dto;
+                });
     }
 
 
     private String getNewVerificationCode() {
+        // FIXME: generare veramente un nuovo codice
         log.debug("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
         return AddressBookService.VERIFICATION_CODE_OK;
     }
 
+    /**
+     * Wrap dello sha per rendere più facile capire dove viene usato
+     * @param realaddress indirizzo da hashare
+     * @return hash dell'indirizzo
+     */
     private String hashAddress(@NonNull String realaddress)
     {
         return DigestUtils.sha256Hex(realaddress);
@@ -164,20 +236,25 @@ public class AddressBookService {
 
 
     private Mono<SAVE_ADDRESS_RESULT> validateVerificationCodeAndSendToDataVault(String recipientId, String verificationCode, String realaddress, String legal, String senderId, String channelType) {
-        VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashAddress(realaddress), channelType);
+        String hashedaddress = hashAddress(realaddress);
+        log.info("validanting code uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
+        VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
         return dao.getVerificationCode(verificationCodeEntity)
                 .flatMap(r -> {
                     if (!r.getVerificationCode().equals(verificationCode))
                         return Mono.error(new InvalidVerificationCodeException());
 
-                    log.info("Verification code validated uid:{} address:{} channel:{} addrtype:{}", recipientId, realaddress, channelType, legal);
+                    log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
                     return sendToDataVaultAndSaveInDynamodb(recipientId, realaddress, legal, senderId, channelType);
                 });
     }
 
     private Mono<SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress, String channelType) {
-        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(realaddress), channelType);
-        verificationCode.setVerificationCode(getNewVerificationCode());
+        String hashedaddress = hashAddress(realaddress);
+        String vercode = getNewVerificationCode();
+        log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
+        verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)
@@ -197,7 +274,9 @@ public class AddressBookService {
      */
     private Mono<SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(String recipientId, String realaddress, String legal, String senderId, String channelType)
     {
+        String hashedaddress = hashAddress(realaddress);
         String addressId = UUID.randomUUID().toString();
+        log.info("saving address in datavault and db uid:{} hashedaddress:{} channel:{} legal:{} addressid:{}", recipientId, hashedaddress, channelType, legal, addressId);
         return this.dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress).zipWhen(r -> {
             AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
             addressBook.setAddressId(addressId);

@@ -33,41 +33,23 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      * prima di essere salvato in database. Questa sezione di codice richiede un'ulteriore analisi e una revisione.
      * N.B: La race condition si verifica solo se l'utente utilizza due finestre del browser dfferenti. Eventualità poco probabile.
      *
-     * @param userAttributes
+     * @param userAttributes entity da salvare
      * @return none
      */
     @Override
     public Mono<Object> consentAction(ConsentEntity userAttributes){
-        GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
-                .key(getKeyBuild(userAttributes.getRecipientId(), userAttributes.getConsentType()))
+        UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
+                .item(userAttributes)
+                .ignoreNulls(true)
                 .build();
-
-        return  Mono.fromFuture(userAttributesTable.getItem(getReq)
-                        .thenCompose(r -> {
-                            if (r != null) {
-                                // update -> don't modify created
-                                userAttributes.setCreated(null);
-                                if (r.isAccepted() == userAttributes.isAccepted())
-                                    // se il consenso non cambia non modifico lastModified
-                                    userAttributes.setLastModified(null);
-                            }
-                            else
-                                // create -> don't set lastModified
-                                userAttributes.setLastModified(null);
-
-                            UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
-                                    .item(userAttributes)
-                                    .ignoreNulls(true)
-                                    .build();
-                            return userAttributesTable.updateItem(updRequest);
-                        }));
+        return Mono.fromFuture(userAttributesTable.updateItem(updRequest));
     }
 
     /**
      * Legge l'entity ConsentEntity associata a recipientId e ConsentType (TOS/DATAPRIVACY)
      *
-     * @param recipientId
-     * @param consentType
+     * @param recipientId id utente
+     * @param consentType tipologia consenso
      * @return ConsentEntity
      */
     @Override
@@ -85,7 +67,7 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      * Legge la lista di entity ConsentEntity associata a recipientId
      * Per ogni recipientId esistono tanti consensi quante sono le tipologie di consenso (2): ConsentTypeDto.TOS e ConsentTypeDto.DATAPRIVACY
      *
-     * @param recipientId
+     * @param recipientId id utente
      * @return Flux<ConsentEntity>  lista di ConsentEntity
      */
     @Override

@@ -5,6 +5,7 @@ import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressDeletionFailure;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
 import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.v1.entities.BaseEntity;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.v1.entities.VerifiedAddressEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,7 @@ public class AddressBookDao extends BaseDao {
         expressionValues.put(":pk",  AttributeValue.builder().s(addressBook.getPk()).build());
 
         Expression exp = Expression.builder()
-                .expression(AddressBookEntity.COL_PK + " = :pk")
+                .expression(BaseEntity.COL_PK + " = :pk")
                 .expressionValues(expressionValues)
                 .build();
 

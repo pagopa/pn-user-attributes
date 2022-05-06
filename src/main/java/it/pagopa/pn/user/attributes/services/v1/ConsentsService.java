@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
-
 @Service
 @Slf4j
 public class ConsentsService {
@@ -31,17 +29,6 @@ public class ConsentsService {
     public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto) {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
-        .map(entity -> {
-            Instant strDate = Instant.now();
-            // qui vengono impostate entrambe le date.
-            // Nel metodo ConsentDao->consentAction vengono sovrascritte in modo che:
-            //   alla creazione del consenso created != null e lastModified == null
-            //   alla modifica del consenso created non viene alterato e lastModified viene aggiornato
-
-            entity.setCreated(strDate);
-            entity.setLastModified(strDate);
-            return entity;
-        })
         .map(consentDao::consentAction);
     }
 

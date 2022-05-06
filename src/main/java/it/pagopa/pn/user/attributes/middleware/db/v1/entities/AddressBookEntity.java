@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.db.v1.entities;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
@@ -19,7 +20,8 @@ import java.time.Instant;
 @DynamoDbBean
 @Data
 @NoArgsConstructor
-public class AddressBookEntity {
+@EqualsAndHashCode(callSuper = true)
+public class AddressBookEntity extends BaseEntity {
 
 
     private static final String PK_PREFIX = "AB#";
@@ -30,41 +32,31 @@ public class AddressBookEntity {
     private static final int SK_ITEMS_SENDER_ID = 1;
     private static final int SK_ITEMS_CHANNEL_TYPE = 2;
 
-    public static final String COL_PK = "pk";
-    public static final String COL_SK = "sk";
-
+    public static final String COL_ADDRESS_ID = "addressId";
 
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(addressType + ITEMS_SEPARATOR + (senderId==null?SENDER_ID_DEFAULT:senderId) + ITEMS_SEPARATOR + (channelType==null?"":channelType));
-        this.setCreated(Instant.now());
-        this.setLastModified(this.getCreated());
     }
 
     @DynamoDbIgnore
     public String getRecipientId() {
-        return pk.split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
+        return getPk().split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
     }
+
     @DynamoDbIgnore
     public String getChannelType() {
-        return sk.split(ITEMS_SEPARATOR)[SK_ITEMS_CHANNEL_TYPE];
+        return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_CHANNEL_TYPE];
     }
     @DynamoDbIgnore
     public String getAddressType() {
-        return sk.split(ITEMS_SEPARATOR)[SK_ITEMS_ADDRESS_TYPE];
+        return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_ADDRESS_TYPE];
     }
-
     @DynamoDbIgnore
     public String getSenderId() {
-        return sk.split(ITEMS_SEPARATOR)[SK_ITEMS_SENDER_ID];
+        return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_SENDER_ID];
     }
 
-    @Getter(onMethod=@__({@DynamoDbPartitionKey, @DynamoDbAttribute(COL_PK)}))  private String pk;
-    @Getter(onMethod=@__({@DynamoDbSortKey, @DynamoDbAttribute(COL_SK)}))  private String sk;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("created"), @DynamoDbUpdateBehavior(UpdateBehavior.WRITE_IF_NOT_EXISTS) }))  private Instant created;
-    @Getter(onMethod=@__({@DynamoDbAttribute("lastModified")}))  private Instant lastModified;
-
-    @Getter(onMethod=@__({@DynamoDbAttribute("addressId")}))  private String addressId;
-
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_ADDRESS_ID)}))  private String addressId;
 }
