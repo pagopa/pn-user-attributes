@@ -1,9 +1,9 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.api.ConsentsApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.ConsentsApi;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @Slf4j
-public class ConsentsController implements ConsentsApi  {
+public class ConsentsController implements ConsentsApi {
     ConsentsService consentsService;
 
     public ConsentsController(ConsentsService consentsService) {
@@ -27,7 +27,7 @@ public class ConsentsController implements ConsentsApi  {
         log.debug("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
 
         return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
-                .then(Mono.just(new ResponseEntity<Void>(HttpStatus.OK)));
+                .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
     @Override
