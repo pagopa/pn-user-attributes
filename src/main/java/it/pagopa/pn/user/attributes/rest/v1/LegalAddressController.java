@@ -32,23 +32,14 @@ public class LegalAddressController implements LegalApi {
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressByRecipient(String recipientId, ServerWebExchange exchange) {
         log.debug("getLegalAddressByRecipient - recipientId: {}", recipientId);
-        return this.addressBookService.getLegalAddressByRecipient(recipientId).collectList().map(dtos -> {
-            if (dtos.isEmpty())
-                return ResponseEntity.notFound().build();
-            else
-                return ResponseEntity.ok(Flux.fromIterable(dtos));
-        });
+        return Mono.fromSupplier(() -> ResponseEntity.ok(this.addressBookService.getLegalAddressByRecipient(recipientId)));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressBySender(String recipientId, String senderId, ServerWebExchange exchange) {
         log.debug("getLegalAddressBySender - recipientId: {} - senderId: {}", recipientId, senderId);
-        return this.addressBookService.getLegalAddressBySender(recipientId, senderId).collectList().map(dtos -> {
-            if (dtos.isEmpty())
-                return ResponseEntity.notFound().build();
-            else
-                return ResponseEntity.ok(Flux.fromIterable(dtos));
-        });
+        return Mono.fromSupplier(() -> ResponseEntity.ok(this.addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)));
+
     }
 
     @Override

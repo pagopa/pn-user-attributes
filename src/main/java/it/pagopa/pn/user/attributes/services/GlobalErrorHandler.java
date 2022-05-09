@@ -33,10 +33,11 @@ public class GlobalErrorHandler implements ErrorWebExceptionHandler {
     log.error("exception catched", throwable);
 
     DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
-      serverWebExchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
+      HttpStatus status = ExceptionHelper.getHttpStatusFromException(throwable);
+      serverWebExchange.getResponse().setStatusCode(status);
       DataBuffer dataBuffer;
       try {
-        dataBuffer = bufferFactory.wrap(objectMapper.writeValueAsBytes(ExceptionHelper.handleException(throwable, HttpStatus.BAD_REQUEST)));
+        dataBuffer = bufferFactory.wrap(objectMapper.writeValueAsBytes(ExceptionHelper.handleException(throwable, status)));
       } catch (JsonProcessingException e) {
         dataBuffer = bufferFactory.wrap("".getBytes());
       }

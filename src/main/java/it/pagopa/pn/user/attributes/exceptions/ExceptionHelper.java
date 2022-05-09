@@ -12,6 +12,15 @@ public class ExceptionHelper {
 
     private ExceptionHelper(){}
 
+    public static HttpStatus getHttpStatusFromException(Throwable ex){
+        if (ex instanceof PnException)
+        {
+            return HttpStatus.resolve(((PnException) ex).getStatus());
+        }
+        else
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
     public static ProblemDto handleException(Throwable ex, HttpStatus statusError){
         // gestione exception e generazione fault
         ProblemDto res = new ProblemDto();

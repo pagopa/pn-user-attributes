@@ -4,7 +4,7 @@ public class NotFoundException extends PnException {
 
 
     public NotFoundException() {
-        super("Indirizzo non trovato", "Il codice passato non è corretto", 404);
+        super("Recapito non trovato", "Non sono stati trovati recapiti per l'utente", 404);
     }
 
 }

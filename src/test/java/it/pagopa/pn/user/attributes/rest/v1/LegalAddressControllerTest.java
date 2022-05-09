@@ -90,7 +90,7 @@ class LegalAddressControllerTest {
         Flux<LegalDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
-        Mockito.when(svc.getLegalAddressBySender(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(svc.getLegalAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(retValue);
 
         // Then

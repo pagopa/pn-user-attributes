@@ -35,20 +35,15 @@ public class ConsentsController implements ConsentsApi {
         log.debug("getConsentByType - recipientId: {} - consentType: {}", recipientId, consentType);
 
         return this.consentsService.getConsentByType(recipientId, consentType)
-                .map(m -> ResponseEntity.status(HttpStatus.OK).body(m))
-                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)));
+                .map(ResponseEntity::ok);
+
     }
 
     @Override
     public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
         log.debug("getConsents - recipientId: {} ", recipientId);
 
-        return this.consentsService.getConsents(recipientId).collectList().map(consentDtos -> {
-            if (consentDtos.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            else
-                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(consentDtos));
-        });
+        return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId)));
     }
 }
 

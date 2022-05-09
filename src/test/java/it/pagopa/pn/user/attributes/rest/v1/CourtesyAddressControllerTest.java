@@ -126,7 +126,7 @@ class CourtesyAddressControllerTest {
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);
 
-        Mockito.when(svc.getCourtesyAddressBySender(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(svc.getCourtesyAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(retValue);
 
         // Then
