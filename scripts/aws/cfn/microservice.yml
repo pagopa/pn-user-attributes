@@ -77,10 +77,10 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLE-NAME=${UserAttributesDynamoTableName}'
-        ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES.CLIENT_EXTERNALCHANNELS_BASEPATH=https://72xd35m211.execute-api.eu-south-1.amazonaws.com/dev/'
-        ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES.CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID={{resolve:secretsmanager:UserAttributes:SecretString:HeaderValueExternalChannelCxId}}'
+        ContainerEnvEntry3: !Sub 'PN_USERATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesDynamoTableName}'
+        ContainerEnvEntry4: !Sub 'PN_USERATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry5: !Sub 'PN_USERATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=https://72xd35m211.execute-api.eu-south-1.amazonaws.com/dev/'
+        ContainerEnvEntry6: !Sub 'PN_USERATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID={{resolve:secretsmanager:UserAttributes:SecretString:HeaderValueExternalChannelCxId}}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
