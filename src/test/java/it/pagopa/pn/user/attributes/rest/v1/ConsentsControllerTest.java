@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
-    private static final String PA_ID = "PA_ID";
+    private static final String PA_ID = "x-pagopa-pn-uid";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
 
@@ -33,8 +33,7 @@ class ConsentsControllerTest {
     @Test
     void consentAction() {
         // Given
-        String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
-                .replace("{recipientId}", RECIPIENTID)
+        String url = "/user-consents/v1/consents/{consentType}"
                 .replace("{consentType}", CONSENTTYPE);
 
         ConsentActionDto consentAction = new ConsentActionDto();
@@ -54,7 +53,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(consentActionDtoMono, ConsentActionDto.class)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -62,8 +61,7 @@ class ConsentsControllerTest {
     @Test
     void getConsentByType() {
         // Given
-        String url = "/user-consents/v1/consents/{recipientId}/{consentType}"
-                .replace("{recipientId}", RECIPIENTID)
+        String url = "/user-consents/v1/consents/{consentType}"
                 .replace("{consentType}", CONSENTTYPE);
 
         ConsentDto consentDto = new ConsentDto();
@@ -79,15 +77,14 @@ class ConsentsControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
 
     @Test
     void getConsents() {
-        String url = "/user-consents/v1/consents/{recipientId}"
-                .replace("{recipientId}", RECIPIENTID);
+        String url = "/user-consents/v1/consents";
 
         // Given
         ConsentDto consentDto = new ConsentDto();
@@ -103,15 +100,14 @@ class ConsentsControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
 
     @Test
     void getConsents_NotFound() {
-        String url = "/user-consents/v1/consents/{recipientId}"
-                .replace("{recipientId}", RECIPIENTID);
+        String url = "/user-consents/v1/consents";
 
         // Given
         ConsentDto consentDto = new ConsentDto();
@@ -127,8 +123,8 @@ class ConsentsControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
-                .expectStatus().isNotFound();
+                .expectStatus().isOk().expectBodyList(ConsentDto.class).hasSize(0);
     }
 }

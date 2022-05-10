@@ -16,8 +16,8 @@ import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = {LegalAddressController.class})
 class LegalAddressControllerTest {
-    private static final String PA_ID = "PA_ID";
-    private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
+    private static final String PA_ID = "x-pagopa-pn-cx-id";
+    private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
     private static final String CHANNELTYPE = "PEC";
 
@@ -30,8 +30,7 @@ class LegalAddressControllerTest {
     @Test
     void deleteRecipientLegalAddress() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/legal/{senderId}/{channelType}"
-                .replace("{recipientId}", RECIPIENTID)
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
                 .replace("{channelType}", CHANNELTYPE);
 
@@ -46,7 +45,7 @@ class LegalAddressControllerTest {
         webTestClient.delete()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isNoContent();
     }
@@ -54,8 +53,7 @@ class LegalAddressControllerTest {
     @Test
     void getLegalAddressByRecipient() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/legal"
-                .replace("{recipientId}", RECIPIENTID);
+        String url = "/address-book/v1/digital-address/legal";
 
         LegalDigitalAddressDto dto = new LegalDigitalAddressDto();
         dto.setRecipientId(RECIPIENTID);
@@ -71,7 +69,7 @@ class LegalAddressControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -96,7 +94,6 @@ class LegalAddressControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -104,8 +101,7 @@ class LegalAddressControllerTest {
     @Test
     void postRecipientLegalAddress() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/legal/{senderId}/{channelType}"
-                .replace("{recipientId}", RECIPIENTID)
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
                 .replace("{channelType}", CHANNELTYPE);
 
@@ -127,7 +123,7 @@ class LegalAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(addressVerification), AddressVerificationDto.class)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }

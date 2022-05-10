@@ -11,6 +11,7 @@ class ConsentActionDtoToConsentEntityMapperTest {
 
     @Test
     void toEntity() {
+        //GIVEN
         String recipientId = "1234";
         ConsentTypeDto type = ConsentTypeDto.TOS;
         boolean accepted = true;
@@ -19,18 +20,15 @@ class ConsentActionDtoToConsentEntityMapperTest {
 
         ConsentActionDto dto = new ConsentActionDto();
         dto.setAction(ConsentActionDto.ActionEnum.ACCEPT);
-
-        ConsentEntity ce = mapper.toEntity(recipientId,type, dto);
-
         ConsentEntity ceExpected = new ConsentEntity(recipientId, type.getValue());
         ceExpected.setAccepted(accepted);
 
-        assertEquals(ceExpected, ce);
 
-        ce = mapper.toEntity(recipientId,type, dto);
-        ceExpected.setAccepted(!accepted);
+        //WHEN
+        ConsentEntity ce = mapper.toEntity(recipientId,type, dto);
 
-        assertNotEquals(ceExpected, ce);
-
+        //THEN
+        assertEquals(ceExpected.getRecipientId(), ce.getRecipientId());
+        assertEquals(ceExpected.getConsentType(), ce.getConsentType());
     }
 }

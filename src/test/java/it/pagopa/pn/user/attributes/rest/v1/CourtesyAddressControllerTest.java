@@ -16,8 +16,8 @@ import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = {CourtesyAddressController.class})
 class CourtesyAddressControllerTest {
-    private static final String PA_ID = "PA_ID";
-    private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
+    private static final String PA_ID = "x-pagopa-pn-cx-id";
+    private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
     private static final String CHANNELTYPE = "SMS";
 
@@ -31,13 +31,12 @@ class CourtesyAddressControllerTest {
     @Test
     void postRecipientCourtesyAddress() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}"
-                    .replace("{recipientId}", RECIPIENTID)
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
                     .replace("{senderId}", SENDERID)
                     .replace("{channelType}", CHANNELTYPE);
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setVerificationCode("verification");
+        addressVerificationDto.setVerificationCode("12345");
         addressVerificationDto.setValue("value");
 
         // When
@@ -55,7 +54,7 @@ class CourtesyAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(addressVerificationDto), AddressVerificationDto.class)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -63,8 +62,7 @@ class CourtesyAddressControllerTest {
     @Test
     void deleteRecipientCourtesyAddress() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/courtesy/{senderId}/{channelType}"
-                .replace("{recipientId}", RECIPIENTID)
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
                 .replace("{channelType}", CHANNELTYPE);
 
@@ -80,7 +78,7 @@ class CourtesyAddressControllerTest {
         webTestClient.delete()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isNoContent();
     }
@@ -88,8 +86,7 @@ class CourtesyAddressControllerTest {
     @Test
     void getCourtesyAddressByRecipient() {
         // Given
-        String url = "/address-book/v1/digital-address/{recipientId}/courtesy"
-                .replace("{recipientId}", RECIPIENTID);
+        String url = "/address-book/v1/digital-address/courtesy";
         CourtesyDigitalAddressDto dto = new CourtesyDigitalAddressDto();
         Flux<CourtesyDigitalAddressDto> retValue = Flux.just(dto);
         dto.setRecipientId(RECIPIENTID);
@@ -105,7 +102,7 @@ class CourtesyAddressControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
+                .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -131,7 +128,6 @@ class CourtesyAddressControllerTest {
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(PA_ID)
                 .exchange()
                 .expectStatus().isOk();
     }
