@@ -34,11 +34,11 @@ Resources:
       BillingMode: "PAY_PER_REQUEST"
 
 Outputs:
-  UserAttibutesTable:
+  UserAttributesTableName:
     Description: Dynamo Name used by application to access the key-value store
     Value: !Ref UserAttributesTable
 
-  UserAttibutesTableArn:
+  UserAttributesTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store
     Value: !Sub '${UserAttributesTable.Arn}'
 

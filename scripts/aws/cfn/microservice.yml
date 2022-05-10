@@ -55,11 +55,11 @@ Parameters:
     Type: String
     Description: 'network load balancer link for API-GW'
 
-  UserAttibutesTable:
+  UserAttributesTableName:
     Type: String
     Description: 'Name of dynamodb table containing User Attributes information'
 
-  UserAttibutesTableArn:
+  UserAttributesTableArn:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
@@ -77,7 +77,7 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry3: !Sub 'PN_USERATTRIBUTES_DYNAMODB_TABLENAME=${UserAttibutesTable}'
+        ContainerEnvEntry3: !Sub 'PN_USERATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesTableName}'
         ContainerEnvEntry4: !Sub 'PN_USERATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry5: !Sub 'PN_USERATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=https://72xd35m211.execute-api.eu-south-1.amazonaws.com/dev/'
         ContainerEnvEntry6: !Sub 'PN_USERATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID={{resolve:secretsmanager:UserAttributes:SecretString:HeaderValueExternalChannelCxId}}'
@@ -109,7 +109,7 @@ Resources:
               - dynamodb:TransactWriteItems
               - dynamodb:UpdateItem
             Resource:
-              - !Ref UserAttibutesTableArn
+              - !Ref UserAttributesTableArn
 
   # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
