@@ -1,1 +1,1 @@
-Il codice di verifica è {}
+Il codice di verifica è %s

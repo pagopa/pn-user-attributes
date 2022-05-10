@@ -36,12 +36,14 @@ public class ExceptionHelper {
             res.setTitle(ex.getMessage());
             res.setDetail(((PnException)ex).getDescription());
             res.setStatus(((PnException) ex).getStatus());
+            log.warn("pn-exception catched", ex);
         }
         else
         {
             // nascondo all'utente l'errore
             res.title("Errore generico");
             res.detail("Qualcosa è andato storto, ritenta più tardi");
+            log.error("exception catched", ex);
         }
 
         return res;

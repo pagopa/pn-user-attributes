@@ -30,9 +30,7 @@ public class GlobalErrorHandler implements ErrorWebExceptionHandler {
   @Override
   @NonNull
   public Mono<Void> handle(@NonNull ServerWebExchange serverWebExchange, @NonNull Throwable throwable) {
-    log.error("exception catched", throwable);
-
-    DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
+      DataBufferFactory bufferFactory = serverWebExchange.getResponse().bufferFactory();
       HttpStatus status = ExceptionHelper.getHttpStatusFromException(throwable);
       serverWebExchange.getResponse().setStatusCode(status);
       DataBuffer dataBuffer;

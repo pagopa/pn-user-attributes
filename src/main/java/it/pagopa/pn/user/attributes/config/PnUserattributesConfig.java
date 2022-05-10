@@ -14,4 +14,7 @@ public class PnUserattributesConfig {
     private String dynamodbTableName;
 
     private String clientDatavaultBasepath;
+    private String clientExternalchannelsBasepath;
+
+    private String clientExternalchannelsHeaderExtchCxId;
 }
