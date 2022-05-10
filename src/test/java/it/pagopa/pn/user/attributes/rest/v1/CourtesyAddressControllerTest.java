@@ -42,10 +42,9 @@ class CourtesyAddressControllerTest {
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveAddressBook(Mockito.anyString(),
+        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
                                          Mockito.anyString(),
-                                         Mockito.eq(false),
-                                         Mockito.anyString(),
+                                         Mockito.any(),
                                          Mockito.any()))
                 .thenReturn(voidReturn);
 
@@ -72,10 +71,9 @@ class CourtesyAddressControllerTest {
 
         // When
         Mono<Object> voidReturn  = Mono.just("");
-        Mockito.when(svc.deleteAddressBook(Mockito.anyString(),
+        Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
                         Mockito.anyString(),
-                        Mockito.eq(false),
-                        Mockito.anyString()))
+                        Mockito.any()))
                 .thenReturn(voidReturn);
 
         // Then

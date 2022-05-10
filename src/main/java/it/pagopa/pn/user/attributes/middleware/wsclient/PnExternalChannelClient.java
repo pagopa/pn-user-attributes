@@ -1,44 +1,53 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.channel.ChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.ApiClient;
-import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
-import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
-import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
+import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.externalchannels.v1.ApiClient;
+import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalCourtesyMessagesApi;
+import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalLegalMessagesApi;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
  */
 @Component
-public class PnExternalChannelClient {
+public class PnExternalChannelClient extends BaseClient {
 
-    // FIXME: stub di mock per l'invio di notifica
     private final PnUserattributesConfig pnUserattributesConfig;
+    private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
+    private DigitalLegalMessagesApi digitalLegalMessagesApi;
 
-    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig) {
+
+    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, DigitalCourtesyMessagesApi digitalCourtesyMessagesApi, DigitalLegalMessagesApi digitalLegalMessagesApi) {
         this.pnUserattributesConfig = pnUserattributesConfig;
+        this.digitalCourtesyMessagesApi = digitalCourtesyMessagesApi;
+        this.digitalLegalMessagesApi = digitalLegalMessagesApi;
+    }
+
+    @PostConstruct
+    public void init(){
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
+
+        this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
+
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
+
+        this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);
     }
 
 
-
-    public Mono<Void> sendVerificationCode(String address, String channelType, String verificationCode)
+    public Mono<Void> sendVerificationCode(String address, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
-         return Mono.empty();
+        //digitalCourtesyMessagesApi.sendCourtesyShortMessage()
+        return Mono.empty();
             
     }
 

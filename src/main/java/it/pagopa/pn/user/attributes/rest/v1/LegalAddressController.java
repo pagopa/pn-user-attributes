@@ -25,7 +25,7 @@ public class LegalAddressController implements LegalApi {
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, ServerWebExchange exchange) {
         log.debug("deleteRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
-        return this.addressBookService.deleteAddressBook(recipientId, senderId, true, channelType.getValue())
+        return this.addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType)
                 .map(m -> ResponseEntity.noContent().build());
     }
 
@@ -45,7 +45,7 @@ public class LegalAddressController implements LegalApi {
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         log.info("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
-        return this.addressBookService.saveAddressBook(recipientId, senderId, true, channelType.getValue(), addressVerificationDto)
+        return this.addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto)
                 .map(m -> {
                     log.debug("postRecipientLegalAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)

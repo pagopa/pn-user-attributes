@@ -72,7 +72,7 @@ public class AddressBookDao extends BaseDao {
 
         return Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
                 .exceptionally(throwable -> {
-                    if (throwable instanceof ConditionalCheckFailedException)
+                    if (throwable.getCause() instanceof ConditionalCheckFailedException)
                         throw new NotFoundException();
                     else {
                         throw new InternalErrorException();
@@ -93,8 +93,7 @@ public class AddressBookDao extends BaseDao {
                 .build();
 
         return Flux.from(addressBookTable.query(qeRequest)
-                        .items())
-                .switchIfEmpty(Mono.error(new NotFoundException()));
+                        .items());
     }
 
 
@@ -109,8 +108,7 @@ public class AddressBookDao extends BaseDao {
 
 
         return Flux.from(addressBookTable.query(qeRequest)
-                .items())
-                .switchIfEmpty(Mono.error(new NotFoundException()));
+                .items());
 
     }
 

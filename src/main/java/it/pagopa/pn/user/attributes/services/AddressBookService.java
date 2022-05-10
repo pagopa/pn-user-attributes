@@ -2,10 +2,7 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.UserAddressesDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
@@ -59,6 +56,32 @@ public class AddressBookService {
 
 
     /**
+     * Il metodo si occupa di salvare un indirizzo di tipo LEGALE
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param legalChannelType tipologia canale legale
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @return risultato operazione
+     */
+    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto);
+    }
+
+    /**
+     * Il metodo si occupa di salvare un indirizzo di tipo CORTESIA
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param courtesyChannelType tipologia canale cortesia
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @return risultato operazione
+     */
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto);
+    }
+
+    /**
      * Il metodo si occupa di salvare un indirizzo, gestendo di fatto le varie casisitiche
      * Il metodo prevede:
      * - Cercare in DB se esiste già un indirizzo verificato (senza considerare il channelType che può essere diverso), con la stessa SHA
@@ -73,13 +96,15 @@ public class AddressBookService {
      *
      * @param recipientId id utente
      * @param senderId eventuale id PA
-     * @param isLegal tipologia
-     * @param channelType tipologia canale
+     * @param legalChannelType tipologia canale legale
+     * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType, Mono<AddressVerificationDto> addressVerificationDto) {
-        String legal = isLegal? LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+        String legal = getLegalType(legalChannelType);
+        String channelType = getChannelType(legalChannelType, courtesyChannelType);
+
         return addressVerificationDto
                 .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
                 ,(r, alreadyverifiedoutcome) -> new Object(){
@@ -101,7 +126,7 @@ public class AddressBookService {
                         if (!StringUtils.hasText(res.verificationCode))
                         {
                             // CASO A: non mi viene passato un codice verifica
-                            return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, res.realaddress, channelType);
+                            return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, res.realaddress, legalChannelType, courtesyChannelType);
                         }
                         else
                         {
@@ -114,8 +139,17 @@ public class AddressBookService {
     }
 
 
-    public Mono<Object> deleteAddressBook(String recipientId, String senderId, boolean isLegal,  String channelType) {
-        String legal = isLegal?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType) {
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null);
+    }
+
+    public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
+        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
+    }
+
+    private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
+        String legal = getLegalType(legalChannelType);
+        String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
         return  dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
                         .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
@@ -185,7 +219,8 @@ public class AddressBookService {
                         }
                     });
                     return dto;
-                });
+                })
+                .switchIfEmpty(Mono.just(new UserAddressesDto()));
     }
 
 
@@ -195,6 +230,15 @@ public class AddressBookService {
         return AddressBookService.VERIFICATION_CODE_OK;
     }
 
+    private String getChannelType(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType)
+    {
+        return legalChannelType!=null?legalChannelType.getValue():courtesyChannelType.getValue();
+    }
+
+    private String getLegalType(LegalChannelTypeDto legalChannelType)
+    {
+        return legalChannelType!=null?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
+    }
     /**
      * Wrap dello sha per rendere più facile capire dove viene usato
      * @param realaddress indirizzo da hashare
@@ -221,16 +265,17 @@ public class AddressBookService {
                 .switchIfEmpty(Mono.error(new InvalidVerificationCodeException()));
     }
 
-    private Mono<SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress, String channelType) {
+    private Mono<SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
         String hashedaddress = hashAddress(realaddress);
         String vercode = getNewVerificationCode();
+        String channelType = getChannelType(legalChannelType, courtesyChannelType);
         log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)
-                .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(realaddress, channelType, verificationCode.getVerificationCode())
+                .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .thenReturn("OK")
                         ,(r, a) -> SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }
