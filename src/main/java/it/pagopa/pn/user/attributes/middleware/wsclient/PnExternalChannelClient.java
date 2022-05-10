@@ -65,69 +65,77 @@ public class PnExternalChannelClient extends BaseClient {
 
     public Mono<Void> sendVerificationCode(String address, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
-        log.info("sending verification code address:{} vercode: {} channel:{}", address, verificationCode, legalChannelType!=null?legalChannelType.getValue():courtesyChannelType.getValue());
         String requestId = UUID.randomUUID().toString();
+        log.info("sending verification code address:{} vercode: {} channel:{} requestId:{}", address, verificationCode, legalChannelType!=null?legalChannelType.getValue():courtesyChannelType.getValue(), requestId);
         if (legalChannelType != null)
-        {
-            if (legalChannelType != LegalChannelTypeDto.PEC)
-                throw new InvalidChannelErrorException();
+           return sendLegalVerificationCode(requestId, address, legalChannelType, verificationCode);
+        else
+            return sendCourtesyVerificationCode(requestId, address, courtesyChannelType, verificationCode);
+    }
 
-            DigitalNotificationRequestDto digitalNotificationRequestDto = new DigitalNotificationRequestDto();
-            digitalNotificationRequestDto.setChannel(DigitalNotificationRequestDto.ChannelEnum.PEC);
+    private Mono<Void> sendLegalVerificationCode(String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
+    {
+        if (legalChannelType != LegalChannelTypeDto.PEC)
+            throw new InvalidChannelErrorException();
+
+        DigitalNotificationRequestDto digitalNotificationRequestDto = new DigitalNotificationRequestDto();
+        digitalNotificationRequestDto.setChannel(DigitalNotificationRequestDto.ChannelEnum.PEC);
+        digitalNotificationRequestDto.setRequestId(requestId);
+        digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
+        digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
+        digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
+        digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, true));
+        digitalNotificationRequestDto.setReceiverDigitalAddress(address);
+        digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
+        return digitalLegalMessagesApi
+                .sendDigitalLegalMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
+                .retryWhen(
+                        Retry.backoff(2, Duration.ofMillis(25))
+                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
+                );
+    }
+
+    private Mono<Void> sendCourtesyVerificationCode(String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
+    {
+        if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
+        {
+            DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
+            digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
             digitalNotificationRequestDto.setRequestId(requestId);
             digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-            digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
-            digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
+            digitalNotificationRequestDto.setQos(DigitalCourtesySmsRequestDto.QosEnum.INTERACTIVE);
+            digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, false));
+            digitalNotificationRequestDto.setReceiverDigitalAddress(address);
+            digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
+            return digitalCourtesyMessagesApi
+                    .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
+                    .retryWhen(
+                            Retry.backoff(2, Duration.ofMillis(25))
+                                    .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
+                    );
+        }
+        else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
+        {
+            DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
+            digitalNotificationRequestDto.setChannel(DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL);
+            digitalNotificationRequestDto.setRequestId(requestId);
+            digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
+            digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
             digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, true));
             digitalNotificationRequestDto.setReceiverDigitalAddress(address);
             digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-            return digitalLegalMessagesApi
-                    .sendDigitalLegalMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
+            return digitalCourtesyMessagesApi
+                    .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
                     .retryWhen(
                             Retry.backoff(2, Duration.ofMillis(25))
                                     .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                     );
         }
         else
-        {
-            if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
-            {
-                DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
-                digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
-                digitalNotificationRequestDto.setRequestId(requestId);
-                digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-                digitalNotificationRequestDto.setQos(DigitalCourtesySmsRequestDto.QosEnum.INTERACTIVE);
-                digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, false));
-                digitalNotificationRequestDto.setReceiverDigitalAddress(address);
-                digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                return digitalCourtesyMessagesApi
-                        .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                        .retryWhen(
-                                Retry.backoff(2, Duration.ofMillis(25))
-                                        .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                        );
-            }
-            else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
-            {
-                DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
-                digitalNotificationRequestDto.setChannel(DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL);
-                digitalNotificationRequestDto.setRequestId(requestId);
-                digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-                digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
-                digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, true));
-                digitalNotificationRequestDto.setReceiverDigitalAddress(address);
-                digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                return digitalCourtesyMessagesApi
-                        .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                        .retryWhen(
-                                Retry.backoff(2, Duration.ofMillis(25))
-                                        .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                        );
-            }
-            else
-                throw new InvalidChannelErrorException();
-        }
+            throw new InvalidChannelErrorException();
     }
+
+
 
     private String getMailVerificationCodeBody(String verificationCode, boolean isForEmail)
     {
