@@ -77,7 +77,11 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        MappedPaths: '/user-attributes/*,/address-book/*,/address-book-private/*'
+        ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLE-NAME=${UserAttributesDynamoTableName}'
+        ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES.CLIENT_EXTERNALCHANNELS_BASEPATH=https://72xd35m211.execute-api.eu-south-1.amazonaws.com/dev/'
+        ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES.CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID={{resolve:secretsmanager:UserAttributes:SecretString:HeaderValueExternalChannelCxId}}'
+        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -107,21 +111,6 @@ Resources:
             Resource:
               - !Ref UserAttributesDynamoTableArn
 
-
-  # Expose PN-UserAttributes microservice public API with API-GW for B2B usage
-  AddressBookMicroservicePrivateAPI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
-        IntendedUsage: B2B
-        DnsName: !Ref ApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: '/address-book-private/*'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-
   # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
@@ -140,7 +129,7 @@ Resources:
   AddressBookMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-s
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
         MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
         IntendedUsage: WEB
