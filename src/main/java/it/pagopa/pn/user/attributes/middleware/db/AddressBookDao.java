@@ -1,13 +1,12 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressDeletionFailure;
-import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressNotFound;
-import it.pagopa.pn.user.attributes.exceptions.PnDigitalAddressesNotFound;
+import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
+import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
-import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -23,8 +22,6 @@ import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedExce
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static it.pagopa.pn.user.attributes.exceptions.RestWebExceptionHandler.findExceptionRootCause;
 
 @Repository
 @Slf4j
@@ -75,11 +72,10 @@ public class AddressBookDao extends BaseDao {
 
         return Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
                 .exceptionally(throwable -> {
-                    Throwable rootCause = findExceptionRootCause(throwable);
-                    if (rootCause instanceof ConditionalCheckFailedException)
-                        throw new PnDigitalAddressNotFound();
+                    if (throwable instanceof ConditionalCheckFailedException)
+                        throw new NotFoundException();
                     else {
-                        throw new PnDigitalAddressDeletionFailure();
+                        throw new InternalErrorException();
                     }
                 }));
 
@@ -98,7 +94,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                         .items())
-                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
+                .switchIfEmpty(Mono.error(new NotFoundException()));
     }
 
 
@@ -114,7 +110,7 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest)
                 .items())
-                .switchIfEmpty(Mono.error(new PnDigitalAddressesNotFound()));
+                .switchIfEmpty(Mono.error(new NotFoundException()));
 
     }
 

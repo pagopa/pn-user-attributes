@@ -1,9 +1,9 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.api.CourtesyApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,25 +34,13 @@ public class CourtesyAddressController implements CourtesyApi {
     @Override
     public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId, ServerWebExchange exchange) {
         log.debug("getCourtesyAddressByRecipient - recipientId: {}", recipientId);
-
-        return this.addressBookService.getCourtesyAddressByRecipient(recipientId).collectList().map(dtos -> {
-            if (dtos.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            else
-                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(dtos));
-        });
-
+        return Mono.fromSupplier(() ->  ResponseEntity.ok(this.addressBookService.getCourtesyAddressByRecipient(recipientId)));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressBySender(String recipientId, String senderId, ServerWebExchange exchange) {
         log.debug("getCourtesyAddressBySender - recipientId: {} - senderId: {}", recipientId, senderId);
-        return this.addressBookService.getCourtesyAddressBySender(recipientId, senderId).collectList().map(dtos -> {
-            if (dtos.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            else
-                return ResponseEntity.status(HttpStatus.OK).body(Flux.fromIterable(dtos));
-        });
+        return Mono.fromSupplier(() ->  ResponseEntity.ok(this.addressBookService.getCourtesyAddressByRecipientAndSender(recipientId, senderId)));
     }
 
     @Override

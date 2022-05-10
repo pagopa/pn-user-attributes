@@ -1,8 +1,9 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentActionDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
@@ -34,12 +35,14 @@ public class ConsentsService {
 
     public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType) {
         return consentDao.getConsentByType(recipientId, consentType.getValue())
-                .map(consentEntityConsentDtoMapper::toDto);
+                .map(consentEntityConsentDtoMapper::toDto)
+                .switchIfEmpty(Mono.error(new NotFoundException()));
     }
 
 
     public Flux<ConsentDto> getConsents(String recipientId) {
         return consentDao.getConsents(recipientId)
-                .map(consentEntityConsentDtoMapper::toDto);
+                .map(consentEntityConsentDtoMapper::toDto)
+                .switchIfEmpty(Flux.error(new NotFoundException()));
     }
 }

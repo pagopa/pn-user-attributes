@@ -1,10 +1,9 @@
 package it.pagopa.pn.user.attributes.middleware.db.entities;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ConsentEntityTest {
     private static final String PA_ID = "PA_ID";

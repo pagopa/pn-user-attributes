@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.LegalDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -90,7 +90,7 @@ class LegalAddressControllerTest {
         Flux<LegalDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
-        Mockito.when(svc.getLegalAddressBySender(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(svc.getLegalAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(retValue);
 
         // Then

@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -126,7 +126,7 @@ class CourtesyAddressControllerTest {
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);
 
-        Mockito.when(svc.getCourtesyAddressBySender(Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(svc.getCourtesyAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(retValue);
 
         // Then
