@@ -22,8 +22,6 @@ public class ConsentDao extends BaseDao implements IConsentDao {
         this.userAttributesTable = dynamoDbAsyncClient.table(pnUserattributesConfig.getDynamodbTableName(), TableSchema.fromBean(ConsentEntity.class));
     }
 
-    // Crea o modifica l'entity ConsentEntity
-
     /**
      * Inserice o aggiorna un item di tipo ConsentEntity
      * setta i campi accepted, created, lastModified
@@ -38,6 +36,8 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      */
     @Override
     public Mono<Object> consentAction(ConsentEntity userAttributes){
+        log.debug("consentAction recipientId:{} consentType:{}", userAttributes.getRecipientId(), userAttributes.getConsentType());
+
         UpdateItemEnhancedRequest<ConsentEntity> updRequest = UpdateItemEnhancedRequest.builder(ConsentEntity.class)
                 .item(userAttributes)
                 .ignoreNulls(true)
@@ -54,6 +54,8 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      */
     @Override
      public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType) {
+        log.debug("getConsentByType recipientId:{} consentType:{}", recipientId, consentType);
+
         ConsentEntity ce = new ConsentEntity(recipientId, consentType);
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
                 .key(getKeyBuild(ce.getPk(), ce.getSk()))
@@ -72,6 +74,8 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      */
     @Override
     public Flux<ConsentEntity> getConsents(String recipientId) {
+        log.debug("getConsents recipientId:{}", recipientId);
+
         ConsentEntity ce = new ConsentEntity(recipientId, "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest

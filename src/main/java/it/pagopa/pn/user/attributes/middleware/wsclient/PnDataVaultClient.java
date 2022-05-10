@@ -8,6 +8,7 @@ import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.genera
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -20,6 +21,7 @@ import java.time.Duration;
  * Classe wrapper di pn-data-vault, con gestione del backoff
  */
 @Component
+@Slf4j
 public class PnDataVaultClient extends BaseClient {
     
     private AddressBookApi addressBookApi;
@@ -48,6 +50,7 @@ public class PnDataVaultClient extends BaseClient {
      */
     public Mono<Void> updateRecipientAddressByInternalId(String internalId, String addressId, String realaddress)
     {
+        log.info("updateRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
         AddressDtoDto dto = new AddressDtoDto();
         dto.setValue(realaddress);
         return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, dto)
@@ -67,6 +70,7 @@ public class PnDataVaultClient extends BaseClient {
      */
     public Mono<RecipientAddressesDtoDto> getRecipientAddressesByInternalId(String internalId)
     {
+        log.info("getRecipientAddressesByInternalId internalId:{}", internalId);
         return addressBookApi.getRecipientAddressesByInternalId (internalId)
             .retryWhen(
                     Retry.backoff(2, Duration.ofMillis(25))
@@ -85,6 +89,7 @@ public class PnDataVaultClient extends BaseClient {
      */
     public Mono<Void> deleteRecipientAddressByInternalId(String internalId, String addressId)
     {
+        log.info("deleteRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
         return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId)
                 .retryWhen(
                         Retry.backoff(2, Duration.ofMillis(25))

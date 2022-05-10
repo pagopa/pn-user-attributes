@@ -1,7 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -82,6 +81,175 @@ public class AddressBookService {
     }
 
     /**
+     * Elimina un indirizzo di tipo LEGALE
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @param legalChannelType tipo canale legale
+     * @return nd
+     */
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType) {
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null);
+    }
+
+    /**
+     * Elimina un indirizzo di tipo CORTESIA
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @param courtesyChannelType tipo canale cortesia
+     * @return nd
+     */
+    public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
+        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
+    }
+
+    /**
+     * Ritorna gli indirizzi di CORTESIA in base a recipient e sender id
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @return lista indirizzi di cortesia
+     */
+    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipientAndSender(String recipientId, String senderId) {
+        return dao.getAddresses(recipientId, senderId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<CourtesyDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
+
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
+    }
+
+    /**
+     * Ritorna gli indirizzi di CORTESIA in base al recipientId
+     *
+     * @param recipientId id utente
+     * @return lista indirizzi
+     */
+    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
+        return getCourtesyAddressByRecipientAndSender(recipientId, null);
+    }
+
+    /**
+     * Ritorna gli indirizzi LEGALI per li recipitent e il sender id
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @return lista indirizzi
+     */
+    public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
+        return dao.getAddresses(recipientId, senderId, LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())
+                .collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                        (list, addresses) -> {
+                            List<LegalDigitalAddressDto> res = new ArrayList<>();
+                            list.forEach(ent -> {
+                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                                LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
+                                add.setValue(realaddress);
+                                res.add(add);
+                            });
+
+                            return res;
+                        })
+                .flatMapIterable(x -> x);
+    }
+
+    /**
+     * Lista indirizzi in base al recipient
+     *
+     * @param recipientId id utente
+     * @return lista indirizzi
+     */
+    public Flux<LegalDigitalAddressDto> getLegalAddressByRecipient(String recipientId) {
+        return this.getLegalAddressByRecipientAndSender(recipientId, null);
+    }
+
+    /**
+     * Ritorna gli indirizzi LEGALI e di CORTESIA per il recipient
+     *
+     * @param recipientId id utente
+     * @return oggetto contenente le liste LEGALI e di CORTESIA
+     */
+    public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId) {
+        return dao.getAllAddressesByRecipient(recipientId).collectList()
+                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                (list, addresses) -> {
+                    UserAddressesDto dto = new UserAddressesDto();
+
+                    list.forEach(ent -> {
+                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+                        if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
+                            LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
+                            add.setValue(realaddress);
+                            dto.addLegalItem(add);
+                        }
+                        else {
+                            CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
+                            add.setValue(realaddress);
+                            dto.addCourtesyItem(add);
+                        }
+                    });
+                    return dto;
+                })
+                .switchIfEmpty(Mono.just(new UserAddressesDto()));
+    }
+
+    /**
+     * Genera un nuovo codice
+     *
+     * @return il codice generato
+     */
+    private String getNewVerificationCode() {
+        // FIXME: generare veramente un nuovo codice
+        log.debug("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
+        return AddressBookService.VERIFICATION_CODE_OK;
+    }
+
+    /**
+     * Ricava il tipo di channel in base agli enum.
+     * Ci si aspetta che solo un parametro sia valorizzato per volta
+     *
+     * @param legalChannelType eventuale channelType legale
+     * @param courtesyChannelType eventuale channelType cortesia
+     * @return stringa rappresentante il channelType
+     */
+    private String getChannelType(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType)
+    {
+        return legalChannelType!=null?legalChannelType.getValue():courtesyChannelType.getValue();
+    }
+
+    /**
+     * Ricava il tipo di canale (legale o cortesia)
+     *
+     * @param legalChannelType eventuale channelType legale. Se null, si intende di cortesia
+     * @return stringa rappresentante il tipo di canale
+     */
+    private String getLegalType(LegalChannelTypeDto legalChannelType)
+    {
+        return legalChannelType!=null?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
+    }
+
+    /**
+     * Wrap dello sha per rendere più facile capire dove viene usato
+     * @param realaddress indirizzo da hashare
+     * @return hash dell'indirizzo
+     */
+    private String hashAddress(@NonNull String realaddress)
+    {
+        return DigestUtils.sha256Hex(realaddress);
+    }
+
+    /**
      * Il metodo si occupa di salvare un indirizzo, gestendo di fatto le varie casisitiche
      * Il metodo prevede:
      * - Cercare in DB se esiste già un indirizzo verificato (senza considerare il channelType che può essere diverso), con la stessa SHA
@@ -107,11 +275,11 @@ public class AddressBookService {
 
         return addressVerificationDto
                 .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
-                ,(r, alreadyverifiedoutcome) -> new Object(){
-                    public final String verificationCode = r.getVerificationCode();
-                    public final String realaddress = r.getValue();
-                    public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
-                })
+                        ,(r, alreadyverifiedoutcome) -> new Object(){
+                            public final String verificationCode = r.getVerificationCode();
+                            public final String realaddress = r.getValue();
+                            public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
+                        })
                 .flatMap(res -> {
                     if (res.alreadyverifiedOutcome == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED)
                     {
@@ -138,118 +306,34 @@ public class AddressBookService {
                 });
     }
 
-
-    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType) {
-        return deleteAddressBook(recipientId, senderId, legalChannelType, null);
-    }
-
-    public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
-        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
-    }
-
+    /**
+     * Elimina un indirizzo
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @param legalChannelType eventuale canale legale
+     * @param courtesyChannelType eventuale canale cortesia
+     * @return nd
+     */
     private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
         return  dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                        .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+                .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
     }
 
-    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
-                .collectList()
-                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
-                        (list, addresses) -> {
-                            List<CourtesyDigitalAddressDto> res = new ArrayList<>();
-                            list.forEach(ent -> {
-                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
-                                CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
-                                add.setValue(realaddress);
-                                res.add(add);
-                            });
-
-                            return res;
-                        })
-                .flatMapIterable(x -> x);
-    }
-
-    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
-        return getCourtesyAddressByRecipientAndSender(recipientId, null);
-    }
-
-    public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId, LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())
-                .collectList()
-                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
-                        (list, addresses) -> {
-                            List<LegalDigitalAddressDto> res = new ArrayList<>();
-                            list.forEach(ent -> {
-                                String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
-                                LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
-                                add.setValue(realaddress);
-                                res.add(add);
-                            });
-
-                            return res;
-                        })
-                .flatMapIterable(x -> x);
-    }
-
-    public Flux<LegalDigitalAddressDto> getLegalAddressByRecipient(String recipientId) {
-        return this.getLegalAddressByRecipientAndSender(recipientId, null);
-    }
-
-    public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId) {
-        return dao.getAllAddressesByRecipient(recipientId).collectList()
-                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
-                (list, addresses) -> {
-                    UserAddressesDto dto = new UserAddressesDto();
-
-                    list.forEach(ent -> {
-                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
-                        if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
-                            LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
-                            add.setValue(realaddress);
-                            dto.addLegalItem(add);
-                        }
-                        else {
-                            CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
-                            add.setValue(realaddress);
-                            dto.addCourtesyItem(add);
-                        }
-                    });
-                    return dto;
-                })
-                .switchIfEmpty(Mono.just(new UserAddressesDto()));
-    }
-
-
-    private String getNewVerificationCode() {
-        // FIXME: generare veramente un nuovo codice
-        log.debug("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
-        return AddressBookService.VERIFICATION_CODE_OK;
-    }
-
-    private String getChannelType(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType)
-    {
-        return legalChannelType!=null?legalChannelType.getValue():courtesyChannelType.getValue();
-    }
-
-    private String getLegalType(LegalChannelTypeDto legalChannelType)
-    {
-        return legalChannelType!=null?LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue():CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue();
-    }
     /**
-     * Wrap dello sha per rendere più facile capire dove viene usato
-     * @param realaddress indirizzo da hashare
-     * @return hash dell'indirizzo
+     * Valida un codice di verifica e lo anonimizza
+     *
+     * @param recipientId id utente
+     * @param verificationCode codice verifica
+     * @param realaddress indirizzo da anonimizzare
+     * @param legal tipo canale legale
+     * @param senderId id mittente
+     * @param channelType tipo canale
+     * @return risultato dell'operazione
      */
-    private String hashAddress(@NonNull String realaddress)
-    {
-        return DigestUtils.sha256Hex(realaddress);
-    }
-
-
     private Mono<SAVE_ADDRESS_RESULT> validateVerificationCodeAndSendToDataVault(String recipientId, String verificationCode, String realaddress, String legal, String senderId, String channelType) {
         String hashedaddress = hashAddress(realaddress);
         log.info("validating code uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
@@ -265,6 +349,15 @@ public class AddressBookService {
                 .switchIfEmpty(Mono.error(new InvalidVerificationCodeException()));
     }
 
+    /**
+     * Genera, salva e invia a ext-channel un nuovo codice di verifica
+     *
+     * @param recipientId id utente
+     * @param realaddress indirizzo utente
+     * @param legalChannelType eventuale tipo canale legale
+     * @param courtesyChannelType eventuale tipo canale cortesia
+     * @return risultato dell'operazione
+     */
     private Mono<SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
         String hashedaddress = hashAddress(realaddress);
         String vercode = getNewVerificationCode();
@@ -288,7 +381,7 @@ public class AddressBookService {
      * @param legal tipologia
      * @param senderId eventuale preferenza mittente
      * @param channelType tipologia canale
-     * @return success
+     * @return risultato dell'operazione
      */
     private Mono<SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(String recipientId, String realaddress, String legal, String senderId, String channelType)
     {
@@ -301,6 +394,16 @@ public class AddressBookService {
                 .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
     }
 
+    /**
+     * Salva in dynamodb l'id offuscato
+     *
+     * @param recipientId id utente
+     * @param hashedaddress hash indirizzo
+     * @param legal tipo indirizzo legale
+     * @param senderId id mittente
+     * @param channelType tipo canale
+     * @return nd
+     */
     private Mono<Void> saveInDynamodb(String recipientId, String hashedaddress, String legal, String senderId, String channelType){
         log.info("saving address in db uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);

@@ -22,7 +22,7 @@ public class AllAddressController implements AllApi {
 
     @Override
     public Mono<ResponseEntity<UserAddressesDto>> getAddressesByRecipient(String recipientId, ServerWebExchange exchange) {
-        log.debug("getAddressesByRecipient - recipientId: {}", recipientId);
+        log.info("getAddressesByRecipient - recipientId: {}", recipientId);
         return addressBookService.getAddressesByRecipient(recipientId)
                 .map(userAddressesDto -> ResponseEntity.status(HttpStatus.OK).body(userAddressesDto));
 

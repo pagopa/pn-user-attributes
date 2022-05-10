@@ -27,19 +27,39 @@ public class ConsentsService {
         this.dtosToConsentEntityMapper = consentActionDtoToConsentEntityMapper;
     }
 
+    /**
+     * Salva un nuovo consenso
+     *
+     * @param recipientId id utente
+     * @param consentType tipo consenso
+     * @param consentActionDto azione consenso
+     * @return nd
+     */
     public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto) {
         return consentActionDto
         .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
         .map(consentDao::consentAction);
     }
 
+    /**
+     * Ritorna il consenso per tipologia
+     *
+     * @param recipientId id utente
+     * @param consentType tipologia
+     * @return il consenso
+     */
     public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType) {
         return consentDao.getConsentByType(recipientId, consentType.getValue())
                 .map(consentEntityConsentDtoMapper::toDto)
                 .switchIfEmpty(Mono.error(new NotFoundException()));
     }
 
-
+    /**
+     * Ritorna i consensi per l'utente
+     *
+     * @param recipientId id utente
+     * @return lista consensi
+     */
     public Flux<ConsentDto> getConsents(String recipientId) {
         return consentDao.getConsents(recipientId)
                 .map(consentEntityConsentDtoMapper::toDto)

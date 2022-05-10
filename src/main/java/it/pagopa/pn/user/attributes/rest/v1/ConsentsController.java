@@ -24,7 +24,7 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        log.debug("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
+        log.info("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
 
         return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
@@ -32,7 +32,7 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, ServerWebExchange exchange) {
-        log.debug("getConsentByType - recipientId: {} - consentType: {}", recipientId, consentType);
+        log.info("getConsentByType - recipientId: {} - consentType: {}", recipientId, consentType);
 
         return this.consentsService.getConsentByType(recipientId, consentType)
                 .map(ResponseEntity::ok);
@@ -41,7 +41,7 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
-        log.debug("getConsents - recipientId: {} ", recipientId);
+        log.info("getConsents - recipientId: {} ", recipientId);
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId)));
     }
