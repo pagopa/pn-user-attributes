@@ -23,14 +23,9 @@ public class AllAddressController implements AllApi {
     @Override
     public Mono<ResponseEntity<UserAddressesDto>> getAddressesByRecipient(String recipientId, ServerWebExchange exchange) {
         log.debug("getAddressesByRecipient - recipientId: {}", recipientId);
-
         return addressBookService.getAddressesByRecipient(recipientId)
-                .map(userAddressesDto -> {
-                    if (userAddressesDto.getCourtesy() == null && userAddressesDto.getLegal() == null)
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    else
-                        return ResponseEntity.status(HttpStatus.OK).body(userAddressesDto);
-                });
+                .map(userAddressesDto -> ResponseEntity.status(HttpStatus.OK).body(userAddressesDto));
+
     }
 }
 

@@ -27,7 +27,7 @@ public class CourtesyAddressController implements CourtesyApi {
     public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
         log.debug("deleteRecipientCourtesyAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
 
-        return this.addressBookService.deleteAddressBook(recipientId, senderId, false, channelType.getValue())
+        return this.addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType)
                 .map(m -> ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
     }
 
@@ -47,7 +47,7 @@ public class CourtesyAddressController implements CourtesyApi {
     public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         log.debug("postRecipientCourtesyAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
 
-        return this.addressBookService.saveAddressBook(recipientId, senderId, false, channelType.getValue(), addressVerificationDto)
+        return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)
                 .map(m -> {
                     log.debug("postRecipientCourtesyAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)

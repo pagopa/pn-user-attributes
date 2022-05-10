@@ -1,31 +1,26 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.channel.ChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.ApiClient;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
 import java.net.ConnectException;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
  */
 @Component
-public class PnDataVaultClient {
+public class PnDataVaultClient extends BaseClient {
     
     private AddressBookApi addressBookApi;
     private final PnUserattributesConfig pnUserattributesConfig;
@@ -36,15 +31,10 @@ public class PnDataVaultClient {
 
     @PostConstruct
     public void init(){
-        HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
-                .doOnConnected(connection -> connection.addHandlerLast(new ReadTimeoutHandler(10000, TimeUnit.MILLISECONDS)));
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
-        WebClient webClient = ApiClient.buildWebClientBuilder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
-        ApiClient newApiClient = new ApiClient(webClient);
-        newApiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
-        this.addressBookApi = new AddressBookApi(newApiClient);
+        this.addressBookApi = new AddressBookApi(apiClient);
     }
 
     /**
