@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
@@ -44,7 +45,6 @@ class LegalAddressControllerTest {
         // Then
         webTestClient.delete()
                 .uri(url)
-                .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isNoContent();
@@ -121,11 +121,69 @@ class LegalAddressControllerTest {
         webTestClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(addressVerification), AddressVerificationDto.class)
+                .bodyValue(addressVerification)
+                .header(PA_ID, RECIPIENTID)
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+
+    @Test
+    void postRecipientLegalAddressVerCodeNeeded() {
+        // Given
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CHANNELTYPE);
+
+        AddressVerificationDto addressVerification = new AddressVerificationDto();
+        addressVerification.setVerificationCode("verification");
+        addressVerification.setValue("value");
+
+        // When
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
+                        Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenReturn(voidReturn);
+
+        // Then
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerification)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void postRecipientLegalAddressVerCodeFail() {
+        // Given
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CHANNELTYPE);
+
+        AddressVerificationDto addressVerification = new AddressVerificationDto();
+        addressVerification.setVerificationCode("verification");
+        addressVerification.setValue("value");
+
+        // When
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
+                        Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenThrow(new InvalidVerificationCodeException());
+
+        // Then
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerification)
+                .header(PA_ID, RECIPIENTID)
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
 }

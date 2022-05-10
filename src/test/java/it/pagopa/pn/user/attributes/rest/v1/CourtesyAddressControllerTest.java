@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
@@ -52,11 +53,70 @@ class CourtesyAddressControllerTest {
         webTestClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(addressVerificationDto), AddressVerificationDto.class)
+                .bodyValue(addressVerificationDto)
+                .header(PA_ID, RECIPIENTID)
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void postRecipientCourtesyAddressVerCodeNeeded() {
+        // Given
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CHANNELTYPE);
+
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setVerificationCode("12345");
+        addressVerificationDto.setValue("value");
+
+        // When
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
+                        Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenReturn(voidReturn);
+
+
+        // Then
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerificationDto)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void postRecipientCourtesyAddressVerCodeFailed() {
+        // Given
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CHANNELTYPE);
+
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setVerificationCode("12345");
+        addressVerificationDto.setValue("value");
+
+        // When
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
+                        Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenThrow(new InvalidVerificationCodeException());
+
+
+        // Then
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerificationDto)
+                .header(PA_ID, RECIPIENTID)
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
     @Test
@@ -77,7 +137,6 @@ class CourtesyAddressControllerTest {
         // Then
         webTestClient.delete()
                 .uri(url)
-                .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isNoContent();

@@ -38,7 +38,6 @@ class ConsentsControllerTest {
 
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
-        Mono<ConsentActionDto> consentActionDtoMono = Mono.just(consentAction);
 
         ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE);
         ce.setAccepted(true);
@@ -51,8 +50,7 @@ class ConsentsControllerTest {
         webTestClient.put()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(consentActionDtoMono, ConsentActionDto.class)
+                .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
