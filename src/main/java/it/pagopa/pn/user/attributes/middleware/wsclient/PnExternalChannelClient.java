@@ -139,19 +139,9 @@ public class PnExternalChannelClient extends BaseClient {
 
     private String getMailVerificationCodeBody(String verificationCode, boolean isForEmail)
     {
-        String message = fetchMessage(isForEmail?"email.txt":"sms.txt");
+        String message = isForEmail?pnUserattributesConfig.getVerificationCodeMessageEMAIL():pnUserattributesConfig.getVerificationCodeMessageSMS();
         message = String.format(message, verificationCode);
         return  message;
     }
 
-    private String fetchMessage(String filename){
-        try {
-            File file = ResourceUtils.getFile("classpath:verificationcodemessages/" + filename);
-            InputStream in = new FileInputStream(file);
-            return IOUtils.toString(in, StandardCharsets.UTF_8.name());
-        } catch (Exception e) {
-            log.error("cannot load message from resources", e);
-            throw new InternalErrorException();
-        }
-    }
 }
