@@ -17,8 +17,10 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @SpringBootTest
 class ConsentDaoTestIT {
 
+    private final Duration d = Duration.ofMillis(3000);
 
     @Autowired
     private ConsentDao consentDao;
@@ -39,10 +42,13 @@ class ConsentDaoTestIT {
     @Autowired
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
 
+    @Autowired
+    PnUserattributesConfig pnUserattributesConfig;
+
     TestDao<ConsentEntity> testDao;
 
     @BeforeEach
-    void setup(PnUserattributesConfig pnUserattributesConfig) {
+    void setup() {
         testDao = new TestDao(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), ConsentEntity.class);
     }
 
@@ -58,14 +64,13 @@ class ConsentDaoTestIT {
         }
 
         //When
-        consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
+        consentDao.consentAction(consentToInsert).block(d);
 
         //Then
         try {
             ConsentEntity elementFromDb = testDao.get(consentToInsert.getPk(), consentToInsert.getSk());
 
             Assertions.assertNotNull(elementFromDb);
-
             Assertions.assertEquals(consentToInsert, elementFromDb);
         } catch (Exception e) {
             fail(e);
@@ -79,8 +84,8 @@ class ConsentDaoTestIT {
     }
 
     public static ConsentEntity newConsent(boolean accepted) {
-        ConsentEntity c = new ConsentEntity();
-        c.setAccepted(true);
+        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", "TOS");
+        c.setAccepted(accepted);
         c.setCreated(Instant.now());
         c.setLastModified(Instant.now());
         return c;
@@ -91,27 +96,25 @@ class ConsentDaoTestIT {
 
         //Given
         ConsentEntity consentToInsert = newConsent(false);
-        ConsentEntity result = newConsent(false);
-        //da usare ConsentTypeDto?
         consentToInsert.setSk("DATAPRIVACY");
 
 
         try {
             testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());
+            consentDao.consentAction(consentToInsert).block(d);
         } catch (Exception e) {
             System.out.println("Nothing to remove");
         }
 
         //When
-        consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
-        consentDao.getConsentByType(consentToInsert.getRecipientId(), consentToInsert.getSk());
+        ConsentEntity result = consentDao.getConsentByType(consentToInsert.getRecipientId(), consentToInsert.getSk()).block(d);
 
         //Then
 
         try {
-
             Assertions.assertNotNull(result);
-            Assertions.assertEquals(ConsentTypeDto.DATAPRIVACY, result.getSk());
+            Assertions.assertEquals(consentToInsert.getRecipientId(), result.getRecipientId());
+            Assertions.assertEquals(consentToInsert.getConsentType(), result.getConsentType());
         } catch (Exception e) {
             throw new RuntimeException();
         } finally {
@@ -129,33 +132,37 @@ class ConsentDaoTestIT {
     void getConsents() {
         //devo verificare che per ogni recipientId ci siano due consensi (privacy e tos)
         //Given
+        List<ConsentEntity> toInsert = new ArrayList<>();
         ConsentEntity consentToInsert = newConsent(false);
         consentToInsert.setSk("DATAPRIVACY");
-
-        try {
-            testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());
-        } catch (Exception e) {
-            System.out.println("Nothing to remove");
-        }
-        consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
+        toInsert.add(consentToInsert);
+        consentToInsert = newConsent(true);
         consentToInsert.setSk("TOS");
+        toInsert.add(consentToInsert);
 
         try {
-            testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    consentDao.consentAction(x).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
         } catch (Exception e) {
             System.out.println("Nothing to remove");
         }
 
-        consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
 
-        List<ConsentEntity> results = (List<ConsentEntity>) consentDao.getConsents(consentToInsert.getRecipientId());
+        //WHEN
+        List<ConsentEntity> results = consentDao.getConsents(consentToInsert.getRecipientId()).collectList().block(d);
 
-        //then
+        //THEN
         try {
             Assertions.assertNotNull(results);
             Assertions.assertEquals(2, results.size());
-            Assertions.assertEquals("DATAPRIVACY", results.get(0).getSk());
-            Assertions.assertEquals("TOS", results.get(1).getSk());
+            Assertions.assertTrue(toInsert.contains(results.get(0)));
+            Assertions.assertTrue(toInsert.contains(results.get(1)));
         } catch (Exception e) {
             throw new RuntimeException();
         } finally {
@@ -169,30 +176,37 @@ class ConsentDaoTestIT {
 
     @Test
     void updateConsent() {
-
+        //GIVEN
         ConsentEntity consentToInsert = newConsent(false);
+        try {
+            // faccio passare un pò di tempo così il prossimo consent ha date diverse
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+        }
+        ConsentEntity consentToUpdate = newConsent(true);
 
         try {
             testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());
+            consentDao.consentAction(consentToInsert).block(d);
         } catch (Exception e) {
             System.out.println("Nothing to remove");
         }
 
-        consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
+        //WHEN
+        consentDao.consentAction(consentToUpdate).block(d);
+
 
         //Then
         try {
-            ConsentEntity elementFromDb1 = testDao.get(consentToInsert.getPk(), consentToInsert.getSk());
-
-
-            consentDao.consentAction(consentToInsert).block(Duration.ofMillis(3000));
-
-            ConsentEntity elementFromDb2 = testDao.get(consentToInsert.getPk(), consentToInsert.getSk());
+            ConsentEntity elementFromDb1 = testDao.get(consentToUpdate.getPk(), consentToUpdate.getSk());
 
             Assertions.assertNotNull(elementFromDb1);
-            Assertions.assertNotNull(elementFromDb2);
-            Assertions.assertEquals(elementFromDb1.getCreated(), elementFromDb2.getCreated());
-            Assertions.assertNotEquals(elementFromDb1.getLastModified(), elementFromDb2.getLastModified());
+            Assertions.assertEquals(consentToUpdate.getPk(), elementFromDb1.getPk());
+            Assertions.assertEquals(consentToUpdate.getSk(), elementFromDb1.getSk());
+            Assertions.assertEquals(consentToUpdate.isAccepted(), elementFromDb1.isAccepted());
+            Assertions.assertEquals(consentToUpdate.getLastModified(), elementFromDb1.getLastModified());
+            Assertions.assertEquals(consentToInsert.getCreated(), elementFromDb1.getCreated());
+
 
         } catch (Exception e) {
             fail(e);

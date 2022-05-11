@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.db.entities;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.UpdateBehavior;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbUpdat
 
 import java.time.Instant;
 
+@EqualsAndHashCode
 public class BaseEntity {
 
     public static final String COL_PK = "pk";
