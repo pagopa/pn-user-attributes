@@ -113,9 +113,8 @@ class ConsentDaoTestIT {
 
         try {
             Assertions.assertNotNull(result);
-            Assertions.assertEquals(consentToInsert.getRecipientId(), result.getRecipientId());
-            Assertions.assertEquals(consentToInsert.getConsentType(), result.getConsentType());
-        } catch (Exception e) {
+            Assertions.assertEquals(consentToInsert, result);
+                  } catch (Exception e) {
             throw new RuntimeException();
         } finally {
             try {
