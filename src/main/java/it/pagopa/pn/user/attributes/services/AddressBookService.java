@@ -368,7 +368,7 @@ public class AddressBookService {
         verificationCode.setTtl(LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)
-                .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
+                .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .thenReturn("OK")
                         ,(r, a) -> SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }

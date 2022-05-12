@@ -137,34 +137,35 @@ class AddressBookDaoTestIT {
         void getVerificationCode () {
         }
 
-    void validateHashedAddress() {
+        @Test
+        void validateHashedAddress() {
 
-        //Given
-        AddressBookEntity addressBook = newAddress();
-        VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "Legal", "SMS");
-        try {
-            testDao.delete(addressBook.getPk(), addressBook.getSk());
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddress).block(d);
-        } catch (Exception e) {
-            System.out.println("error removing");
-        }
-
-        //When
-        AddressBookDao.CHECK_RESULT result = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525").block(d);
-
-        //Then
-        try {
-            Assertions.assertEquals("CHECK_RESULT.NOT_EXISTS", result);
-        } catch (Exception e) {
-            fail(e);
-        } finally {
+            //Given
+            AddressBookEntity addressBook = newAddress();
+            VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "hashAddressgahs67323525", "SMS");
             try {
                 testDao.delete(addressBook.getPk(), addressBook.getSk());
+                addressBookDao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddress).block(d);
             } catch (Exception e) {
-                System.out.println("Nothing to remove");
+                System.out.println("error removing");
+            }
+
+            //When
+            AddressBookDao.CHECK_RESULT result = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
+
+            //Then
+            try {
+                Assertions.assertEquals(AddressBookDao.CHECK_RESULT.NOT_EXISTS, result);
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                try {
+                    testDao.delete(addressBook.getPk(), addressBook.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
             }
         }
-    }
 
         @Test
         void saveAddressBookAndVerifiedAddress () {

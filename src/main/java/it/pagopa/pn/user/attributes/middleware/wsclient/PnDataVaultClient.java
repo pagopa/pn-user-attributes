@@ -6,16 +6,20 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.ApiClient;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
+import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.api.RecipientsApi;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
 import java.net.ConnectException;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
@@ -25,6 +29,7 @@ import java.time.Duration;
 public class PnDataVaultClient extends BaseClient {
     
     private AddressBookApi addressBookApi;
+    private RecipientsApi recipientsApi;
     private final PnUserattributesConfig pnUserattributesConfig;
 
     public PnDataVaultClient(PnUserattributesConfig pnUserattributesConfig) {
@@ -37,6 +42,11 @@ public class PnDataVaultClient extends BaseClient {
         apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
         this.addressBookApi = new AddressBookApi(apiClient);
+
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
+
+        this.recipientsApi = new RecipientsApi(apiClient);
     }
 
     /**
@@ -91,6 +101,23 @@ public class PnDataVaultClient extends BaseClient {
     {
         log.info("deleteRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
         return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId)
+                .retryWhen(
+                        Retry.backoff(2, Duration.ofMillis(25))
+                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
+                );
+
+    }
+
+
+    /**
+     * Ritorna una lista di nominativi in base alla lista di iuid passati
+     *
+     * @param internalIds lista di iuid
+     * @return lista di nominativi
+     */
+    public Flux<BaseRecipientDtoDto> getRecipientDenominationByInternalId(List<String> internalIds)
+    {
+        return recipientsApi.getRecipientDenominationByInternalId(internalIds)
                 .retryWhen(
                         Retry.backoff(2, Duration.ofMillis(25))
                                 .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)

@@ -1,1 +1,7 @@
-Il codice verifica è: %s
+Ciao %s,
+
+per confermare l’associazione del tuo indirizzo email su Piattaforma Notifiche, inserisci il codice %s
+
+A presto,
+
+Il team di Piattaforma Notifiche

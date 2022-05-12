@@ -177,12 +177,9 @@ public class ConsentDaoTestIT {
     void updateConsent() {
         //GIVEN
         ConsentEntity consentToInsert = newConsent(false);
-        try {
-            // faccio passare un pò di tempo così il prossimo consent ha date diverse
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-        }
         ConsentEntity consentToUpdate = newConsent(true);
+        consentToUpdate.setCreated(consentToUpdate.getCreated().plusMillis(100));
+        consentToUpdate.setLastModified(consentToUpdate.getLastModified().plusMillis(100));
 
         try {
             testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());

@@ -6,7 +6,8 @@
             <includeMdcKeyName>trace_id</includeMdcKeyName>
         </encoder>
     </appender>
-    <root level="debug">
+    <logger name="it.pagopa" level="DEBUG" />
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
