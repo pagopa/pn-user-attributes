@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.fail;
         "aws.endpoint-url=http://localhost:4566"
 })
 @SpringBootTest
-class ConsentDaoTestIT {
+public class ConsentDaoTestIT {
 
     private final Duration d = Duration.ofMillis(3000);
 
