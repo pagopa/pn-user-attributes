@@ -15,6 +15,14 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
   <name>pn-user-attributes</name>
   <description>TODO</description>
 
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <springdoc-openapi-webflux-version>1.6.7</springdoc-openapi-webflux-version>
+    <software.amazon.awssdk-version>2.17.174</software.amazon.awssdk-version>
+    <sonar.coverage.exclusions>it.pagopa.pn.user.attributes.middleware.db/**/*Dao.java</sonar.coverage.exclusions>
+  </properties>
+
   <dependencies>
 
     <!-- inizio sezione di dipendenze in alternativa a pn-commons -->
@@ -52,7 +60,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
-      <version>2.17.155</version>
+      <version>${software.amazon.awssdk-version}</version>
     </dependency>
     <dependency>
       <groupId>net.logstash.logback</groupId>
