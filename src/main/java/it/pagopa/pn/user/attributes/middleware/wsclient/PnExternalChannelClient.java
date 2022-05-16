@@ -40,7 +40,7 @@ public class PnExternalChannelClient extends BaseClient {
     private final PnUserattributesConfig pnUserattributesConfig;
     private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
     private DigitalLegalMessagesApi digitalLegalMessagesApi;
-    private PnDataVaultClient dataVaultClient;
+    private final PnDataVaultClient dataVaultClient;
 
 
     public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient) {
@@ -88,7 +88,9 @@ public class PnExternalChannelClient extends BaseClient {
                     digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                    digitalNotificationRequestDto.setAttachementUrls(new ArrayList<>());
+                    digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
+                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                    digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
                     return  digitalNotificationRequestDto;
                 })
                 .take(1)
@@ -118,6 +120,7 @@ public class PnExternalChannelClient extends BaseClient {
             digitalNotificationRequestDto.setMessageText(getSMSVerificationCodeBody(verificationCode));
             digitalNotificationRequestDto.setReceiverDigitalAddress(address);
             digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
+            digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderSms());
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
                     .retryWhen(
@@ -142,7 +145,9 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
                         digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                        digitalNotificationRequestDto.setAttachementUrls(new ArrayList<>());
+                        digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
+                        digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                        digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
                         return  digitalNotificationRequestDto;
                     })
                     .take(1)

@@ -30,14 +30,18 @@ public class PnUserattributesConfig {
     private String clientExternalchannelsBasepath;
 
     private String clientExternalchannelsHeaderExtchCxId;
+    private String clientExternalchannelsSenderEmail;
+    private String clientExternalchannelsSenderSms;
 
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;
+    private String verificationCodeMessageEMAILSubject;
 
     @PostConstruct
     public void init(){
-        this.verificationCodeMessageEMAIL = fetchMessage("email.txt");
-        this.verificationCodeMessageSMS = fetchMessage("sms.txt");
+        this.verificationCodeMessageEMAILSubject = fetchMessage("emailsubject.txt");
+        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.txt");
+        this.verificationCodeMessageSMS = fetchMessage("smsbody.txt");
 
     }
 

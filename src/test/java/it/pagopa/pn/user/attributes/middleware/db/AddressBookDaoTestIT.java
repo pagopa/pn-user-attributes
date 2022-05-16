@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
         "aws.endpoint-url=http://localhost:4566"
 })
 @SpringBootTest
+public
 class AddressBookDaoTestIT {
     private final Duration d = Duration.ofMillis(3000);
 
@@ -41,21 +42,21 @@ class AddressBookDaoTestIT {
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
 
-    //TestDao<AddressBookEntity> testDao;
     TestDao<AddressBookEntity> testDao;
     TestDao<VerificationCodeEntity> testCodeDao;
 
 
     @BeforeEach
     void setup() {
-        testDao = new TestDao(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), AddressBookEntity.class);
+        testDao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), AddressBookEntity.class);
+        testCodeDao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), VerificationCodeEntity.class);
     }
 
     @Test
     void deleteAddressBook() {
 
         //Given
-        AddressBookEntity addressBookToDelete = newAddress();
+        AddressBookEntity addressBookToDelete = newAddress(true);
         VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "Legal", "SMS");
         try {
             testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
@@ -65,7 +66,7 @@ class AddressBookDaoTestIT {
         }
 
         //When
-        addressBookDao.deleteAddressBook(addressBookToDelete.getRecipientId(), addressBookToDelete.getSenderId(), addressBookToDelete.getAddressType(), addressBookToDelete.getChannelType());
+        addressBookDao.deleteAddressBook(addressBookToDelete.getRecipientId(), addressBookToDelete.getSenderId(), addressBookToDelete.getAddressType(), addressBookToDelete.getChannelType()).block(d);
 
         //Then
         try {
@@ -88,12 +89,10 @@ class AddressBookDaoTestIT {
                 //Given
                 VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
                 List<AddressBookEntity> toInsert = new ArrayList<>();
-                AddressBookEntity addressToInsert = newAddress();
-                addressToInsert.setSk("Legal");
-                toInsert.add(addressToInsert);
-                addressToInsert = newAddress();
-                addressToInsert.setSk("courtesy");
-                toInsert.add(addressToInsert);
+                toInsert.add(newAddress(true));
+                toInsert.add(newAddress(false));
+
+
 
                 try {
                     toInsert.forEach(x -> {
@@ -109,19 +108,24 @@ class AddressBookDaoTestIT {
                 }
 
                 //WHEN
-            List<AddressBookEntity> results = addressBookDao.getAddresses(addressToInsert.getRecipientId(),addressToInsert.getSenderId(), addressToInsert.getAddressType()).collectList().block(d);
+            List<AddressBookEntity> results = addressBookDao.getAddresses(toInsert.get(0).getRecipientId(),toInsert.get(0).getSenderId(), toInsert.get(0).getAddressType()).collectList().block(d);
 
                 //THEN
                 try {
                     Assertions.assertNotNull(results);
-                    Assertions.assertEquals(2, results.size());
+                    Assertions.assertEquals(1, results.size());
                     Assertions.assertTrue(toInsert.contains(results.get(0)));
-                    Assertions.assertTrue(toInsert.contains(results.get(1)));
                 } catch (Exception e) {
                     throw new RuntimeException();
                 } finally {
                     try {
-                        testDao.delete(addressToInsert.getPk(), addressToInsert.getSk());
+                        toInsert.forEach(x -> {
+                            try {
+                                testDao.delete(x.getPk(), x.getSk());
+                            } catch (Exception e) {
+                                System.out.println("error removing");
+                            }
+                        });
                     } catch (Exception e) {
                         System.out.println("Nothing to remove");
                     }
@@ -134,10 +138,8 @@ class AddressBookDaoTestIT {
             //Given
             VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
             List<AddressBookEntity> toInsert = new ArrayList<>();
-            AddressBookEntity addressToInsert = new AddressBookEntity("AB-123e4567-e89b-12d3-a456-426614174000","Default","Legal","SMS");
-            toInsert.add(addressToInsert);
-            addressToInsert = new AddressBookEntity("AB-123e4567-e89b-12d3-a456-426614174000","Default","Courtesy","SMS");
-            toInsert.add(addressToInsert);
+            toInsert.add(newAddress(true));
+            toInsert.add(newAddress(false));
             try {
                 toInsert.forEach(x -> {
                     try {
@@ -152,7 +154,7 @@ class AddressBookDaoTestIT {
             }
 
             //WHEN
-            List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(addressToInsert.getRecipientId()).collectList().block(d);
+            List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId()).collectList().block(d);
 
             //THEN
             try {
@@ -160,13 +162,17 @@ class AddressBookDaoTestIT {
                 Assertions.assertEquals(2, results.size());
                 Assertions.assertTrue(toInsert.contains(results.get(0)));
                 Assertions.assertTrue(toInsert.contains(results.get(1)));
-                Assertions.assertEquals("AB-123e4567-e89b-12d3-a456-426614174000",results.get(0).getRecipientId());
-                Assertions.assertEquals("AB-123e4567-e89b-12d3-a456-426614174000",results.get(1).getRecipientId());
             } catch (Exception e) {
                 throw new RuntimeException();
             } finally {
                 try {
-                    testDao.delete(addressToInsert.getPk(), addressToInsert.getSk());
+                    toInsert.forEach(x -> {
+                        try {
+                            testDao.delete(x.getPk(), x.getSk());
+                        } catch (Exception e) {
+                            System.out.println("error removing");
+                        }
+                    });
                 } catch (Exception e) {
                     System.out.println("Nothing to remove");
                 }
@@ -188,8 +194,6 @@ class AddressBookDaoTestIT {
             addressBookDao.saveVerificationCode(verificationCodeToInsert).block(d);
             //Then
             try {
-
-                //testCodeDAO???
                 VerificationCodeEntity verificationCodeFromDb = testCodeDao.get(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
 
                 Assertions.assertNotNull( verificationCodeFromDb);
@@ -217,7 +221,7 @@ class AddressBookDaoTestIT {
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
-                addressBookDao.saveVerificationCode(verificationCodeToInsert);
+                addressBookDao.saveVerificationCode(verificationCodeToInsert).block(d);
             } catch (Exception e) {
                 System.out.println("error removing");
             }
@@ -243,7 +247,7 @@ class AddressBookDaoTestIT {
         void validateHashedAddress() {
 
             //Given
-            AddressBookEntity addressBook = newAddress();
+            AddressBookEntity addressBook = newAddress(true);
             VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "hashAddressgahs67323525", "SMS");
             try {
                 testDao.delete(addressBook.getPk(), addressBook.getSk());
@@ -253,8 +257,8 @@ class AddressBookDaoTestIT {
             }
 
             //When
-            AddressBookDao.CHECK_RESULT result1 = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
-            AddressBookDao.CHECK_RESULT result2 = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525").block(d);
+            AddressBookDao.CHECK_RESULT result1 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
+            AddressBookDao.CHECK_RESULT result2 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525").block(d);
             //Then
             try {
                 Assertions.assertEquals(AddressBookDao.CHECK_RESULT.NOT_EXISTS, result1);
@@ -274,7 +278,7 @@ class AddressBookDaoTestIT {
         @Test
         void saveAddressBookAndVerifiedAddress () {
             //Given
-            AddressBookEntity addressBookToInsert = newAddress();
+            AddressBookEntity addressBookToInsert = newAddress(true);
             VerifiedAddressEntity verifiedAddressToInsert = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "address67323525", "SMS");
             try {
                 testDao.delete(addressBookToInsert.getPk(), addressBookToInsert.getSk());
@@ -304,10 +308,10 @@ class AddressBookDaoTestIT {
 
         }
 
-        public static AddressBookEntity newAddress() {
-            AddressBookEntity ab = new AddressBookEntity("AB-123e4567-e89b-12d3-a456-426614174000", "LEGAL", "default", "SMS");
-            ab.setCreated(Instant.now());
-            ab.setLastModified(Instant.now());
-            return ab;
+        public static AddressBookEntity newAddress(boolean isLegal) {
+            if (isLegal)
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", "default", "PEC");
+            else
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", "default", "EMAIL");
         }
     }
