@@ -67,7 +67,6 @@ class PnDataVaultClientTest {
                 .respond(response()
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
-
         //When
         assertDoesNotThrow(() -> pnDataVaultClient.updateRecipientAddressByInternalId(internalId, addressId,realaddress).block(Duration.ofMillis(3000)));
     }
@@ -85,7 +84,7 @@ class PnDataVaultClientTest {
         recipientAddressesDtoDto.putAddressesItem(internalId, dto);
         ObjectMapper mapper = new ObjectMapper();
         String respjson = mapper.writeValueAsString(recipientAddressesDtoDto);
-        
+
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("GET")
