@@ -127,9 +127,7 @@ class ConsentsServiceTest {
 
         // WHEN
         Mono<ConsentDto> mono =  service.getConsentByType(recipientId, dto);
-        assertThrows(NotFoundException.class, () -> {
-           mono.block(d);
-        });
+        assertThrows(NotFoundException.class, () -> mono.block(d));
         //THEN
     }
 
@@ -169,72 +167,7 @@ class ConsentsServiceTest {
 
         // WHEN
         Mono<List<ConsentDto>> mono = service.getConsents(recipientId).collectList();
-        assertThrows(NotFoundException.class, () -> {
-            mono.block(d);
-        });
+        assertThrows(NotFoundException.class, () -> mono.block(d));
         //THEN
     }
-/*
-
-
-
-    private static class MockConsentDao implements IConsentDao {
-
-        private final Map<Key,ConsentEntity> store = new ConcurrentHashMap<>();
-
-        public void put(ConsentEntity entity) {
-            Key key = Key.builder()
-                    .partitionValue(entity.getRecipientId())
-                    .sortValue(entity.getConsentType())
-                    .build();
-            this.store.put(key, entity);
-        }
-
-
-        public ConsentEntity get(Key key) {
-            return store.get(key);
-        }
-
-        @Override
-        public Mono<Object> consentAction(ConsentEntity userAttributes) {
-            if (userAttributes.getCreated() == null)
-                userAttributes.setCreated(Instant.now());
-            else
-                userAttributes.setLastModified(Instant.now());
-
-            put(userAttributes);
-            return Mono.empty();
-        }
-
-        @Override
-        public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType) {
-            Key key = Key.builder()
-                    .partitionValue("CO#" + recipientId)
-                    .sortValue(consentType)
-                    .build();
-
-            ConsentEntity entity = get(key);
-            if (entity == null)
-                return Mono.empty();
-            else
-                return Mono.just(entity);
-        }
-
-        @Override
-        public Flux<ConsentEntity> getConsents(String recipientId) {
-            List<ConsentEntity> list = new ArrayList<>();
-
-            for (var entry : store.entrySet()) {
-                if (entry.getValue().getRecipientId().equals("CO#" + recipientId))
-                    list.add(entry.getValue());
-            }
-            if (list.isEmpty())
-                return Flux.empty();
-            else {
-                return Flux.just(list.toArray(new ConsentEntity[0]));
-            }
-        }
-    }
-
- */
 }

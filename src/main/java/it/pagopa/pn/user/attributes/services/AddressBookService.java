@@ -22,19 +22,19 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Service
 @Slf4j
 public class AddressBookService {
-    // Nel branch feature/PN-1283 il controllo del codice di verifica tramite external channell non viene fatto.
-    // Temporaneamente il controllo viene fatto confrontando il codice immesso con una stringa costante
-    public static final String VERIFICATION_CODE_OK = "12345";
 
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
+
+    Random rnd = new Random();
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
@@ -210,9 +210,14 @@ public class AddressBookService {
      * @return il codice generato
      */
     private String getNewVerificationCode() {
-        // FIXME: generare veramente un nuovo codice
-        log.debug("generated a new verificationCode: {}", AddressBookService.VERIFICATION_CODE_OK);
-        return AddressBookService.VERIFICATION_CODE_OK;
+        // It will generate 6 digit random Number.
+        // from 0 to 999999
+        int number = rnd.nextInt(99999);
+
+        // this will convert any number sequence into 6 character.
+        String code = String.format("%05d", number);
+        log.debug("generated a new verificationCode: {}", code);
+        return code;
     }
 
     /**

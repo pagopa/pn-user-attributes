@@ -63,6 +63,10 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
+  ExternalChannelBasePath:
+    Type: String
+    Description: 'Base url of external channel microservice'
+
 Resources:
 
   # PN-User-Attributes microservice
@@ -79,7 +83,7 @@ Resources:
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
         ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesTableName}'
         ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=https://72xd35m211.execute-api.eu-south-1.amazonaws.com/dev/'
+        ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID={{resolve:secretsmanager:UserAttributes:SecretString:HeaderValueExternalChannelCxId}}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
