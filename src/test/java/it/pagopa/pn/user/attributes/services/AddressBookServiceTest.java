@@ -1,5 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -36,13 +39,13 @@ class AddressBookServiceTest {
     PnDataVaultClient pnDatavaultClient;
 
     @Mock
-    AddressBookDao dao;
+    AddressBookDao addressBookDao;
 
     @Mock
     PnExternalChannelClient pnExternalChannelClient;
 
     @Mock
-    AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
+    AddressBookEntityToCourtesyDigitalAddressDtoMapper courtesyDigitalAddressToDto;
 
     @Mock
     AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
@@ -86,6 +89,31 @@ class AddressBookServiceTest {
         // MAndateDto come proviene da FE quindi senza alcune info
         final LegalDigitalAddressDto legalAddressDto = new LegalDigitalAddressDto();
         legalAddressDto.setRecipientId(entity.getRecipientId());
+        legalAddressDto.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        legalAddressDto.setSenderId("default");
+        legalAddressDto.setChannelType(LegalChannelTypeDto.PEC);
+
+        final CourtesyDigitalAddressDto courtesyAddressDto = new CourtesyDigitalAddressDto();
+        courtesyAddressDto.setRecipientId(entity.getRecipientId());
+        courtesyAddressDto.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        courtesyAddressDto.setSenderId("default");
+        courtesyAddressDto.setChannelType(CourtesyChannelTypeDto.EMAIL);
+
+        List<AddressBookEntity> listFromDb = new ArrayList<>();
+        listFromDb.add(entity);
+
+
+        when(addressBookDao.getAllAddressesByRecipient (Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(pnDatavaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.empty());
+
+
+        //When
+        List<AddressBookEntity> result = addressBookService.getAddressesByRecipient(entity.getRecipientId().block(Duration.ofMillis(3000)));
+
+        //Then
+        assertNotNull(result);
+
+        assertEquals(2, result.size());
 
     }
 
