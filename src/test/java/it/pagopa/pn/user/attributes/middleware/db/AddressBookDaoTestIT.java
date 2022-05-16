@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.middleware.db;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,10 @@ class AddressBookDaoTestIT {
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
 
+    //TestDao<AddressBookEntity> testDao;
     TestDao<AddressBookEntity> testDao;
+    TestDao<VerificationCodeEntity> testCodeDao;
+
 
     @BeforeEach
     void setup() {
@@ -127,14 +131,112 @@ class AddressBookDaoTestIT {
 
         @Test
         void getAllAddressesByRecipient () {
+            //Given
+            VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
+            List<AddressBookEntity> toInsert = new ArrayList<>();
+            AddressBookEntity addressToInsert = new AddressBookEntity("AB-123e4567-e89b-12d3-a456-426614174000","Default","Legal","SMS");
+            toInsert.add(addressToInsert);
+            addressToInsert = new AddressBookEntity("AB-123e4567-e89b-12d3-a456-426614174000","Default","Courtesy","SMS");
+            toInsert.add(addressToInsert);
+            try {
+                toInsert.forEach(x -> {
+                    try {
+                        testDao.delete(x.getPk(), x.getSk());
+                        addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                    } catch (Exception e) {
+                        System.out.println("error removing");
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+
+            //WHEN
+            List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(addressToInsert.getRecipientId()).collectList().block(d);
+
+            //THEN
+            try {
+                Assertions.assertNotNull(results);
+                Assertions.assertEquals(2, results.size());
+                Assertions.assertTrue(toInsert.contains(results.get(0)));
+                Assertions.assertTrue(toInsert.contains(results.get(1)));
+                Assertions.assertEquals("AB-123e4567-e89b-12d3-a456-426614174000",results.get(0).getRecipientId());
+                Assertions.assertEquals("AB-123e4567-e89b-12d3-a456-426614174000",results.get(1).getRecipientId());
+            } catch (Exception e) {
+                throw new RuntimeException();
+            } finally {
+                try {
+                    testDao.delete(addressToInsert.getPk(), addressToInsert.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
+            }
         }
+
 
         @Test
         void saveVerificationCode () {
+            //Given
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS");
+
+            try {
+                testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("error removing");
+            }
+            //When
+            addressBookDao.saveVerificationCode(verificationCodeToInsert).block(d);
+            //Then
+            try {
+
+                //testCodeDAO???
+                VerificationCodeEntity verificationCodeFromDb = testCodeDao.get(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+
+                Assertions.assertNotNull( verificationCodeFromDb);
+                Assertions.assertEquals( verificationCodeToInsert, verificationCodeFromDb);
+
+
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                try {
+                    testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
+            }
+
+
         }
 
         @Test
         void getVerificationCode () {
+
+            //Given
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS");
+
+            try {
+                testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+                addressBookDao.saveVerificationCode(verificationCodeToInsert);
+            } catch (Exception e) {
+                System.out.println("error removing");
+            }
+            //When
+            VerificationCodeEntity verificationCode = addressBookDao.getVerificationCode(verificationCodeToInsert).block(d);
+            //Then
+            try {
+                Assertions.assertNotNull(verificationCode);
+                Assertions.assertEquals( verificationCodeToInsert, verificationCode);
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                try {
+                    testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
+            }
+
         }
 
         @Test
@@ -151,11 +253,13 @@ class AddressBookDaoTestIT {
             }
 
             //When
-            AddressBookDao.CHECK_RESULT result = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
-
+            AddressBookDao.CHECK_RESULT result1 = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
+            AddressBookDao.CHECK_RESULT result2 = addressBookDao.validateHashedAddress(addressBook.getRecipientId(), "hashAddressgahs67323525").block(d);
             //Then
             try {
-                Assertions.assertEquals(AddressBookDao.CHECK_RESULT.NOT_EXISTS, result);
+                Assertions.assertEquals(AddressBookDao.CHECK_RESULT.NOT_EXISTS, result1);
+                Assertions.assertEquals(AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED,result2);
+
             } catch (Exception e) {
                 fail(e);
             } finally {
@@ -169,6 +273,35 @@ class AddressBookDaoTestIT {
 
         @Test
         void saveAddressBookAndVerifiedAddress () {
+            //Given
+            AddressBookEntity addressBookToInsert = newAddress();
+            VerifiedAddressEntity verifiedAddressToInsert = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "address67323525", "SMS");
+            try {
+                testDao.delete(addressBookToInsert.getPk(), addressBookToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("error removing");
+            }
+
+            //When
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToInsert, verifiedAddressToInsert).block(d);
+            //Then
+            try {
+                AddressBookEntity addressBookFromDb = testDao.get(addressBookToInsert.getPk(),addressBookToInsert.getSk());
+
+                Assertions.assertNotNull( addressBookFromDb);
+                Assertions.assertEquals( addressBookToInsert, addressBookFromDb);
+
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                try {
+                    testDao.delete(addressBookToInsert.getPk(), addressBookToInsert.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
+            }
+
+
         }
 
         public static AddressBookEntity newAddress() {
