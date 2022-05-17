@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class AddressBookService {
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
 
-    Random rnd = new Random();
+    Random rnd = new SecureRandom();
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,

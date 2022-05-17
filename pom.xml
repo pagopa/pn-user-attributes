@@ -21,6 +21,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
     <springdoc-openapi-webflux-version>1.6.7</springdoc-openapi-webflux-version>
     <software.amazon.awssdk-version>2.17.174</software.amazon.awssdk-version>
     <sonar.coverage.exclusions>it.pagopa.pn.user.attributes.middleware.db/**/*Dao.java</sonar.coverage.exclusions>
+    <sonar.coverage.exclusions>${project.groupId}.microservice.msclient.generated/**/*.java</sonar.coverage.exclusions>
   </properties>
 
   <dependencies>
@@ -188,8 +189,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.user.attributes.microservice.msclient.generated.datavault.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.user.attributes.microservice.msclient.generated.datavault.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
@@ -211,8 +212,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.user.attributes.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.user.attributes.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
