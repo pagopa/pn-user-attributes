@@ -186,6 +186,8 @@ public class AddressBookService {
                 .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
                 (list, addresses) -> {
                     UserAddressesDto dto = new UserAddressesDto();
+                    dto.setCourtesy(new ArrayList<>());
+                    dto.setLegal(new ArrayList<>());
 
                     list.forEach(ent -> {
                         String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
@@ -202,7 +204,12 @@ public class AddressBookService {
                     });
                     return dto;
                 })
-                .switchIfEmpty(Mono.just(new UserAddressesDto()));
+                .switchIfEmpty(Mono.defer(() -> {
+                    UserAddressesDto dto = new UserAddressesDto();
+                    dto.setCourtesy(new ArrayList<>());
+                    dto.setLegal(new ArrayList<>());
+                    return Mono.just(dto);
+                }));
     }
 
     /**
