@@ -97,7 +97,7 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesTableName}'
+        ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLE_NAME=${UserAttributesTableName}'
         ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
@@ -127,6 +127,7 @@ Resources:
               - dynamodb:ExecuteTransaction
               - dynamodb:GetItem
               - dynamodb:PutItem
+              - dynamodb:DeleteItem
               - dynamodb:Query
               - dynamodb:TransactGetItems
               - dynamodb:TransactWriteItems
@@ -144,20 +145,6 @@ Resources:
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'user-consents'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-
-  # Expose PN-UserAttributes microservice public API with API-GW for WEB us
-  AddressBookMicroservicePublicWebAPI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
-        IntendedUsage: WEB
-        DnsName: !Ref WebApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: 'address-book'
+        ServiceApiPath: 'user-consents,address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
