@@ -145,6 +145,20 @@ Resources:
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'user-consents,address-book'
+        ServiceApiPath: 'user-consents'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+
+  # Expose PN-AddressBook microservice public API with API-GW for WEB usage
+  AddressBookMicroservicePublicWebAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBook'
+        IntendedUsage: WEB
+        DnsName: !Ref WebApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
