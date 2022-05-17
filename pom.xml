@@ -15,14 +15,16 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
   <name>pn-user-attributes</name>
   <description>TODO</description>
 
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <springdoc-openapi-webflux-version>1.6.7</springdoc-openapi-webflux-version>
+    <software.amazon.awssdk-version>2.17.174</software.amazon.awssdk-version>
+    <sonar.coverage.exclusions>it.pagopa.pn.user.attributes.middleware.db/**/*Dao.java</sonar.coverage.exclusions>
+    <sonar.coverage.exclusions>${project.groupId}.microservice.msclient.generated/**/*.java</sonar.coverage.exclusions>
+  </properties>
+
   <dependencies>
-    <!-- commentato perchè non si riesce ad evitare la connessione a Cassandra all'avvio
-    <dependency>
-      <groupId>it.pagopa.pn</groupId>
-      <artifactId>pn-commons</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-    -->
 
     <!-- inizio sezione di dipendenze in alternativa a pn-commons -->
     <dependency>
@@ -38,11 +40,28 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <artifactId>springdoc-openapi-webflux-ui</artifactId>
       <version>1.6.6</version>
     </dependency>
+    <dependency>
+      <groupId>io.swagger</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>1.6.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>3.0.2</version>
+    </dependency>
     <!-- fine sezione di dipendenze in alternativa a pn-commons -->
+
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+    </dependency>
+
 
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
+      <version>${software.amazon.awssdk-version}</version>
     </dependency>
     <dependency>
       <groupId>net.logstash.logback</groupId>
@@ -53,6 +72,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.11.0</version>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -62,6 +86,17 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mock-server</groupId>
+      <artifactId>mockserver-junit-jupiter</artifactId>
+      <version>5.11.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mock-server</groupId>
+      <artifactId>mockserver-netty</artifactId>
+      <version>5.11.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -91,10 +126,10 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.address.book.api.v1.config</configPackage>
+                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
+                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
+                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
+                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -120,10 +155,10 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.user.consents.api.v1.config</configPackage>
+                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
+                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
+                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
+                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -134,6 +169,52 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
                 <skipDefaultInterface>false</skipDefaultInterface>
                 <useTags>true</useTags>
               </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client-datavault</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <inputSpec>${project.basedir}/docs/wsclient/pn-data-vault/pn-datavault-api-v1.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.api</apiPackage>
+              <modelNameSuffix>Dto</modelNameSuffix>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client-external-channels</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <inputSpec>${project.basedir}/docs/wsclient/pn-external-channels/api-internal-v1.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
+              <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
         </executions>

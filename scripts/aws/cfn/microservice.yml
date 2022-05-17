@@ -63,6 +63,26 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
+  ExternalChannelBasePath:
+    Type: String
+    Description: 'Base url of external channel microservice'
+
+  HeaderValueExternalChannelCxId:
+    Type: String
+    Description: 'Header di riconoscimento per external channel'
+
+  ExternalChannelSenderPEC:
+    Type: String
+    Description: 'Sender address for PEC'
+
+  ExternalChannelSenderEMAIL:
+    Type: String
+    Description: 'Sender address for EMAIL'
+
+  ExternalChannelSenderSMS:
+    Type: String
+    Description: 'Sender address for SMS'
+
 Resources:
 
   # PN-User-Attributes microservice
@@ -77,8 +97,14 @@ Resources:
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
-        ContainerEnvEntry3: !Sub 'PN_USERATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesTableName}'
-        MappedPaths: '/user-attributes/*,/address-book/*,/address-book-private/*'
+        ContainerEnvEntry3: !Sub 'PN_USER_ATTRIBUTES_DYNAMODB_TABLENAME=${UserAttributesTableName}'
+        ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
+        ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
+        ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_PEC=${ExternalChannelSenderPEC}'
+        ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_EMAIL=${ExternalChannelSenderEMAIL}'
+        ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_SMS=${ExternalChannelSenderSMS}'
+        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -114,11 +140,11 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes-uc'
+        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'user-consents'
+        ServiceApiPath: '/user-consents/*'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
 
@@ -128,11 +154,10 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes-ab'
+        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
-        ServiceApiPath: 'address-book'
+        ServiceApiPath: '/address-book/*'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-
