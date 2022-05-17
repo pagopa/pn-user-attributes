@@ -10,10 +10,10 @@ components:
         - requestId
         - eventType
         - qos
-        - clientRequestTimeStamp 
-        - channel    
+        - clientRequestTimeStamp
+        - channel
         - receiverDigitalAddress
-        - messageText      
+        - messageText
       type: object
       properties:
         requestId:
@@ -80,7 +80,7 @@ components:
         - $ref: '#/components/schemas/BaseDigitalMessageRequest'
         - type: object
           required:
-            - channel    
+            - channel
             - subjectText
             - messageContentType
           properties:
@@ -88,10 +88,10 @@ components:
               type: string
               enum:
                 - PEC
-                - REM            
+                - REM
               description: >-
                 Canale di recapito con cui il Sender chiede l’erogazione del servizio. In un primo momento sarà PEC, 
-                ma il dominio dovrà prevedere a breve SERQ, PEC_REM, ed in futuro ogni forma di recapito digitale a valore legale.            
+                ma il dominio dovrà prevedere a breve SERQ, PEC_REM, ed in futuro ogni forma di recapito digitale a valore legale.
             subjectText:
               type: string
               description: >-
@@ -102,8 +102,8 @@ components:
                 - 'text/plain'
                 - 'text/html'
               description: >-
-                Formato: HTML o PLAIN 
-            attachmentsUrls:
+                Formato: HTML o PLAIN
+            attachmentUrls:
               type: array
               items:
                 type: string
@@ -112,7 +112,7 @@ components:
                   (i.e. url del file dentro Safe Storage che si occuperà di crypt/decrypt dei documenti).
                   Il Safe Storge si occuperà di calcolare la presigned url per il recupero dell'allegato che sarà decifrato.
                   documentUrl può rispondere (alla GET) con un 403 per redirect vs servizio (i.e. lambda, safe storage, presigned url vs bucket s3 non cifrato). 
-    
+
     ### - EMAIL
     ###########################################
     DigitalCourtesyMailRequest:
@@ -121,15 +121,15 @@ components:
         - $ref: '#/components/schemas/DigitalNotificationRequest'
         - type: object
           required:
-            - channel    
+            - channel
           properties:
             channel:
               type: string
               enum:
-                - EMAIL          
+                - EMAIL
               description: >-
                 Canale di recapito con cui il Sender chiede l’erogazione del servizio. Per ora solo email
-    
+
     ### - SMS
     ###########################################
     DigitalCourtesySmsRequest:
@@ -143,7 +143,7 @@ components:
             channel:
               type: string
               enum:
-                - SMS          
+                - SMS
               description: >-
                 Canale di recapito con cui il Sender chiede l’erogazione del servizio. In un primo momento sarà PEC, 
                 ma il dominio dovrà prevedere a breve SERQ, PEC_REM, ed in futuro ogni forma di recapito digitale a valore legale.            
@@ -152,7 +152,7 @@ components:
     #############################################################################################
     ###                     EVENTI DI PROGRESSIONE MESSAGGISTICA DIGITALE                     ###
     #############################################################################################
-  
+
     ProgressEventCategory:
       type: string
       enum:
@@ -167,9 +167,9 @@ components:
         - system
         - id
       properties:
-        system: 
+        system:
           type: string
-        id: 
+        id:
           type: string
 
     BaseMessageProgressEvent:
@@ -193,15 +193,14 @@ components:
           type: string
         generatedMessage:
           $ref: '#/components/schemas/DigitalMessageReference'
-      
+
 
     CourtesyMessageProgressEvent:
       title: Avanzamento per messaggi di cortesia
       allOf:
         - $ref: '#/components/schemas/BaseMessageProgressEvent'
-    
+
     LegalMessageSentDetails:
       title: Avanzamento per messaggi legali
       allOf:
         - $ref: '#/components/schemas/BaseMessageProgressEvent'
-    
