@@ -218,11 +218,11 @@ public class AddressBookService {
      * @return il codice generato
      */
     private String getNewVerificationCode() {
-        // It will generate 6 digit random Number.
-        // from 0 to 999999
+        // It will generate 5 digit random Number.
+        // from 0 to 99999
         int number = rnd.nextInt(99999);
 
-        // this will convert any number sequence into 6 character.
+        // this will convert any number sequence into 5 character.
         String code = String.format("%05d", number);
         log.debug("generated a new verificationCode: {}", code);
         return code;
