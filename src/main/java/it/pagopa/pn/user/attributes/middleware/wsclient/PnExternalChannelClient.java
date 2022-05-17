@@ -88,7 +88,7 @@ public class PnExternalChannelClient extends BaseClient {
                     digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                    digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
+                    digitalNotificationRequestDto.setAttachmentsUrls(new ArrayList<>());
                     digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                     digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
                     return  digitalNotificationRequestDto;
@@ -145,7 +145,7 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
                         digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                        digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
+                        digitalNotificationRequestDto.setAttachmentsUrls(new ArrayList<>());
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
                         return  digitalNotificationRequestDto;
