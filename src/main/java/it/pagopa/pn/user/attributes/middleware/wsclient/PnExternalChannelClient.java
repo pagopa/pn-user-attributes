@@ -6,6 +6,7 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.InvalidChannelErrorException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.StringUtil;
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalCourtesyMessagesApi;
@@ -16,6 +17,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.utils.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -90,7 +92,8 @@ public class PnExternalChannelClient extends BaseClient {
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                     digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
                     digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
-                    digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
+                    if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderPec()))
+                        digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderPec());
                     return  digitalNotificationRequestDto;
                 })
                 .take(1)
@@ -120,7 +123,8 @@ public class PnExternalChannelClient extends BaseClient {
             digitalNotificationRequestDto.setMessageText(getSMSVerificationCodeBody(verificationCode));
             digitalNotificationRequestDto.setReceiverDigitalAddress(address);
             digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-            digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderSms());
+            if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderSms()))
+                digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderSms());
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
                     .retryWhen(
@@ -147,7 +151,8 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                         digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
-                        digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
+                        if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
+                            digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
                         return  digitalNotificationRequestDto;
                     })
                     .take(1)

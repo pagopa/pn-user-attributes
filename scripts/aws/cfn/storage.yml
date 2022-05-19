@@ -32,6 +32,9 @@ Resources:
         - AttributeName: "sk"
           KeyType: "RANGE"
       BillingMode: "PAY_PER_REQUEST"
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: Boolean
 
 Outputs:
   UserAttributesTableName:

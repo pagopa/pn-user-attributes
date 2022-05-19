@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.db.entities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
@@ -28,6 +29,8 @@ public class AddressBookEntity extends BaseEntity {
     private static final int SK_ITEMS_SENDER_ID = 1;
     private static final int SK_ITEMS_CHANNEL_TYPE = 2;
 
+    public static final String COL_ADDRESSHASH = "addresshash";
+
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){
         this.setPk(PK_PREFIX + recipientId);
         this.setSk(addressType + ITEMS_SEPARATOR + (senderId==null?SENDER_ID_DEFAULT:senderId) + ITEMS_SEPARATOR + (channelType==null?"":channelType));
@@ -53,4 +56,5 @@ public class AddressBookEntity extends BaseEntity {
         return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_SENDER_ID];
     }
 
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_ADDRESSHASH)}))  private String addresshash;
 }
