@@ -212,7 +212,8 @@ public class AddressBookDao extends BaseDao {
                AtomicReference<Integer> count = new AtomicReference<>(0);
                list.forEach(ab -> {
                    if (ab.getAddresshash() != null
-                       && ab.getAddresshash().equals(hashedAddressToCheck.get()))
+                       && ab.getAddresshash().equals(hashedAddressToCheck.get())
+                       && ab.getChannelType().equals(addressBook.getChannelType()))
                    {
                        count.set(count.get() +1);
                    }
