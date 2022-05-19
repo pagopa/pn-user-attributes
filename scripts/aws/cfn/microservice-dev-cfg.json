@@ -3,8 +3,8 @@
     "CorsAllowedDomains" : "http://localhost:8090,https://portale-pa-develop.fe.dev.pn.pagopa.it/,https://portale-pf-develop.fe.dev.pn.pagopa.it/,https://www.dev.pn.pagopa.it",
     "ExternalChannelBasePath": "https://p0kt6b8wsi.execute-api.eu-south-1.amazonaws.com/dev/",
     "HeaderValueExternalChannelCxId": "pn-delivery-002",
-    "ExternalChannelSenderPEC": "",
-    "ExternalChannelSenderEMAIL": "",
-    "ExternalChannelSenderSMS": ""
+    "ExternalChannelSenderPEC": "noreply@pecpiattaformanotifiche.it",
+    "ExternalChannelSenderEMAIL": "noreply@piattaformanotifiche.it",
+    "ExternalChannelSenderSMS": "00393331234567"
   }
 }
