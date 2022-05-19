@@ -32,6 +32,7 @@ public class PnUserattributesConfig {
     private String clientExternalchannelsHeaderExtchCxId;
     private String clientExternalchannelsSenderEmail;
     private String clientExternalchannelsSenderSms;
+    private String clientExternalchannelsSenderPec;
 
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;

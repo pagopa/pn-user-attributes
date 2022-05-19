@@ -29,6 +29,7 @@ import java.util.Random;
 @Slf4j
 public class AddressBookService {
 
+    private static final int VERIFICATION_CODE_TTL_MINUTES = 10;
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
@@ -378,7 +379,7 @@ public class AddressBookService {
         log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
         verificationCode.setVerificationCode(vercode);
-        verificationCode.setTtl(LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()).toEpochSecond());
+        verificationCode.setTtl(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_TTL_MINUTES).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)
                 .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
@@ -420,6 +421,7 @@ public class AddressBookService {
     private Mono<Void> saveInDynamodb(String recipientId, String hashedaddress, String legal, String senderId, String channelType){
         log.info("saving address in db uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
+        addressBook.setAddresshash(hashedaddress);
 
         VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedaddress, channelType);
 

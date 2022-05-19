@@ -2,9 +2,9 @@ package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
-import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,22 +43,27 @@ class AddressBookDaoTestIT {
 
     TestDao<AddressBookEntity> testDao;
     TestDao<VerificationCodeEntity> testCodeDao;
+    TestDao<VerifiedAddressEntity> testVADao;
 
 
     @BeforeEach
     void setup() {
         testDao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), AddressBookEntity.class);
         testCodeDao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), VerificationCodeEntity.class);
+        testVADao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), VerifiedAddressEntity.class);
     }
 
     @Test
     void deleteAddressBook() {
 
         //Given
+        String hashed = DigestUtils.sha256Hex("test@test.it");
         AddressBookEntity addressBookToDelete = newAddress(true);
-        VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "Legal", "SMS");
+        addressBookToDelete.setAddresshash(hashed);
+        VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity(addressBookToDelete.getRecipientId(), hashed, addressBookToDelete.getChannelType());
         try {
             testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
             addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
         } catch (Exception e) {
             System.out.println("error removing");
@@ -72,6 +76,8 @@ class AddressBookDaoTestIT {
         try {
             AddressBookEntity elementFromDb = testDao.get(addressBookToDelete.getPk(), addressBookToDelete.getSk());
             Assertions.assertNull(elementFromDb);
+            VerifiedAddressEntity elementFromDb1 = testVADao.get(verifiedAddress.getPk(), verifiedAddress.getSk());
+            Assertions.assertNull(elementFromDb1);
         } catch (Exception e) {
             fail(e);
         } finally {
@@ -83,6 +89,63 @@ class AddressBookDaoTestIT {
 
         }
     }
+
+    @Test
+    void deleteAddressBookButNotVerifiedAddress() {
+
+        //Given
+        String hashed = DigestUtils.sha256Hex("test@test.it");
+        AddressBookEntity addressBookToDelete = newAddress(false);
+        addressBookToDelete.setAddresshash(hashed);
+        VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity(addressBookToDelete.getRecipientId(), hashed, addressBookToDelete.getChannelType());
+
+        AddressBookEntity addressBookToDelete1 = newAddress(false, "idpa123");
+        addressBookToDelete1.setAddresshash(hashed);
+
+        try {
+            testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            testDao.delete(addressBookToDelete1.getPk(), addressBookToDelete1.getSk());
+            testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete1,verifiedAddress).block(d);
+        } catch (Exception e) {
+            System.out.println("error removing");
+        }
+
+        //When
+        addressBookDao.deleteAddressBook(addressBookToDelete.getRecipientId(), addressBookToDelete.getSenderId(), addressBookToDelete.getAddressType(), addressBookToDelete.getChannelType()).block(d);
+
+        //Then
+        try {
+            AddressBookEntity elementFromDb = testDao.get(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            Assertions.assertNull(elementFromDb);
+            VerifiedAddressEntity elementFromDb1 = testVADao.get(verifiedAddress.getPk(), verifiedAddress.getSk());
+            Assertions.assertNotNull(elementFromDb1);
+
+            //When2
+            addressBookDao.deleteAddressBook(addressBookToDelete1.getRecipientId(), addressBookToDelete1.getSenderId(), addressBookToDelete1.getAddressType(), addressBookToDelete1.getChannelType()).block(d);
+
+            // Then2
+            elementFromDb = testDao.get(addressBookToDelete1.getPk(), addressBookToDelete1.getSk());
+            Assertions.assertNull(elementFromDb);
+            elementFromDb1 = testVADao.get(verifiedAddress.getPk(), verifiedAddress.getSk());
+            Assertions.assertNull(elementFromDb1);
+
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+                testDao.delete(addressBookToDelete1.getPk(), addressBookToDelete1.getSk());
+                testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+
+        }
+
+    }
+
         @Test
         void getAddresses () {
 
@@ -309,9 +372,13 @@ class AddressBookDaoTestIT {
         }
 
         public static AddressBookEntity newAddress(boolean isLegal) {
+           return newAddress(isLegal, "default");
+        }
+
+        public static AddressBookEntity newAddress(boolean isLegal, String senderId) {
             if (isLegal)
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", "default", "PEC");
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", senderId, "PEC");
             else
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", "default", "EMAIL");
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", senderId, "EMAIL");
         }
     }

@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedExce
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Repository
 @Slf4j
@@ -55,7 +56,6 @@ public class AddressBookDao extends BaseDao {
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
         log.debug("deleteAddressBook recipientId:{} senderId:{} legalType:{} channelType:{}", recipientId, senderId, legal, channelType);
-
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -72,15 +72,15 @@ public class AddressBookDao extends BaseDao {
                 .build();
 
 
-        return Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
+        return deleteVerifiedAddressIfItsLastRemained(addressBook)
+                .then(Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof ConditionalCheckFailedException)
                         throw new NotFoundException();
                     else {
                         throw new InternalErrorException();
                     }
-                }));
-
+                })));
     }
 
 
@@ -176,7 +176,62 @@ public class AddressBookDao extends BaseDao {
                 .addUpdateItem(verifiedAddressTable, updVARequest)
                 .build();
 
-        return Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest));
+        return deleteVerifiedAddressIfItsLastRemained(addressBook)
+                .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)));
+    }
+
+    /**
+     * Elimina l'eventuale verified address se è l'ultimo rimasto e viene rimosso (o modificato) l'addressbook
+     *
+     * @param addressBook entity da cui partire per la ricerca
+     * @return nd
+     */
+    private Mono<Void> deleteVerifiedAddressIfItsLastRemained(AddressBookEntity addressBook)
+    {
+        // step1: cerco se esiste un precedente addressbook con gli stessi parametri del mio (ignorando l'hashedaddress CORRENTE,
+        // che potrebbe essere cambiato, ad esempio nel caso in cui sto sovrascrivendo, che è un caso speciale di DELETE-INSERT visto che è unico
+        // step2: se lo trovo, uso il suo hashedaddress per la successiva ricerca. Se non lo trovo vuol dire che sto inserendo un nuovo indirizzo, e quindi non c'è nulla da eliminare.
+        // step3: nel caso in cui esisteva un indirizzo, devo controllare se ci sono ALTRI indirizzi con lo stesso hashedaddress.
+        //        Se si, non devo fare nulla (non è l'ultimo).
+        //        Altrimenti, devo eliminare il verifiedaddress associato al channelType
+
+        //NB: gli step li eseguo comunque in memoria, perchè così eseguo una richiesta unica a dynamo e non si suppone siano molti indirizzi
+        return this.getAllAddressesByRecipient(addressBook.getRecipientId()).collectList().flatMap(list -> {
+            log.info("deleteVerifiedAddressIfItsLastRemained there are {} for recipientId:{}", list.size(), addressBook.getRecipientId());
+            // step 1
+            AtomicReference<String> hashedAddressToCheck = new AtomicReference<>();
+               list.forEach(ab -> {
+                   if (ab.getSk().equals(addressBook.getSk()))
+                   {
+                       hashedAddressToCheck.set(ab.getAddresshash());
+                   }
+               });
+            // step 2
+           if (hashedAddressToCheck.get() != null)
+           {
+               AtomicReference<Integer> count = new AtomicReference<>(0);
+               list.forEach(ab -> {
+                   if (ab.getAddresshash() != null
+                       && ab.getAddresshash().equals(hashedAddressToCheck.get()))
+                   {
+                       count.set(count.get() +1);
+                   }
+               });
+               // step 3
+               if (count.get() == 1)
+               {
+                   log.info("deleteVerifiedAddressIfItsLastRemained this was the last one address for hash:{} and channelType:{}, removing verifiedaddress", hashedAddressToCheck.get(), addressBook.getChannelType());
+                   VerifiedAddressEntity verifiedAddressToDelete =new VerifiedAddressEntity(addressBook.getRecipientId(), hashedAddressToCheck.get(), addressBook.getChannelType());
+                   return Mono.fromFuture(this.verifiedAddressTable.deleteItem(verifiedAddressToDelete)).then();
+               }
+               else
+                   log.info("deleteVerifiedAddressIfItsLastRemained there are more than one address for hash:{} and channelType:{}", hashedAddressToCheck.get(), addressBook.getChannelType());
+           }
+           else
+               log.info("deleteVerifiedAddressIfItsLastRemained there aren't previous addresses for recipient and channeltype recipientId:{} and channelType:{}, nothing to remove", addressBook.getRecipientId(), addressBook.getChannelType());
+
+           return Mono.empty();
+        });
     }
 
 }
