@@ -66,11 +66,19 @@ public class PnExternalChannelClient extends BaseClient {
 
     public Mono<Void> sendVerificationCode(String recipientId, String address, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
-        String requestId = UUID.randomUUID().toString();
-        if (legalChannelType != null)
-           return sendLegalVerificationCode(recipientId, requestId, address, legalChannelType, verificationCode);
-        else
-            return sendCourtesyVerificationCode(recipientId, requestId, address, courtesyChannelType, verificationCode);
+        if ( ! pnUserattributesConfig.isDevelopment() ) {
+            String requestId = UUID.randomUUID().toString();
+            if (legalChannelType != null)
+                return sendLegalVerificationCode(recipientId, requestId, address, legalChannelType, verificationCode);
+            else
+                return sendCourtesyVerificationCode(recipientId, requestId, address, courtesyChannelType, verificationCode);
+        }
+        else {
+            log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND!!!!");
+            log.warn("recipientId={} address={} legalChannelType={} courtesyChannelType={} verificationCode={}",
+                    recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+            return Mono.empty();
+        }
     }
 
     private Mono<Void> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
