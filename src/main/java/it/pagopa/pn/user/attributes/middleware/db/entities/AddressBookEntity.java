@@ -23,12 +23,12 @@ public class AddressBookEntity extends BaseEntity {
 
     private static final String PK_PREFIX = "AB#";
     private static final String ITEMS_SEPARATOR = "#";
-    private static final String SENDER_ID_DEFAULT = "default";
     private static final int PK_ITEMS_RECIPIENTID = 1;
     private static final int SK_ITEMS_ADDRESS_TYPE = 0;
     private static final int SK_ITEMS_SENDER_ID = 1;
     private static final int SK_ITEMS_CHANNEL_TYPE = 2;
 
+    public static final String SENDER_ID_DEFAULT = "default";
     public static final String COL_ADDRESSHASH = "addresshash";
 
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){

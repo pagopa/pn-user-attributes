@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
@@ -195,8 +196,107 @@ class AddressBookDaoTestIT {
                 }
                 }
 
+    @Test
+    void getAddressesSenderIdNull () {
 
-        @Test
+        //Given
+        VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
+        List<AddressBookEntity> toInsert = new ArrayList<>();
+        toInsert.add(newAddress(true));
+        toInsert.add(newAddress(false));
+
+
+
+        try {
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<AddressBookEntity> results = addressBookDao.getAddresses(toInsert.get(0).getRecipientId(),null, toInsert.get(0).getAddressType()).collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(1, results.size());
+            Assertions.assertTrue(toInsert.contains(results.get(0)));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                toInsert.forEach(x -> {
+                    try {
+                        testDao.delete(x.getPk(), x.getSk());
+                    } catch (Exception e) {
+                        System.out.println("error removing");
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void getAddressesDefaultFallback () {
+
+        //Given
+        VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
+        List<AddressBookEntity> toInsert = new ArrayList<>();
+        toInsert.add(newAddress(true, "paid"));
+        toInsert.add(newAddress(true));
+
+
+
+        try {
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<AddressBookEntity> results = addressBookDao.getAddresses(toInsert.get(0).getRecipientId(),toInsert.get(0).getSenderId(), toInsert.get(0).getAddressType()).collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(1, results.size());
+            Assertions.assertTrue(toInsert.contains(results.get(0)));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                toInsert.forEach(x -> {
+                    try {
+                        testDao.delete(x.getPk(), x.getSk());
+                    } catch (Exception e) {
+                        System.out.println("error removing");
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
         void getAllAddressesByRecipient () {
             //Given
             VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
@@ -217,7 +317,7 @@ class AddressBookDaoTestIT {
             }
 
             //WHEN
-            List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId()).collectList().block(d);
+            List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId(), null).collectList().block(d);
 
             //THEN
             try {
@@ -241,6 +341,52 @@ class AddressBookDaoTestIT {
                 }
             }
         }
+
+    @Test
+    void getAllAddressesByRecipientFiltered () {
+        //Given
+        VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","address@pec.it","SMS");
+        List<AddressBookEntity> toInsert = new ArrayList<>();
+        toInsert.add(newAddress(true));
+        toInsert.add(newAddress(false));
+        try {
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId(), CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue()).collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(1, results.size());
+            Assertions.assertEquals(toInsert.get(1).getSk(), results.get(0).getSk());
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                toInsert.forEach(x -> {
+                    try {
+                        testDao.delete(x.getPk(), x.getSk());
+                    } catch (Exception e) {
+                        System.out.println("error removing");
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
 
 
         @Test

@@ -20,9 +20,13 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
@@ -87,7 +91,14 @@ public class AddressBookDao extends BaseDao {
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
         log.debug("getAddresses recipientId:{} senderId:{} legalType:{}", recipientId, senderId, legalType);
 
+        if (senderId == null)
+            senderId = AddressBookEntity.SENDER_ID_DEFAULT;
+
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legalType, senderId, null);
+        // mi interessa avere quelle che INIZIANO PER il legaltype specificato (ignorando il senderId),
+        // e poi dovrò filtrare in base al sender se presente, o tornare il default
+        if (!senderId.equals(AddressBookEntity.SENDER_ID_DEFAULT))
+            addressBook.setSk(legalType);
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
@@ -95,26 +106,49 @@ public class AddressBookDao extends BaseDao {
                 .scanIndexForward(true)
                 .build();
 
+        String finalSenderId = senderId;
         return Flux.from(addressBookTable.query(qeRequest)
-                        .items());
+                        .items())
+                .collectList()
+                .map(results -> {
+                    if (!AddressBookEntity.SENDER_ID_DEFAULT.equals(finalSenderId)) {
+                        // devo filtrare gli elementi, per produrre una lista contenente, per ogni channelTYPE
+                        // quello preferito per il senderid se presente oppure quello di default
+                        // se invcece il senderId era null (che equivale a volere quello di default), cerco direttamente quelli di default
+                        List<AddressBookEntity> res = new ArrayList<>();
+                        // inserisco tutti gli elementi che hanno il senderid specificato
+                        res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(finalSenderId)).collect(Collectors.toList()));
+                        // inserisco tutti gli elementi che hanno il senderid di default e il channeltype NON era già presente nella lista dei risultati
+                        res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(AddressBookEntity.SENDER_ID_DEFAULT)
+                                && res.stream().noneMatch(rab -> rab.getChannelType().equals(ab.getChannelType()))).collect(Collectors.toList()));
+                        return  res;
+                    }
+                    else
+                        return results; // è gia a posto
+                })
+                .flatMapIterable(ab -> ab);
     }
 
 
-    public Flux<AddressBookEntity> getAllAddressesByRecipient(String recipientId) {
-        log.debug("getAllAddressesByRecipient recipientId:{}", recipientId);
+    public Flux<AddressBookEntity> getAllAddressesByRecipient(String recipientId, @Nullable String legalType) {
+        log.debug("getAllAddressesByRecipient recipientId:{} legaltype:{}", recipientId, legalType);
 
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, null, null, null);
-
-        QueryEnhancedRequest qeRequest = QueryEnhancedRequest
+        QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
                 .builder()
-                .queryConditional(QueryConditional.keyEqualTo(getKeyBuild(addressBook.getPk())))
-                .scanIndexForward(true)
-                .build();
+                .scanIndexForward(true);
+
+        if (legalType != null)
+        {
+            addressBook.setSk(legalType);
+            qeRequest = qeRequest.queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(addressBook.getPk(), addressBook.getSk())));
+        }
+        else
+            qeRequest = qeRequest.queryConditional(QueryConditional.keyEqualTo(getKeyBuild(addressBook.getPk())));
 
 
-        return Flux.from(addressBookTable.query(qeRequest)
+        return Flux.from(addressBookTable.query(qeRequest.build())
                 .items());
-
     }
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
@@ -196,7 +230,7 @@ public class AddressBookDao extends BaseDao {
         //        Altrimenti, devo eliminare il verifiedaddress associato al channelType
 
         //NB: gli step li eseguo comunque in memoria, perchè così eseguo una richiesta unica a dynamo e non si suppone siano molti indirizzi
-        return this.getAllAddressesByRecipient(addressBook.getRecipientId()).collectList().flatMap(list -> {
+        return this.getAllAddressesByRecipient(addressBook.getRecipientId(), null).collectList().flatMap(list -> {
             log.info("deleteVerifiedAddressIfItsLastRemained there are {} for recipientId:{}", list.size(), addressBook.getRecipientId());
             // step 1
             AtomicReference<String> hashedAddressToCheck = new AtomicReference<>();

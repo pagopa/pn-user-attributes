@@ -409,7 +409,7 @@ class AddressBookServiceTest {
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
-        when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
@@ -491,7 +491,7 @@ class AddressBookServiceTest {
         resdto1.setChannelType(LegalChannelTypeDto.APPIO);
 
 
-        when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         //When
@@ -532,7 +532,7 @@ class AddressBookServiceTest {
         resdto2.setChannelType(CourtesyChannelTypeDto.EMAIL);
 
 
-        when(addressBookDao.getAllAddressesByRecipient (Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(addressBookDao.getAllAddressesByRecipient (Mockito.any(), Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto2);
