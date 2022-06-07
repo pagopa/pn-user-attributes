@@ -6,6 +6,10 @@ Parameters:
     Type: String
     Description: 'Usually pn can be pnXYZ where XYZ are the feature number, useful to create
       experimental environments without crash official development environment'
+  
+  AlarmSNSTopicArn:
+    Type: String
+    Description: ARN of alarm topic
 
   ApiDnsName:
     Type: String
@@ -94,6 +98,7 @@ Resources:
         MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
         CpuValue: 1024
         MemoryAmount: 2GB
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
         ContainerEnvEntry2: !Sub 'CORS_ALLOWED_DOMAINS=${CorsAllowedDomains}'
