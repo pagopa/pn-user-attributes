@@ -92,6 +92,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-junit-jupiter</artifactId>
       <version>5.11.1</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mock-server</groupId>
@@ -178,7 +179,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>${project.basedir}/docs/wsclient/pn-data-vault/pn-datavault-api-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/647830b82cd7ee9f43dd5b4f6b10a17e50d6da12/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
