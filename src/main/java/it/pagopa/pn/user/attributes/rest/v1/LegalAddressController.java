@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 
 @RestController
 @Slf4j
@@ -24,9 +27,19 @@ public class LegalAddressController implements LegalApi {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, ServerWebExchange exchange) {
-        log.info("deleteRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
+        String logMessage = String.format("deleteRecipientLegalAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_DD_DEL, logMessage)
+                .build();
         return this.addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType)
-                .map(m -> ResponseEntity.noContent().build());
+                .onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                }).map(m -> {
+                    logEvent.generateSuccess().log();
+                    return ResponseEntity.noContent().build();
+                });
     }
 
     @Override
@@ -44,14 +57,25 @@ public class LegalAddressController implements LegalApi {
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        log.info("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
+        String logMessage = String.format("postRecipientLegalAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
+                .build();
         return this.addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto)
+                .onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                })
                 .map(m -> {
                     log.info("postRecipientLegalAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.ok().build();
-                    else
+                    else {
+                        logEvent.generateSuccess().log();
                         return ResponseEntity.noContent().build();
+                    }
                 });
 
     }

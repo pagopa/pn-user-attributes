@@ -26,6 +26,17 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
 
   <dependencies>
 
+    <dependency>
+      <groupId>it.pagopa.pn</groupId>
+      <artifactId>pn-commons</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.data</groupId>
+          <artifactId>spring-data-cassandra</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <!-- inizio sezione di dipendenze in alternativa a pn-commons -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

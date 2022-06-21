@@ -30,6 +30,9 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 
 /**
  * Classe wrapper di pn-external-channels, con gestione del backoff
@@ -83,7 +86,14 @@ public class PnExternalChannelClient extends BaseClient {
 
     private Mono<Void> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
     {
-        log.info("sendLegalVerificationCode PEC sending verification code address:{} vercode: {} channel:{} requestId:{}", LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
+        String logMessage = String.format(
+                "sendLegalVerificationCode PEC sending verification code address:%s vercode: %s channel: %s requestId: %s",
+                LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_VERIFY_PEC, logMessage)
+                .build();
         if (legalChannelType != LegalChannelTypeDto.PEC)
             throw new InvalidChannelErrorException();
 
@@ -102,6 +112,7 @@ public class PnExternalChannelClient extends BaseClient {
                     digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderPec()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderPec());
+                    logEvent.generateSuccess().log();
                     return  digitalNotificationRequestDto;
                 })
                 .take(1)
@@ -113,6 +124,7 @@ public class PnExternalChannelClient extends BaseClient {
                                         .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                         ))
                         .onErrorResume(WebClientResponseException.class, x -> {
+                            logEvent.generateFailure(x.getResponseBodyAsString()).log();
                             log.error("sendLegalVerificationCode PEC response error {}", x.getResponseBodyAsString(), x);
                             return Mono.error(x);
                         });
@@ -120,9 +132,17 @@ public class PnExternalChannelClient extends BaseClient {
 
     private Mono<Void> sendCourtesyVerificationCode(String recipientId, String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
         {
-            log.info("sendCourtesyVerificationCode SMS sending verification code address:{} vercode: {} channel:{} requestId:{}", LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId);
+            String logMessage = String.format(
+                    "sendCourtesyVerificationCode SMS sending verification code address: %s vercode: %s channel: %s requestId: %s",
+                    LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
+            );
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
+                    .build();
+            log.info(logMessage);
             DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
             digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
             digitalNotificationRequestDto.setRequestId(requestId);
@@ -133,6 +153,7 @@ public class PnExternalChannelClient extends BaseClient {
             digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
             if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderSms()))
                 digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderSms());
+            logEvent.generateSuccess().log();
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
                     .retryWhen(
@@ -140,13 +161,22 @@ public class PnExternalChannelClient extends BaseClient {
                                     .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                     )
                     .onErrorResume(WebClientResponseException.class, x -> {
+                        String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", x.getResponseBodyAsString()); 
+                        logEvent.generateFailure(failureMessage).log();
                         log.error("sendCourtesyVerificationCode SMS response error {}", x.getResponseBodyAsString(), x);
                         return Mono.error(x);
                     });
         }
         else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
         {
-            log.info("sendCourtesyVerificationCode EMAIL sending verification code address:{} vercode: {} channel:{} requestId:{}", LogUtils.maskEmailAddress(address), verificationCode, courtesyChannelType.getValue(), requestId);
+            String logMessage = String.format(
+                    "sendCourtesyVerificationCode EMAIL sending verification code address: %s vercode: %s channel: %s requestId: %s",
+                    LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
+            );
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
+                    .build();
+            log.info(logMessage);
             return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
                     .map(recipientDtoDto -> {
                         DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
@@ -161,6 +191,7 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                         if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                             digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
+                        logEvent.generateSuccess().log();
                         return  digitalNotificationRequestDto;
                     })
                     .take(1)
@@ -172,6 +203,8 @@ public class PnExternalChannelClient extends BaseClient {
                                             .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                             ))
                     .onErrorResume(WebClientResponseException.class, x -> {
+                        String failureMessage = String.format("sendCourtesyVerificationCode EMAIL response error %s", x.getResponseBodyAsString());
+                        logEvent.generateFailure(failureMessage).log();
                         log.error("sendCourtesyVerificationCode EMAIL response error {}", x.getResponseBodyAsString(), x);
                         return Mono.error(x);
                     });

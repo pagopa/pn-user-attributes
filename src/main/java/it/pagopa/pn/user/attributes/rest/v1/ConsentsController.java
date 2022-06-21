@@ -1,5 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.ConsentsApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
@@ -13,6 +16,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Consumer;
+
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi {
@@ -24,9 +29,17 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        log.info("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
-
-        return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
+        String logMessage = String.format("consentAction - recipientId: %s - consentType: %s", recipientId, consentType);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
+                .build();
+        return this.consentsService.consentAction(recipientId, consentType, consentActionDto).onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                })
+                .then(Mono.just(logEvent.generateSuccess().log()))
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 

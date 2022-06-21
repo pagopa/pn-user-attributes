@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 
 @RestController
 @Slf4j
@@ -25,10 +28,21 @@ public class CourtesyAddressController implements CourtesyApi {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
-        log.info("deleteRecipientCourtesyAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
-
+        String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .build();
         return this.addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType)
-                .map(m -> ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
+                .onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                })
+                .map(m -> {
+                    logEvent.generateSuccess().log();
+                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+                });
     }
 
     @Override
@@ -45,15 +59,25 @@ public class CourtesyAddressController implements CourtesyApi {
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        log.info("postRecipientCourtesyAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
-
+        String logMessage = String.format("postRecipientCourtesyAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .build();
         return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)
+                .onErrorResume(throwable -> {
+                    logEvent.generateFailure(throwable.getMessage()).log();
+                    return Mono.error(throwable);
+                })
                 .map(m -> {
                     log.info("postRecipientCourtesyAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.status(HttpStatus.OK).body(null);
-                    else
+                    else {
+                        logEvent.generateSuccess().log();
                         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+                    }
                 });
     }
 
