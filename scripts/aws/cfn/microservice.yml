@@ -153,6 +153,7 @@ Resources:
         ServiceApiPath: 'user-consents'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -167,3 +168,4 @@ Resources:
         ServiceApiPath: 'address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
