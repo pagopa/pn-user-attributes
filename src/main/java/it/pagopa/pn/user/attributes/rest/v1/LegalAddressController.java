@@ -37,7 +37,7 @@ public class LegalAddressController implements LegalApi {
                     logEvent.generateFailure(throwable.getMessage()).log();
                     return Mono.error(throwable);
                 }).map(m -> {
-                    logEvent.generateSuccess().log();
+                    logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.noContent().build();
                 });
     }
@@ -73,7 +73,7 @@ public class LegalAddressController implements LegalApi {
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.ok().build();
                     else {
-                        logEvent.generateSuccess().log();
+                        logEvent.generateSuccess(logMessage).log();
                         return ResponseEntity.noContent().build();
                     }
                 });

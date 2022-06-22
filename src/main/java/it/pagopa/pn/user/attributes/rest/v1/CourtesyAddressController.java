@@ -40,7 +40,7 @@ public class CourtesyAddressController implements CourtesyApi {
                     return Mono.error(throwable);
                 })
                 .map(m -> {
-                    logEvent.generateSuccess().log();
+                    logEvent.generateSuccess(logMessage).log();
                     return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                 });
     }
@@ -63,7 +63,7 @@ public class CourtesyAddressController implements CourtesyApi {
         log.info(logMessage);
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .before(PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
                 .build();
         return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)
                 .onErrorResume(throwable -> {
@@ -75,7 +75,7 @@ public class CourtesyAddressController implements CourtesyApi {
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.status(HttpStatus.OK).body(null);
                     else {
-                        logEvent.generateSuccess().log();
+                        logEvent.generateSuccess(logMessage).log();
                         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                     }
                 });

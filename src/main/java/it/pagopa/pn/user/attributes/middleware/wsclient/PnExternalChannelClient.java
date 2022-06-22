@@ -112,7 +112,7 @@ public class PnExternalChannelClient extends BaseClient {
                     digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderPec()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderPec());
-                    logEvent.generateSuccess().log();
+                    logEvent.generateSuccess(logMessage).log();
                     return  digitalNotificationRequestDto;
                 })
                 .take(1)
@@ -153,7 +153,7 @@ public class PnExternalChannelClient extends BaseClient {
             digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
             if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderSms()))
                 digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderSms());
-            logEvent.generateSuccess().log();
+            logEvent.generateSuccess(logMessage).log();
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
                     .retryWhen(
@@ -191,7 +191,7 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
                         if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                             digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
-                        logEvent.generateSuccess().log();
+                        logEvent.generateSuccess(logMessage).log();
                         return  digitalNotificationRequestDto;
                     })
                     .take(1)

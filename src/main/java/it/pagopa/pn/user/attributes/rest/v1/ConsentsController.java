@@ -39,7 +39,7 @@ public class ConsentsController implements ConsentsApi {
                     logEvent.generateFailure(throwable.getMessage()).log();
                     return Mono.error(throwable);
                 })
-                .then(Mono.just(logEvent.generateSuccess().log()))
+                .then(Mono.just(logEvent.generateSuccess(logMessage).log()))
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
