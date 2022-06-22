@@ -13,9 +13,6 @@ public class PnUserAttributesApplication {
 		SpringApplication.run(PnUserAttributesApplication.class, args);
 	}
 
-	public PnUserAttributesApplication(){
-	}
-
 	@RestController
 	@RequestMapping("/")
 	public static class RootController {
