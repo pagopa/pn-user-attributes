@@ -90,11 +90,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>io.projectreactor.tools</groupId>
-      <artifactId>blockhound</artifactId>
-      <version>1.0.6.RELEASE</version>
-    </dependency>
+
   </dependencies>
 
   <build>

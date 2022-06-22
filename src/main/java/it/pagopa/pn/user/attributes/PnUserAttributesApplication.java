@@ -15,8 +15,6 @@ public class PnUserAttributesApplication {
 	}
 
 	public PnUserAttributesApplication(){
-
-		BlockHound.install();
 	}
 
 	@RestController
