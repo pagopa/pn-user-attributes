@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.config;
 
+import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,11 +10,10 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.util.ResourceUtils;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 @ConfigurationProperties(prefix = "pn.user-attributes")
 @NoArgsConstructor
 @Slf4j
+@Import(SharedAutoConfiguration.class)
 public class PnUserattributesConfig {
 
     private String dynamodbTableName;

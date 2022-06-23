@@ -26,7 +26,14 @@ public class LegalAddressController implements LegalApi {
     public Mono<ResponseEntity<Void>> deleteRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, ServerWebExchange exchange) {
         log.info("deleteRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
         return this.addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType)
-                .map(m -> ResponseEntity.noContent().build());
+                .onErrorResume(throwable -> {
+                    log.error("audit log con errore", throwable);
+                    return Mono.error(throwable);
+                })
+                .map(m -> {
+                    log.info("audit log tutto OK");
+                    return ResponseEntity.noContent().build();
+                });
     }
 
     @Override
@@ -46,12 +53,19 @@ public class LegalAddressController implements LegalApi {
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         log.info("postRecipientLegalAddress - recipientId: {} - senderId: {} - channelType: {}", recipientId, senderId, channelType);
         return this.addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto)
+              .onErrorResume(throwable -> {
+                    log.error("audit log con errore", throwable);
+                    return Mono.error(throwable);
+                })
                 .map(m -> {
                     log.info("postRecipientLegalAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.ok().build();
                     else
+                    {
+                        log.info("audit log tutto OK");
                         return ResponseEntity.noContent().build();
+                    }
                 });
 
     }
