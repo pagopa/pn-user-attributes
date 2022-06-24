@@ -44,20 +44,20 @@ public class LegalAddressController implements LegalApi {
 
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressByRecipient(String recipientId, ServerWebExchange exchange) {
-        log.info("getLegalAddressByRecipient - recipientId: {}", recipientId);
+        log.info("getLegalAddressByRecipient - recipientId={}", recipientId);
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.addressBookService.getLegalAddressByRecipient(recipientId)));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressBySender(String recipientId, String senderId, ServerWebExchange exchange) {
-        log.info("getLegalAddressBySender - recipientId: {} - senderId: {}", recipientId, senderId);
+        log.info("getLegalAddressBySender - recipientId={} - senderId={}", recipientId, senderId);
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)));
 
     }
 
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        String logMessage = String.format("postRecipientLegalAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
+        String logMessage = String.format("postRecipientLegalAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
         log.info(logMessage);
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -69,7 +69,7 @@ public class LegalAddressController implements LegalApi {
                     return Mono.error(throwable);
                 })
                 .map(m -> {
-                    log.info("postRecipientLegalAddress done - recipientId: {} - senderId: {} - channelType: {} res: {}", recipientId, senderId, channelType, m.toString());
+                    log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
                     if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
                         return ResponseEntity.ok().build();
                     else {

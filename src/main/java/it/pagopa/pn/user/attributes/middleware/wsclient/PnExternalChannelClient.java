@@ -6,7 +6,6 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.InvalidChannelErrorException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.StringUtil;
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalCourtesyMessagesApi;
@@ -87,7 +86,7 @@ public class PnExternalChannelClient extends BaseClient {
     private Mono<Void> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
     {
         String logMessage = String.format(
-                "sendLegalVerificationCode PEC sending verification code address:%s vercode: %s channel: %s requestId: %s",
+                "sendLegalVerificationCode PEC sending verification code address=%s vercode=%s channel=%s requestId=%s",
                 LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
         log.info(logMessage);
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
@@ -136,7 +135,7 @@ public class PnExternalChannelClient extends BaseClient {
         if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
         {
             String logMessage = String.format(
-                    "sendCourtesyVerificationCode SMS sending verification code address: %s vercode: %s channel: %s requestId: %s",
+                    "sendCourtesyVerificationCode SMS sending verification code address=%s vercode=%s channel=%s requestId=%s",
                     LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
             PnAuditLogEvent logEvent = auditLogBuilder
@@ -170,7 +169,7 @@ public class PnExternalChannelClient extends BaseClient {
         else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
         {
             String logMessage = String.format(
-                    "sendCourtesyVerificationCode EMAIL sending verification code address: %s vercode: %s channel: %s requestId: %s",
+                    "sendCourtesyVerificationCode EMAIL sending verification code address=%s vercode=%s channel=%s requestId=%s",
                     LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
             PnAuditLogEvent logEvent = auditLogBuilder

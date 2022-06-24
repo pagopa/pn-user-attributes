@@ -99,7 +99,7 @@ public class PnDataVaultClient extends BaseClient {
      */
     public Mono<Void> deleteRecipientAddressByInternalId(String internalId, String addressId)
     {
-        log.info("deleteRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
+        log.info("deleteRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
         return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId)
                 .retryWhen(
                         Retry.backoff(2, Duration.ofMillis(25))

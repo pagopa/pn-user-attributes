@@ -16,8 +16,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.function.Consumer;
-
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi {
@@ -29,23 +27,26 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        String logMessage = String.format("consentAction - recipientId: %s - consentType: %s", recipientId, consentType);
+        String logMessage = String.format("consentAction - recipientId=%s - consentType=%s", recipientId, consentType);
         log.info(logMessage);
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
-        return this.consentsService.consentAction(recipientId, consentType, consentActionDto).onErrorResume(throwable -> {
+        return consentActionDto.flatMap(dto -> {
+                String messageAction = String.format("consentAction=%s", dto.getAction().toString());
+                    logEvent.generateSuccess(messageAction + logMessage);
+                return this.consentsService.consentAction(recipientId, consentType, dto).onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
                     return Mono.error(throwable);
-                })
-                .then(Mono.just(logEvent.generateSuccess(logMessage).log()))
+                });
+            })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
     @Override
     public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, ServerWebExchange exchange) {
-        log.info("getConsentByType - recipientId: {} - consentType: {}", recipientId, consentType);
+        log.info("getConsentByType - recipientId={} - consentType={}", recipientId, consentType);
 
         return this.consentsService.getConsentByType(recipientId, consentType)
                 .map(ResponseEntity::ok);
@@ -54,7 +55,7 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
-        log.info("getConsents - recipientId: {} ", recipientId);
+        log.info("getConsents - recipientId={} ", recipientId);
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId)));
     }
