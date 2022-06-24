@@ -35,10 +35,11 @@ public class ConsentsController implements ConsentsApi {
                 .build();
         return consentActionDto.flatMap(dto -> {
                 String messageAction = String.format("consentAction=%s", dto.getAction().toString());
-                    logEvent.generateSuccess(messageAction + logMessage);
-                return this.consentsService.consentAction(recipientId, consentType, dto).onErrorResume(throwable -> {
+                return this.consentsService.consentAction(recipientId, consentType, dto)
+                        .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
-                    return Mono.error(throwable);
+                    return Mono.error(throwable)
+                            .then(Mono.just(logEvent.generateSuccess(messageAction).log()));
                 });
             })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
