@@ -38,9 +38,8 @@ public class ConsentsController implements ConsentsApi {
                 return this.consentsService.consentAction(recipientId, consentType, dto)
                         .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
-                    return Mono.error(throwable)
-                            .then(Mono.just(logEvent.generateSuccess(messageAction).log()));
-                });
+                    return Mono.error(throwable);
+                }).then(Mono.just(logEvent.generateSuccess(messageAction).log()));
             })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
