@@ -106,9 +106,9 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
-        ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_PEC=${ExternalChannelSenderPEC}'
-        ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_EMAIL=${ExternalChannelSenderEMAIL}'
-        ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_SMS=${ExternalChannelSenderSMS}'
+        # ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_PEC=${ExternalChannelSenderPEC}'
+        # ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_EMAIL=${ExternalChannelSenderEMAIL}'
+        # ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_SMS=${ExternalChannelSenderSMS}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
