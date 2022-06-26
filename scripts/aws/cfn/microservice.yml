@@ -90,6 +90,10 @@ Parameters:
   ExternalChannelSenderSMS:
     Type: String
     Description: 'Sender address for SMS'
+  
+  Version:
+    Type: String
+    Description: 'keep track of used projects commitIds'
 
 Resources:
 
