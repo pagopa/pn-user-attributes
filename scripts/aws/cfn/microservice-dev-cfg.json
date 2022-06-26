@@ -1,9 +1,9 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "https://p0kt6b8wsi.execute-api.eu-south-1.amazonaws.com/dev/",
+    "ExternalChannelBasePath": "https://w0t7lzj7a1.execute-api.eu-south-1.amazonaws.com/dev",
     "HeaderValueExternalChannelCxId": "pn-delivery-002",
-    "ExternalChannelSenderPEC": "noreply@pecpiattaformanotifiche.it",
-    "ExternalChannelSenderEMAIL": "noreply@piattaformanotifiche.it",
-    "ExternalChannelSenderSMS": "00393331234567"
+    "ExternalChannelSenderPEC": "",
+    "ExternalChannelSenderEMAIL": "",
+    "ExternalChannelSenderSMS": ""
   }
 }
