@@ -20,7 +20,7 @@ paths:
   /user-consents/v1/consents:
     get:
       summary: Get all recipient consents
-      description: Returns all consents for the recipient
+      description: Returns all consents for the recipient. Return empty array if none is present.
       operationId: getConsents
       tags:
         - consents
@@ -41,20 +41,15 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'pn-errors.yaml#/components/schemas/Problem'
-        '404':
-          description: recipientId not found
-          content:
-            application/problem+json:
-              schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
-  
+
   /user-consents/v1/consents/{consentType}:
     parameters:
       - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'
       - $ref: '#/components/parameters/consentType'
+      - $ref: '#/components/parameters/queryVersion'
     get:
       summary: Get single consent by type 
-      description: Returns single consent type for the recipient
+      description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
       operationId: getConsentByType
       tags:
         - consents
@@ -67,12 +62,6 @@ paths:
                 $ref: '#/components/schemas/Consent'
         '400':
           description: Invalid input
-          content:
-            application/problem+json:
-              schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
-        '404':
-          description: recipientId not found
           content:
             application/problem+json:
               schema:
@@ -110,7 +99,13 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/ConsentType'
-      
+    queryVersion:
+      name: version
+      in: query
+      description: La versione del consenso. se non presente il default è V001
+      required: false
+      schema:
+        $ref: '#/components/schemas/ConsentVersion'
   
   responses:
     UnauthorizedError:
@@ -118,6 +113,11 @@ components:
   
   
   schemas:
+    ConsentVersion:
+      type: string
+      description: version of consent, default to V001
+      pattern: '^[V]\d{3}$'
+
     ConsentType:
       type: string
       description: type of consent
@@ -140,6 +140,7 @@ components:
       required:
         - consentType
         - recipientId
+        - consentVersion
       properties:
         recipientId:
           example: '123e4567-e89b-12d3-a456-426614174000'
@@ -147,5 +148,7 @@ components:
         consentType:
           $ref: '#/components/schemas/ConsentType'
         accepted:
-          type: boolean    
+          type: boolean
+        consentVersion:
+          $ref: '#/components/schemas/ConsentVersion'
 

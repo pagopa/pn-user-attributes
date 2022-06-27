@@ -58,15 +58,15 @@ class ConsentsServiceTest {
         ConsentActionDto consentActionDto = new ConsentActionDto();
         consentActionDto.setAction(ConsentActionDto.ActionEnum.ACCEPT);
 
-        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue(), null);
         ce.setAccepted(true);
 
-        Mockito.when(consentActionDtoToConsentEntityMapper.toEntity(Mockito.anyString(), Mockito.any(), Mockito.any())).thenReturn(ce);
+        Mockito.when(consentActionDtoToConsentEntityMapper.toEntity(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(ce);
         Mockito.when(consentDao.consentAction(Mockito.any())).thenReturn(Mono.just(new Object()));
 
     
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto).block(d);
+        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );
@@ -82,15 +82,15 @@ class ConsentsServiceTest {
         ConsentActionDto consentActionDto = new ConsentActionDto();
         consentActionDto.setAction(ConsentActionDto.ActionEnum.DECLINE);
 
-        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue());
+        ConsentEntity ce = new ConsentEntity(recipientId, consentTypeDto.getValue(), null);
         ce.setAccepted(false);
 
-        Mockito.when(consentActionDtoToConsentEntityMapper.toEntity(Mockito.anyString(), Mockito.any(), Mockito.any())).thenReturn(ce);
+        Mockito.when(consentActionDtoToConsentEntityMapper.toEntity(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(ce);
         Mockito.when(consentDao.consentAction(Mockito.any())).thenReturn(Mono.just(new Object()));
 
 
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto).block(d);
+        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );
@@ -104,11 +104,11 @@ class ConsentsServiceTest {
         ConsentDto expected = new ConsentDto();
 
         Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
-        Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any())).thenReturn(Mono.just(new ConsentEntity()));
+        Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.just(new ConsentEntity()));
 
 
         // WHEN
-        ConsentDto result = service.getConsentByType(recipientId, dto).block(d);
+        ConsentDto result = service.getConsentByType(recipientId, dto, null).block(d);
 
         //THEN
         assertEquals( expected, result );
@@ -122,13 +122,16 @@ class ConsentsServiceTest {
         ConsentDto expected = new ConsentDto();
 
         Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
-        Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
 
         // WHEN
-        Mono<ConsentDto> mono =  service.getConsentByType(recipientId, dto);
-        assertThrows(NotFoundException.class, () -> mono.block(d));
+        Mono<ConsentDto> mono =  service.getConsentByType(recipientId, dto, null);
+        ConsentDto res = mono.block(d);
+
         //THEN
+        assertNotNull(res);
+        assertEquals(false, res.getAccepted());
     }
 
 
@@ -167,7 +170,10 @@ class ConsentsServiceTest {
 
         // WHEN
         Mono<List<ConsentDto>> mono = service.getConsents(recipientId).collectList();
-        assertThrows(NotFoundException.class, () -> mono.block(d));
+        List<ConsentDto> res = mono.block(d);
+
         //THEN
+        assertNotNull(res);
+        assertEquals(0, res.size());
     }
 }

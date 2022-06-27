@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
 import io.netty.handler.timeout.TimeoutException;
+import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.InvalidChannelErrorException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
@@ -13,7 +14,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
-import it.pagopa.pn.user.attributes.utils.LogUtils;
+import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -160,7 +161,7 @@ public class PnExternalChannelClient extends BaseClient {
                                     .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                     )
                     .onErrorResume(WebClientResponseException.class, x -> {
-                        String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", x.getResponseBodyAsString()); 
+                        String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", x.getResponseBodyAsString());
                         logEvent.generateFailure(failureMessage).log();
                         log.error("sendCourtesyVerificationCode SMS response error {}", x.getResponseBodyAsString(), x);
                         return Mono.error(x);

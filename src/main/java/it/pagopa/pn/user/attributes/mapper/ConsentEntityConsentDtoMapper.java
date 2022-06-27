@@ -17,6 +17,7 @@ public class ConsentEntityConsentDtoMapper {
         dto.setRecipientId(entity.getRecipientId());
         dto.setAccepted(entity.isAccepted());
         dto.setConsentType(ConsentTypeDto.fromValue(entity.getConsentType()));
+        dto.setConsentVersion(entity.getConsentVersion());
         return  dto;
     }
 }

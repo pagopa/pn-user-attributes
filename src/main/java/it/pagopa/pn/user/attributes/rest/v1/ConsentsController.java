@@ -26,29 +26,29 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        String logMessage = String.format("consentAction - recipientId=%s - consentType=%s", recipientId, consentType);
+    public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
+        String logMessage = String.format("consentAction - recipientId=%s - consentType=%s - version=%s", recipientId, consentType, version);
         log.info(logMessage);
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
         return consentActionDto.flatMap(dto -> {
-                String messageAction = String.format("consentAction=%s", dto.getAction().toString());
-                return this.consentsService.consentAction(recipientId, consentType, dto)
-                        .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
-                    return Mono.error(throwable);
-                }).then(Mono.just(logEvent.generateSuccess(messageAction).log()));
-            })
+                    String messageAction = String.format("consentAction=%s", dto.getAction().toString());
+                    return this.consentsService.consentAction(recipientId, consentType, dto, version)
+                            .onErrorResume(throwable -> {
+                                logEvent.generateFailure(throwable.getMessage()).log();
+                                return Mono.error(throwable);
+                            }).then(Mono.just(logEvent.generateSuccess(messageAction).log()));
+                })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
     @Override
-    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, ServerWebExchange exchange) {
-        log.info("getConsentByType - recipientId={} - consentType={}", recipientId, consentType);
+    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, String version, ServerWebExchange exchange) {
+        log.info("getConsentByType - recipientId={} - consentType={} - version={}", recipientId, consentType, version);
 
-        return this.consentsService.getConsentByType(recipientId, consentType)
+        return this.consentsService.getConsentByType(recipientId, consentType, version)
                 .map(ResponseEntity::ok);
 
     }
