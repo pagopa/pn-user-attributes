@@ -23,25 +23,25 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, ServerWebExchange exchange) {
-        log.info("consentAction - recipientId: {} - consentType: {}", recipientId, consentType);
+    public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
+        log.info("consentAction - recipientId={} - consentType={} - version={}", recipientId, consentType, version);
 
-        return this.consentsService.consentAction(recipientId, consentType, consentActionDto)
+        return this.consentsService.consentAction(recipientId, consentType, consentActionDto, version)
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
     @Override
-    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, ServerWebExchange exchange) {
-        log.info("getConsentByType - recipientId: {} - consentType: {}", recipientId, consentType);
+    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, String version, ServerWebExchange exchange) {
+        log.info("getConsentByType - recipientId={} - consentType={} - version={}", recipientId, consentType, version);
 
-        return this.consentsService.getConsentByType(recipientId, consentType)
+        return this.consentsService.getConsentByType(recipientId, consentType, version)
                 .map(ResponseEntity::ok);
 
     }
 
     @Override
     public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
-        log.info("getConsents - recipientId: {} ", recipientId);
+        log.info("getConsents - recipientId={} ", recipientId);
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId)));
     }

@@ -1,12 +1,12 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
+import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -35,9 +35,9 @@ public class ConsentsService {
      * @param consentActionDto azione consenso
      * @return nd
      */
-    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto) {
+    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version) {
         return consentActionDto
-        .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto))
+        .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto, version))
         .map(consentDao::consentAction);
     }
 
@@ -48,10 +48,16 @@ public class ConsentsService {
      * @param consentType tipologia
      * @return il consenso
      */
-    public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType) {
-        return consentDao.getConsentByType(recipientId, consentType.getValue())
+    public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType, String version) {
+        return consentDao.getConsentByType(recipientId, consentType.getValue(), version)
                 .map(consentEntityConsentDtoMapper::toDto)
-                .switchIfEmpty(Mono.error(new NotFoundException()));
+                .defaultIfEmpty(ConsentDto.builder()
+                        .consentType(consentType)
+                        .consentVersion(ConsentEntity.DEFAULT_VERSION)
+                        .accepted(false)
+                        .recipientId(recipientId)
+                        .build());
+
     }
 
     /**
@@ -62,7 +68,6 @@ public class ConsentsService {
      */
     public Flux<ConsentDto> getConsents(String recipientId) {
         return consentDao.getConsents(recipientId)
-                .map(consentEntityConsentDtoMapper::toDto)
-                .switchIfEmpty(Flux.error(new NotFoundException()));
+                .map(consentEntityConsentDtoMapper::toDto);
     }
 }

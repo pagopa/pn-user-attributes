@@ -53,10 +53,10 @@ public class ConsentDao extends BaseDao implements IConsentDao {
      * @return ConsentEntity
      */
     @Override
-     public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType) {
+     public Mono<ConsentEntity> getConsentByType(String recipientId, String consentType, String version) {
         log.debug("getConsentByType recipientId:{} consentType:{}", recipientId, consentType);
 
-        ConsentEntity ce = new ConsentEntity(recipientId, consentType);
+        ConsentEntity ce = new ConsentEntity(recipientId, consentType, version);
         GetItemEnhancedRequest getReq = GetItemEnhancedRequest.builder()
                 .key(getKeyBuild(ce.getPk(), ce.getSk()))
                 .build();
@@ -76,7 +76,7 @@ public class ConsentDao extends BaseDao implements IConsentDao {
     public Flux<ConsentEntity> getConsents(String recipientId) {
         log.debug("getConsents recipientId:{}", recipientId);
 
-        ConsentEntity ce = new ConsentEntity(recipientId, "");
+        ConsentEntity ce = new ConsentEntity(recipientId, "", "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
