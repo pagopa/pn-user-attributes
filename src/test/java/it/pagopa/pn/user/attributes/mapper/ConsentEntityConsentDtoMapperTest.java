@@ -26,6 +26,7 @@ class ConsentEntityConsentDtoMapperTest {
         dtoExpected.setRecipientId(recipientId);
         dtoExpected.setAccepted(accepted);
         dtoExpected.setConsentType(type);
+        dtoExpected.setConsentVersion(ConsentEntity.DEFAULT_VERSION);
 
         ConsentDto dto = mapper.toDto(ce);
 

@@ -35,10 +35,9 @@ public class ConsentsService {
      * @param consentActionDto azione consenso
      * @return nd
      */
-    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version) {
-        return consentActionDto
-        .map(dto -> dtosToConsentEntityMapper.toEntity(recipientId, consentType, dto, version))
-        .map(consentDao::consentAction);
+    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, ConsentActionDto consentActionDto, String version) {
+        ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(recipientId, consentType, consentActionDto, version);
+        return consentDao.consentAction(consentEntity);
     }
 
     /**

@@ -66,7 +66,7 @@ class ConsentsServiceTest {
 
     
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, Mono.just(consentActionDto), null).block(d);
+        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );
@@ -90,7 +90,7 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, Mono.just(consentActionDto), null).block(d);
+        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );

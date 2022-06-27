@@ -1,5 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.ConsentsApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
@@ -24,9 +27,20 @@ public class ConsentsController implements ConsentsApi {
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
-        log.info("consentAction - recipientId={} - consentType={} - version={}", recipientId, consentType, version);
-
-        return this.consentsService.consentAction(recipientId, consentType, consentActionDto, version)
+        String logMessage = String.format("consentAction - recipientId=%s - consentType=%s - version=%s", recipientId, consentType, version);
+        log.info(logMessage);
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
+                .build();
+        return consentActionDto.flatMap(dto -> {
+                    String messageAction = String.format("consentAction=%s", dto.getAction().toString());
+                    return this.consentsService.consentAction(recipientId, consentType, dto, version)
+                            .onErrorResume(throwable -> {
+                                logEvent.generateFailure(throwable.getMessage()).log();
+                                return Mono.error(throwable);
+                            }).then(Mono.just(logEvent.generateSuccess(messageAction).log()));
+                })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }
 
