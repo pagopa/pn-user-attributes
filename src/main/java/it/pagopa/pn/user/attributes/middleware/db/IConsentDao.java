@@ -6,6 +6,6 @@ import reactor.core.publisher.Mono;
 
 public interface IConsentDao {
     Mono<Object> consentAction(ConsentEntity userAttributes);
-    Mono<ConsentEntity> getConsentByType(String recipientId, String consentType);
+    Mono<ConsentEntity> getConsentByType(String recipientId, String consentType, String version);
     Flux<ConsentEntity> getConsents(String recipientId);
 }

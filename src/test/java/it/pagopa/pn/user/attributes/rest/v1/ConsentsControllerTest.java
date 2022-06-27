@@ -39,11 +39,11 @@ class ConsentsControllerTest {
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
 
-        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE);
+        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE, null);
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.just(new Object()));
 
         // Then
@@ -68,7 +68,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsentByType(RECIPIENTID, ConsentTypeDto.TOS))
+        Mockito.when(svc.getConsentByType(RECIPIENTID, ConsentTypeDto.TOS, null))
                 .thenReturn( Mono.just(consentDto) );
 
         // Then

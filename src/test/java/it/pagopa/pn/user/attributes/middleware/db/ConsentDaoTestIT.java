@@ -84,7 +84,7 @@ public class ConsentDaoTestIT {
     }
 
     public static ConsentEntity newConsent(boolean accepted) {
-        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", "TOS");
+        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", "TOS", null);
         c.setAccepted(accepted);
         c.setCreated(Instant.now());
         c.setLastModified(Instant.now());
@@ -96,7 +96,6 @@ public class ConsentDaoTestIT {
 
         //Given
         ConsentEntity consentToInsert = newConsent(false);
-        consentToInsert.setSk("DATAPRIVACY");
 
 
         try {
@@ -107,7 +106,7 @@ public class ConsentDaoTestIT {
         }
 
         //When
-        ConsentEntity result = consentDao.getConsentByType(consentToInsert.getRecipientId(), consentToInsert.getSk()).block(d);
+        ConsentEntity result = consentDao.getConsentByType(consentToInsert.getRecipientId(), consentToInsert.getConsentType(), consentToInsert.getConsentVersion()).block(d);
 
         //Then
 

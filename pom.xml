@@ -41,16 +41,15 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
       <version>${software.amazon.awssdk-version}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.logstash.logback</groupId>
-      <artifactId>logstash-logback-encoder</artifactId>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -147,6 +146,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
                 <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
                 <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
+                <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
