@@ -2,12 +2,14 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
 import io.netty.handler.timeout.TimeoutException;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.InvalidChannelErrorException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalCourtesyMessagesApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalLegalMessagesApi;
@@ -30,9 +32,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.commons.log.PnAuditLogEventType;
 
 /**
  * Classe wrapper di pn-external-channels, con gestione del backoff
@@ -174,7 +173,7 @@ public class PnExternalChannelClient extends BaseClient {
                     LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
             PnAuditLogEvent logEvent = auditLogBuilder
-                    .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
+                    .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
             log.info(logMessage);
             return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
