@@ -19,27 +19,30 @@ import reactor.core.publisher.Mono;
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi {
-    ConsentsService consentsService;
+    private final ConsentsService consentsService;
+    private final PnAuditLogBuilder auditLogBuilder;
 
-    public ConsentsController(ConsentsService consentsService) {
+    public ConsentsController(ConsentsService consentsService, PnAuditLogBuilder pnAuditLogBuilder) {
         this.consentsService = consentsService;
+        this.auditLogBuilder = pnAuditLogBuilder;
     }
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
         String logMessage = String.format("consentAction - recipientId=%s - consentType=%s - version=%s", recipientId, consentType, version);
         log.info(logMessage);
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
         return consentActionDto.flatMap(dto -> {
-                    String messageAction = String.format("consentAction=%s", dto.getAction().toString());
+                    String messageAction = String.format("recipientId=%s - consentType=%s - version=%s - consentAction=%s", recipientId, consentType, version, dto.getAction().toString());
                     return this.consentsService.consentAction(recipientId, consentType, dto, version)
                             .onErrorResume(throwable -> {
                                 logEvent.generateFailure(throwable.getMessage()).log();
                                 return Mono.error(throwable);
-                            }).then(Mono.just(logEvent.generateSuccess(messageAction).log()));
+                            })
+                            .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
                 })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
     }

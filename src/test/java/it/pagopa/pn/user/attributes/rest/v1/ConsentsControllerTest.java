@@ -1,10 +1,13 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +30,22 @@ class ConsentsControllerTest {
     @MockBean
     private ConsentsService svc;
 
-    /**
-     * Test commentato perchè da revisionare (genera una NullPointerException)
-     */
+    @MockBean
+    PnAuditLogBuilder pnAuditLogBuilder;
+
+    PnAuditLogEvent logEvent;
+
+    @BeforeEach
+    public void init(){
+        logEvent = Mockito.mock(PnAuditLogEvent.class);
+
+        Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
+        Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
+        Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
+        Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
+        Mockito.when(logEvent.log()).thenReturn(logEvent);
+    }
+
     @Test
     void consentAction() {
         // Given
@@ -54,6 +70,38 @@ class ConsentsControllerTest {
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
                 .expectStatus().isOk();
+
+        Mockito.verify(logEvent).generateSuccess(Mockito.any());
+        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void consentAction_FAIL() {
+        // Given
+        String url = "/user-consents/v1/consents/{consentType}"
+                .replace("{consentType}", CONSENTTYPE);
+
+        ConsentActionDto consentAction = new ConsentActionDto();
+        consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+
+        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE, null);
+        ce.setAccepted(true);
+
+        // When
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.error(new RuntimeException()));
+
+        // Then
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(consentAction)
+                .header(PA_ID, RECIPIENTID)
+                .exchange()
+                .expectStatus().is5xxServerError();
+
+        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
+        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
     }
 
     @Test

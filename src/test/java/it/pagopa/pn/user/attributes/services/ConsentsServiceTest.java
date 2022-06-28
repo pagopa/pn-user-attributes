@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
@@ -10,27 +10,29 @@ import it.pagopa.pn.user.attributes.middleware.db.ConsentDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(classes = {
+        PnAuditLogBuilder.class
+})
 class ConsentsServiceTest {
 
     private final Duration d = Duration.ofMillis(3000);

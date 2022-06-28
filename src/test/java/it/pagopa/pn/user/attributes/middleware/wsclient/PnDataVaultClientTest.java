@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
@@ -13,6 +14,7 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -28,15 +30,23 @@ import static org.mockserver.model.HttpResponse.response;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "pn.user-attributes.client_datavault_basepath=http://localhost:9998"
+        "pn.user-attributes.client_datavault_basepath=http://localhost:9998",
+        "pn.env.runtime=PROD"
 })
 class PnDataVaultClientTest {
     @Autowired
     private PnDataVaultClient pnDataVaultClient;
 
+    @MockBean
+    PnAuditLogBuilder pnAuditLogBuilder;
+
+   /*@MockBean
+    private PnUserattributesConfig pnUserattributesConfig;
+*/
     private static ClientAndServer mockServer;
     @BeforeAll
     public static void startMockServer() {
+
         mockServer = startClientAndServer(9998);
     }
 
@@ -58,6 +68,8 @@ class PnDataVaultClientTest {
         String path = "/datavault-private/v1/recipients/internal/{internalId}/addresses/{addressId}"
                 .replace("{internalId}",internalId)
                 .replace("{addressId}",addressId);
+
+        //Mockito.when(pnUserattributesConfig.getClientDatavaultBasepath()).thenReturn("http://localhost:9998");
 
 
         new MockServerClient("localhost", 9998)

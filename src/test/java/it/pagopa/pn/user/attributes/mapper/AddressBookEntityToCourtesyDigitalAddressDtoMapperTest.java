@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.mapper;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
@@ -8,11 +9,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(classes = {
+        PnAuditLogBuilder.class,
+        AddressBookEntityToCourtesyDigitalAddressDtoMapper.class
+})
 class AddressBookEntityToCourtesyDigitalAddressDtoMapperTest {
 
 

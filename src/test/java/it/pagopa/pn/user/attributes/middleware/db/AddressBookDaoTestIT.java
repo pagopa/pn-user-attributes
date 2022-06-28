@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
@@ -41,6 +43,9 @@ class AddressBookDaoTestIT {
 
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
+
+    @MockBean
+    PnAuditLogBuilder pnAuditLogBuilder;
 
     TestDao<AddressBookEntity> testDao;
     TestDao<VerificationCodeEntity> testCodeDao;
