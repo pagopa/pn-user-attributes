@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "https://p0kt6b8wsi.execute-api.eu-south-1.amazonaws.com/dev/",
+    "ExternalChannelBasePath": "https://zq5g01oxkb.execute-api.eu-south-1.amazonaws.com/dev/",
     "HeaderValueExternalChannelCxId": "pn-delivery-002",
     "ExternalChannelSenderPEC": "",
     "ExternalChannelSenderEMAIL": "",
