@@ -91,8 +91,8 @@ public class PnExternalChannelClient extends BaseClient {
     private Mono<Void> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
     {
         String logMessage = String.format(
-                "sendLegalVerificationCode PEC sending verification code address=%s vercode=%s channel=%s requestId=%s",
-                LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
+                "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
+                recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
         log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -144,8 +144,8 @@ public class PnExternalChannelClient extends BaseClient {
         if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
         {
             String logMessage = String.format(
-                    "sendCourtesyVerificationCode SMS sending verification code address=%s vercode=%s channel=%s requestId=%s",
-                    LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
+                    "sendCourtesyVerificationCode SMS sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
+                    recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
@@ -182,8 +182,8 @@ public class PnExternalChannelClient extends BaseClient {
         else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
         {
             String logMessage = String.format(
-                    "sendCourtesyVerificationCode EMAIL sending verification code address=%s vercode=%s channel=%s requestId=%s",
-                    LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
+                    "sendCourtesyVerificationCode EMAIL sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
+                    recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
