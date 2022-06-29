@@ -159,6 +159,35 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
             </configuration>
           </execution>
           <execution>
+            <id>pn-user-attributes-address-book-b2b-io-server</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal-io-v1.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <library>spring-boot</library>
+              <modelNameSuffix>Dto</modelNameSuffix>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <configOptions>
+                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1</basePackage>
+                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto</modelPackage>
+                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.api</apiPackage>
+                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.config</configPackage>
+                <dateLibrary>java11</dateLibrary>
+                <delegatePattern>true</delegatePattern>
+                <interfaceOnly>true</interfaceOnly>
+                <annotationLibrary>none</annotationLibrary>
+                <documentationProvider>source</documentationProvider>
+                <openApiNullable>false</openApiNullable>
+                <reactive>true</reactive>
+                <skipDefaultInterface>false</skipDefaultInterface>
+                <useTags>true</useTags>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
             <id>generate-client-datavault</id>
             <goals>
               <goal>generate</goal>
@@ -202,6 +231,29 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
               <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client-io-function-service</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/io-functions-services/23bb8cbffee6814e926d4e953f6c86bca14410de/openapi/index.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.iofunctionservices.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.iofunctionservices.v1.api</apiPackage>
+              <modelNameSuffix></modelNameSuffix>
             </configuration>
           </execution>
         </executions>

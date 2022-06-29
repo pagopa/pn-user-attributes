@@ -31,11 +31,15 @@ public class PnUserattributesConfig {
 
     private String clientDatavaultBasepath;
     private String clientExternalchannelsBasepath;
+    private String clientIoactivationservicesBasepath;
+
 
     private String clientExternalchannelsHeaderExtchCxId;
     private String clientExternalchannelsSenderEmail;
     private String clientExternalchannelsSenderSms;
     private String clientExternalchannelsSenderPec;
+
+    private String clientIoactivationservicesApikey;
 
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;
