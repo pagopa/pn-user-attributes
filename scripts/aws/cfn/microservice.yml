@@ -18,7 +18,11 @@ Parameters:
   WebApiDnsName:
     Type: String
     Description: 'The DNS name used for WEB rest API.'
-  
+
+  IoApiDnsName:
+    Type: String
+    Description: 'The DNS name used for IO rest API.'
+
   CorsAllowedDomains:
     Type: String
     Description: 'Comma separated list of domains allowed to make cross origin request'
@@ -71,6 +75,10 @@ Parameters:
     Type: String
     Description: 'Base url of external channel microservice'
 
+  IoActivationServicesBasePath:
+    Type: String
+    Description: 'Base url of io activation services microservice'
+
   HeaderValueExternalChannelCxId:
     Type: String
     Description: 'Header di riconoscimento per external channel'
@@ -109,7 +117,9 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_PEC=${ExternalChannelSenderPEC}'
         ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_EMAIL=${ExternalChannelSenderEMAIL}'
         ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_SENDER_SMS=${ExternalChannelSenderSMS}'
-        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
+        ContainerEnvEntry10: !Sub 'PN_USER_ATTRIBUTES_CLIENT_IO_ACTIVATION_SERVICES_BASEPATH=${IoActivationServicesBasePath}'
+        ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_CLIENT_IO_ACTIVATION_SERVICES_API_KEY={{resolve:secretsmanager:${ProjectName}-UserAttributes-Apikey:SecretString:IoApiKey}}'
+        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -165,5 +175,20 @@ Resources:
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'address-book'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+
+
+  # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
+  AddressBookMicroservicePublicIoAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBookIO'
+        IntendedUsage: IO
+        DnsName: !Ref IoApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'address-book-io'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain

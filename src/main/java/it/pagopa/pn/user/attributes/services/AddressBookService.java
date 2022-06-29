@@ -329,6 +329,7 @@ public class AddressBookService {
      * @return nd
      */
     private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
+        log.info("deleteAddressBook recipientId={} senderId={} legalChannelType={} courtesyChannelType={}", recipientId, senderId, legalChannelType, courtesyChannelType);
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
@@ -342,6 +343,19 @@ public class AddressBookService {
                         log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
                         return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
                                 .then(Mono.error(throwable));
+                    })
+                    .flatMap(activated -> {
+                        if (activated)
+                        {
+                            log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
+                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
+                                    .then(Mono.error(new InternalError()));
+                        }
+                        else
+                        {
+                            log.info("outcome io-status is not activated, deletion successful");
+                            return Mono.just(new Object());
+                        }
                     })
                     .then(Mono.just(new Object()));
         }
@@ -441,6 +455,19 @@ public class AddressBookService {
                     // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db
                     return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
                             .then(Mono.error(throwable));
+                })
+                .flatMap(activated -> {
+                    if (activated)
+                    {
+                        log.info("outcome io-status is activated, creation successful");
+                        return Mono.just(new Object());
+                    }
+                    else
+                    {
+                        log.error("outcome io-status is not-activated, re-deleting to addressbook appio channeltype");
+                        return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                                .then(Mono.error(new InternalError()));
+                    }
                 })
                 .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
     }
