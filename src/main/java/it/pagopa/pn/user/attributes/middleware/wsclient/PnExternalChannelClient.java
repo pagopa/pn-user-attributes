@@ -107,6 +107,7 @@ public class PnExternalChannelClient extends BaseClient {
                     DigitalNotificationRequestDto digitalNotificationRequestDto = new DigitalNotificationRequestDto();
                     digitalNotificationRequestDto.setChannel(DigitalNotificationRequestDto.ChannelEnum.PEC);
                     digitalNotificationRequestDto.setRequestId(requestId);
+                    digitalNotificationRequestDto.setCorrelationId(requestId);
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                     digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
                     digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
@@ -156,6 +157,7 @@ public class PnExternalChannelClient extends BaseClient {
             DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
             digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
             digitalNotificationRequestDto.setRequestId(requestId);
+            digitalNotificationRequestDto.setCorrelationId(requestId);
             digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
             digitalNotificationRequestDto.setQos(DigitalCourtesySmsRequestDto.QosEnum.INTERACTIVE);
             digitalNotificationRequestDto.setMessageText(getSMSVerificationCodeBody(verificationCode));
@@ -196,6 +198,7 @@ public class PnExternalChannelClient extends BaseClient {
                         DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
                         digitalNotificationRequestDto.setChannel(DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL);
                         digitalNotificationRequestDto.setRequestId(requestId);
+                        digitalNotificationRequestDto.setCorrelationId(requestId);
                         digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                         digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
                         digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
