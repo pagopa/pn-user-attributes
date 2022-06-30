@@ -34,6 +34,7 @@ public class LegalAddressController implements LegalApi {
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_DEL, logMessage)
                 .build();
+        logEvent.log();
         return this.addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
@@ -60,11 +61,11 @@ public class LegalAddressController implements LegalApi {
     @Override
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         String logMessage = String.format("postRecipientLegalAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
                 .build();
+        logEvent.log();
         return this.addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();

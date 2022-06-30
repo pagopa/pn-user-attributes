@@ -93,11 +93,12 @@ public class PnExternalChannelClient extends BaseClient {
         String logMessage = String.format(
                 "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                 recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_VERIFY_PEC, logMessage)
                 .build();
+        logEvent.log();
+
         if (legalChannelType != LegalChannelTypeDto.PEC)
             throw new InvalidChannelErrorException();
 
@@ -150,7 +151,8 @@ public class PnExternalChannelClient extends BaseClient {
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
                     .build();
-            log.info(logMessage);
+            logEvent.log();
+
             DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
             digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
             digitalNotificationRequestDto.setRequestId(requestId);
@@ -188,7 +190,7 @@ public class PnExternalChannelClient extends BaseClient {
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
-            log.info(logMessage);
+            logEvent.log();
             return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
                     .map(recipientDtoDto -> {
                         DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();

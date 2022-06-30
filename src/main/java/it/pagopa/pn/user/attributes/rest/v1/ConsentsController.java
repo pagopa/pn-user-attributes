@@ -30,11 +30,11 @@ public class ConsentsController implements ConsentsApi {
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
         String logMessage = String.format("consentAction - recipientId=%s - consentType=%s - version=%s", recipientId, consentType, version);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
+        logEvent.log();
         return consentActionDto.flatMap(dto -> {
                     String messageAction = String.format("recipientId=%s - consentType=%s - version=%s - consentAction=%s", recipientId, consentType, version, dto.getAction().toString());
                     return this.consentsService.consentAction(recipientId, consentType, dto, version)
