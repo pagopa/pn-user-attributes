@@ -227,6 +227,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <configOptions>
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
+                <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)</additionalModelTypeAnnotations>
               </configOptions>
               <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
               <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>

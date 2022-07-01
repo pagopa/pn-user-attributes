@@ -71,7 +71,7 @@ public class IoFunctionServicesClient extends OcpBaseClient {
                                             .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                             )
                             .onErrorResume(throwable -> {
-                                log.error("error upserting service activation", throwable);
+                                log.error("error upserting service activation message={}", elabExceptionMessage(throwable) , throwable);
                                 return getServiceActivation(internalId);
                             })
                             .map(x -> {

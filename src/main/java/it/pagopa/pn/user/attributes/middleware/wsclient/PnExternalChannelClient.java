@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -249,15 +248,4 @@ public class PnExternalChannelClient extends BaseClient {
         message = String.format(message, verificationCode);
         return  message;
     }
-
-    private String elabExceptionMessage(Throwable x)
-    {
-        String message = x.getMessage()==null?"":x.getMessage();
-        if (x instanceof WebClientResponseException)
-        {
-            message += ";" + ((WebClientResponseException)x).getResponseBodyAsString();
-        }
-        return  message;
-    }
-
 }
