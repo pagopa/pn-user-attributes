@@ -79,6 +79,10 @@ Parameters:
     Type: String
     Description: 'Header di riconoscimento per external channel'
 
+  Version:
+    Type: String
+    Description: 'keep track of used projects commitIds'
+  
 Resources:
 
   # PN-User-Attributes microservice
