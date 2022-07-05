@@ -467,7 +467,7 @@ public class AddressBookService {
                     {
                         log.error("outcome io-status is not-activated, re-deleting to addressbook appio channeltype");
                         return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                                .then(Mono.error(new InternalError()));
+                                .then(Mono.error(new InternalErrorException()));
                     }
                 })
                 .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
