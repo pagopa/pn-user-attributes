@@ -58,7 +58,7 @@ public class CourtesyIoController implements CourtesyApi {
                                     return Mono.error(throwable);
                                 })
                                 .map(m -> {
-                                    log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m.toString());
+                                    log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
                                     logEvent.generateSuccess(logMessage).log();
                                     return ResponseEntity.noContent().build();
                                 });
@@ -75,7 +75,7 @@ public class CourtesyIoController implements CourtesyApi {
                                     return Mono.error(throwable);
                                 })
                                 .map(m -> {
-                                    log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m.toString());
+                                    log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
                                     logEvent.generateSuccess(logMessage).log();
                                     return ResponseEntity.noContent().build();
                                 });

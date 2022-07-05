@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -338,7 +339,7 @@ public class AddressBookService {
         if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
             // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb
             return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                    .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, true))
+                    .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, false))
                     .onErrorResume(throwable -> {
                         log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
                         return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
@@ -349,7 +350,7 @@ public class AddressBookService {
                         {
                             log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
                             return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
-                                    .then(Mono.error(new InternalError()));
+                                    .then(Mono.error(new InternalErrorException()));
                         }
                         else
                         {
