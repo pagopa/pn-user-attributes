@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -26,6 +27,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -188,7 +190,13 @@ public class AddressBookService {
                     dto.setLegal(new ArrayList<>());
 
                     list.forEach(ent -> {
-                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+                        // Nel caso di APPIO, non esiste un address da risolvere in data-vault
+                        String realaddress = null;
+                        if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
+                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                        else
+                            realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+
                         if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
                             LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                             add.setValue(realaddress);
@@ -335,15 +343,26 @@ public class AddressBookService {
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
+        AtomicBoolean waspresent = new AtomicBoolean(true);
 
         if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
             // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb
             return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                    .onErrorResume(NotFoundException.class, (throwable) -> {
+                        log.info("Already not activated, nothing to delete, proceeding with io-deactivation");
+                        waspresent.set(false);
+                        return Mono.just(new Object());
+                    })
                     .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, false))
                     .onErrorResume(throwable -> {
-                        log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
-                        return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
-                                .then(Mono.error(throwable));
+                        if (waspresent.get())
+                        {
+                            log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
+                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
+                                    .then(Mono.error(throwable));
+                        }
+                        else
+                            return Mono.error(throwable);
                     })
                     .flatMap(activated -> {
                         if (activated)
@@ -500,7 +519,13 @@ public class AddressBookService {
                 .map(addresses -> {
                     List<CourtesyDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
-                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                        // Nel caso di APPIO, non esiste un address da risolvere in data-vault
+                        String realaddress = null;
+                        if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
+                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                        else
+                            realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+
                         CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
                         add.setValue(realaddress);
                         res.add(add);
@@ -518,6 +543,7 @@ public class AddressBookService {
                     List<LegalDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
                         String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+
                         LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                         add.setValue(realaddress);
                         res.add(add);
