@@ -30,12 +30,15 @@ public class PnUserattributesConfig {
     private String dynamodbTableName;
 
     private String clientDatavaultBasepath;
+    private String clientExternalregistryBasepath;
     private String clientExternalchannelsBasepath;
+
 
     private String clientExternalchannelsHeaderExtchCxId;
     private String clientExternalchannelsSenderEmail;
     private String clientExternalchannelsSenderSms;
     private String clientExternalchannelsSenderPec;
+
 
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;

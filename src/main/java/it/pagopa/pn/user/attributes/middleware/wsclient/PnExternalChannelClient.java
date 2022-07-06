@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -59,12 +58,12 @@ public class PnExternalChannelClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);
@@ -93,11 +92,12 @@ public class PnExternalChannelClient extends BaseClient {
         String logMessage = String.format(
                 "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                 recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_VERIFY_PEC, logMessage)
                 .build();
+        logEvent.log();
+
         if (legalChannelType != LegalChannelTypeDto.PEC)
             throw new InvalidChannelErrorException();
 
@@ -151,7 +151,8 @@ public class PnExternalChannelClient extends BaseClient {
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
                     .build();
-            log.info(logMessage);
+            logEvent.log();
+
             DigitalCourtesySmsRequestDto digitalNotificationRequestDto = new DigitalCourtesySmsRequestDto();
             digitalNotificationRequestDto.setChannel(DigitalCourtesySmsRequestDto.ChannelEnum.SMS);
             digitalNotificationRequestDto.setRequestId(requestId);
@@ -190,7 +191,7 @@ public class PnExternalChannelClient extends BaseClient {
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
-            log.info(logMessage);
+            logEvent.log();
             return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
                     .map(recipientDtoDto -> {
                         DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
@@ -247,15 +248,4 @@ public class PnExternalChannelClient extends BaseClient {
         message = String.format(message, verificationCode);
         return  message;
     }
-
-    private String elabExceptionMessage(Throwable x)
-    {
-        String message = x.getMessage()==null?"":x.getMessage();
-        if (x instanceof WebClientResponseException)
-        {
-            message += ";" + ((WebClientResponseException)x).getResponseBodyAsString();
-        }
-        return  message;
-    }
-
 }

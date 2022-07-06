@@ -31,11 +31,11 @@ public class CourtesyAddressController implements CourtesyApi {
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
         String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_DEL:PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
                 .build();
+        logEvent.log();
         return this.addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
@@ -62,11 +62,11 @@ public class CourtesyAddressController implements CourtesyApi {
     @Override
     public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         String logMessage = String.format("postRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
-        log.info(logMessage);
 
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
+                .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_INSUP:PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
                 .build();
+        logEvent.log();
         return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();

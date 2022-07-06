@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -13,6 +14,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -51,6 +53,9 @@ class AddressBookServiceTest {
 
     @Mock
     PnExternalChannelClient pnExternalChannelClient;
+
+    @Mock
+    PnExternalRegistryIoClient ioFunctionServicesClient;
 
     @Mock
     AddressBookEntityToCourtesyDigitalAddressDtoMapper courtesyDigitalAddressToDto;
@@ -224,6 +229,73 @@ class AddressBookServiceTest {
     }
 
     @Test
+    void saveCourtesyAddressBookAPPIO() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty()).block(d);
+
+        //THEN
+        assertNotNull( result );
+        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS, result);
+    }
+
+
+    @Test
+    void saveCourtesyAddressBookAPPIO_FAIL() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
+        assertThrows(RuntimeException.class, () -> {
+            mono.block(d);
+        });
+
+
+        //THEN
+    }
+
+    @Test
+    void saveCourtesyAddressBookAPPIO_FAIL2() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(false));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
+        assertThrows(InternalErrorException.class, () -> {
+            mono.block(d);
+        });
+
+
+        //THEN
+    }
+
+    @Test
     void saveCourtesyAddressBookWithVerificationCode() {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
@@ -346,6 +418,70 @@ class AddressBookServiceTest {
 
         //THEN
         assertNotNull( result );
+    }
+
+
+    @Test
+    void deleteCourtesyAddressBookAPPIO() {
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(false));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+
+
+        // WHEN
+        Object result = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType).block(d);
+
+        //THEN
+        assertNotNull( result );
+    }
+
+
+    @Test
+    void deleteCourtesyAddressBookAPPIO_FAIL() {
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+
+
+        // WHEN
+        Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
+        assertThrows(RuntimeException.class, () -> {
+            mono.block(d);
+        });
+
+
+        //THEN
+    }
+
+
+
+    @Test
+    void deleteCourtesyAddressBookAPPIO_FAIL2() {
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
+
+
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+
+
+        // WHEN
+        Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
+        assertThrows(InternalErrorException.class, () -> {
+            mono.block(d);
+        });
+
+
+        //THEN
     }
 
     @Test

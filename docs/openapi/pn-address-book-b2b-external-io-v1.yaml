@@ -1,0 +1,101 @@
+openapi: 3.0.0
+info:
+  description: |
+    OpenApi definition for PN User Attributes - Address Book for IO backend
+  version: v1
+  title: PN User Attributes - Address Book for IO backend
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: https://api.pn.pagopa.it
+    description: Ambiente di produzione
+  - url: https://api.uat.pn.pagopa.it
+    description: Ambiente di test
+  - url: https://api.dev.pn.pagopa.it
+    description: Ambiente di sviluppo
+tags:
+  - name: courtesy
+    description: Receiver Digital Addresses
+
+paths:
+  /address-book-io/v1/digital-address/courtesy:
+    get:
+      summary: courtesy message activation on IO
+      description: Returns IO activation for courtesy message
+      operationId: getCourtesyAddressIo
+      tags:
+        - courtesy
+      parameters:
+        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IoCourtesyDigitalAddressActivation'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+        '404':
+          description: recipient not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+    put:
+      summary: set courtesy message activation on IO
+      description: Set IO activation for courtesy message
+      operationId: setCourtesyAddressIo
+      tags:
+        - courtesy
+      parameters:
+        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IoCourtesyDigitalAddressActivation'
+      responses:
+        '204':
+          description: Updated
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+
+components:
+  parameters:
+    cxTypeAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
+    cxIdAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
+    cxTaxIdAuthFleet:
+      $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'
+  schemas:
+    IoCourtesyDigitalAddressActivation:
+      description: Io courtesy activation
+      type: object
+      required:
+        - activationStatus
+      properties:
+        activationStatus:
+          type: boolean
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+security:
+  - ApiKeyAuth: [] # use the same name as under securitySchemes

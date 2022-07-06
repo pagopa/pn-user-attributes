@@ -1,6 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -10,6 +12,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.lang.NonNull;
@@ -24,6 +27,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -33,6 +37,7 @@ public class AddressBookService {
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
+    private final PnExternalRegistryIoClient ioFunctionServicesClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
 
@@ -46,11 +51,12 @@ public class AddressBookService {
 
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
-                              PnExternalChannelClient pnExternalChannelClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
+                              PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient ioFunctionServicesClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.pnExternalChannelClient = pnExternalChannelClient;
+        this.ioFunctionServicesClient = ioFunctionServicesClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
     }
@@ -133,6 +139,14 @@ public class AddressBookService {
                 .flatMapIterable(x -> x);
     }
 
+    public Mono<Boolean> isAppIoEnabledByRecipient(String recipientId)
+    {
+        return dao.getAllAddressesByRecipient(recipientId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
+                .filter(x -> x.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
+                .take(1).next()
+                .map(x -> true)
+                .defaultIfEmpty(false);
+    }
 
     /**
      * Ritorna gli indirizzi LEGALI per li recipitent e il sender id
@@ -176,7 +190,13 @@ public class AddressBookService {
                     dto.setLegal(new ArrayList<>());
 
                     list.forEach(ent -> {
-                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+                        // Nel caso di APPIO, non esiste un address da risolvere in data-vault
+                        String realaddress;
+                        if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
+                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                        else
+                            realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
+
                         if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
                             LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                             add.setValue(realaddress);
@@ -272,37 +292,40 @@ public class AddressBookService {
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
 
-        return addressVerificationDto
-                .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
-                        ,(r, alreadyverifiedoutcome) -> new Object(){
-                            public final String verificationCode = r.getVerificationCode();
-                            public final String realaddress = r.getValue();
-                            public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
-                        })
-                .flatMap(res -> {
-                    if (res.alreadyverifiedOutcome == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED)
-                    {
-                        // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
-                        // senza dover passare per la creazione di un VC
-                        // Devo cmq creare un VA con il channelType
-                        return this.sendToDataVaultAndSaveInDynamodb(recipientId, res.realaddress, legal, senderId, channelType);
-                    }
-                    else
-                    {
-                        // l'indirizzo non è verificato. Ho due casi possibili:
-                        if (!StringUtils.hasText(res.verificationCode))
-                        {
-                            // CASO A: non mi viene passato un codice verifica
-                            return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, res.realaddress, legalChannelType, courtesyChannelType);
-                        }
-                        else
-                        {
-                            // CASO B: ho un codice di verifica da validare e poi procedere.
-                            return this.validateVerificationCodeAndSendToDataVault(recipientId, res.verificationCode, res.realaddress, legal, senderId, channelType);
-                        }
+        if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
+            // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
+            // senza dover passare per la creazione di un VC
+            // Devo cmq creare un VA con il channelType
+            return sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, senderId, channelType)
+                    .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+        }
+        else {
+            return addressVerificationDto
+                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
+                            , (r, alreadyverifiedoutcome) -> new Object() {
+                                public final String verificationCode = r.getVerificationCode();
+                                public final String realaddress = r.getValue();
+                                public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
+                            })
+                    .flatMap(res -> {
+                        if (res.alreadyverifiedOutcome == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED) {
+                            // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
+                            // senza dover passare per la creazione di un VC
+                            // Devo cmq creare un VA con il channelType
+                            return this.sendToDataVaultAndSaveInDynamodb(recipientId, res.realaddress, legal, senderId, channelType);
+                        } else {
+                            // l'indirizzo non è verificato. Ho due casi possibili:
+                            if (!StringUtils.hasText(res.verificationCode)) {
+                                // CASO A: non mi viene passato un codice verifica
+                                return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, res.realaddress, legalChannelType, courtesyChannelType);
+                            } else {
+                                // CASO B: ho un codice di verifica da validare e poi procedere.
+                                return this.validateVerificationCodeAndSendToDataVault(recipientId, res.verificationCode, res.realaddress, legal, senderId, channelType);
+                            }
 
-                    }
-                });
+                        }
+                    });
+        }
     }
 
     /**
@@ -315,11 +338,51 @@ public class AddressBookService {
      * @return nd
      */
     private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
+        log.info("deleteAddressBook recipientId={} senderId={} legalChannelType={} courtesyChannelType={}", recipientId, senderId, legalChannelType, courtesyChannelType);
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
-        return  dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+
+        AtomicBoolean waspresent = new AtomicBoolean(true);
+
+        if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
+            // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb
+            return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                    .onErrorResume(NotFoundException.class, throwable -> {
+                        log.info("Already not activated, nothing to delete, proceeding with io-deactivation");
+                        waspresent.set(false);
+                        return Mono.just(new Object());
+                    })
+                    .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, false))
+                    .onErrorResume(throwable -> {
+                        if (waspresent.get())
+                        {
+                            log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
+                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
+                                    .then(Mono.error(throwable));
+                        }
+                        else
+                            return Mono.error(throwable);
+                    })
+                    .flatMap(activated -> {
+                        if (Boolean.TRUE.equals(activated))
+                        {
+                            log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
+                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
+                                    .then(Mono.error(new InternalErrorException()));
+                        }
+                        else
+                        {
+                            log.info("outcome io-status is not activated, deletion successful");
+                            return Mono.just(new Object());
+                        }
+                    })
+                    .then(Mono.just(new Object()));
+        }
+        else {
+            return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
+                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+        }
     }
 
     /**
@@ -394,6 +457,42 @@ public class AddressBookService {
     }
 
     /**
+     * Invia al datavault e se tutto OK salva in dynamodb l'indirizzo offuscato
+     *
+     * @param recipientId idutente
+     * @param legal tipologia
+     * @param senderId eventuale preferenza mittente
+     * @param channelType tipologia canale
+     * @return risultato dell'operazione
+     */
+    private Mono<SAVE_ADDRESS_RESULT> sendToIoActivationServiceAndSaveInDynamodb(String recipientId, String legal, String senderId, String channelType)
+    {
+        log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db uid:{} channel:{} legal:{}", recipientId, channelType, legal);
+        return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
+                .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, true))
+                .onErrorResume(throwable -> {
+                    log.error("Saving to io-activation-service failed, deleting from addressbook appio channeltype");
+                    // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db
+                    return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                            .then(Mono.error(throwable));
+                })
+                .flatMap(activated -> {
+                    if (Boolean.TRUE.equals(activated))
+                    {
+                        log.info("outcome io-status is activated, creation successful");
+                        return Mono.just(new Object());
+                    }
+                    else
+                    {
+                        log.error("outcome io-status is not-activated, re-deleting to addressbook appio channeltype");
+                        return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                                .then(Mono.error(new InternalErrorException()));
+                    }
+                })
+                .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+    }
+
+    /**
      * Salva in dynamodb l'id offuscato
      *
      * @param recipientId id utente
@@ -420,7 +519,13 @@ public class AddressBookService {
                 .map(addresses -> {
                     List<CourtesyDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
-                        String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+                        // Nel caso di APPIO, non esiste un address da risolvere in data-vault
+                        String realaddress;
+                        if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
+                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                        else
+                            realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+
                         CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
                         add.setValue(realaddress);
                         res.add(add);
@@ -438,6 +543,7 @@ public class AddressBookService {
                     List<LegalDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
                         String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
+
                         LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                         add.setValue(realaddress);
                         res.add(add);

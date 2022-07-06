@@ -18,7 +18,11 @@ Parameters:
   WebApiDnsName:
     Type: String
     Description: 'The DNS name used for WEB rest API.'
-  
+
+  IoApiDnsName:
+    Type: String
+    Description: 'The DNS name used for IO rest API.'
+
   CorsAllowedDomains:
     Type: String
     Description: 'Comma separated list of domains allowed to make cross origin request'
@@ -46,7 +50,7 @@ Parameters:
   VpcId:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
-  
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -102,7 +106,8 @@ Resources:
         ContainerEnvEntry4: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DATAVAULT_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
-        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*'
+        ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
@@ -160,6 +165,21 @@ Resources:
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'address-book'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+
+  # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
+  AddressBookMicroservicePublicIoAPI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBookIO'
+        IntendedUsage: IO
+        DnsName: !Ref IoApiDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'address-book-io'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
