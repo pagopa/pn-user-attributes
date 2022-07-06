@@ -235,13 +235,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
             </configuration>
           </execution>
           <execution>
-            <id>generate-client-io-function-service</id>
+            <id>generate-client-io-external-registry</id>
             <goals>
               <goal>generate</goal>
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/io-functions-services/23bb8cbffee6814e926d4e953f6c86bca14410de/openapi/index.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/950ab359e6e4ca38666427988c612f656559afd9/docs/openapi/pn-io-message-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
@@ -252,8 +252,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.iofunctionservices.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.iofunctionservices.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.api</apiPackage>
               <modelNameSuffix></modelNameSuffix>
             </configuration>
           </execution>

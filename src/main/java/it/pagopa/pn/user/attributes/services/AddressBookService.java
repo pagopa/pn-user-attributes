@@ -9,9 +9,9 @@ import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
-import it.pagopa.pn.user.attributes.middleware.wsclient.IoFunctionServicesClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.lang.NonNull;
@@ -35,7 +35,7 @@ public class AddressBookService {
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
-    private final IoFunctionServicesClient ioFunctionServicesClient;
+    private final PnExternalRegistryIoClient ioFunctionServicesClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
 
@@ -49,7 +49,7 @@ public class AddressBookService {
 
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
-                              PnExternalChannelClient pnExternalChannelClient, IoFunctionServicesClient ioFunctionServicesClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
+                              PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient ioFunctionServicesClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;

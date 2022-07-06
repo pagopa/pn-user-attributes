@@ -3,13 +3,13 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.api.RecipientsApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
+import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -38,12 +38,12 @@ public class PnDataVaultClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
         this.addressBookApi = new AddressBookApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
         this.recipientsApi = new RecipientsApi(apiClient);

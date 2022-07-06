@@ -12,9 +12,9 @@ import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
-import it.pagopa.pn.user.attributes.middleware.wsclient.IoFunctionServicesClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -55,7 +55,7 @@ class AddressBookServiceTest {
     PnExternalChannelClient pnExternalChannelClient;
 
     @Mock
-    IoFunctionServicesClient ioFunctionServicesClient;
+    PnExternalRegistryIoClient ioFunctionServicesClient;
 
     @Mock
     AddressBookEntityToCourtesyDigitalAddressDtoMapper courtesyDigitalAddressToDto;

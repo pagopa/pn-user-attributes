@@ -58,12 +58,12 @@ public class PnExternalChannelClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);

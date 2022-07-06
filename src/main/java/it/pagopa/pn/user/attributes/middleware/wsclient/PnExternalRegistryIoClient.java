@@ -4,12 +4,13 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.iofunctionservices.v1.ApiClient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.iofunctionservices.v1.api.DefaultApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.iofunctionservices.v1.dto.Activation;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.iofunctionservices.v1.dto.ActivationPayload;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.iofunctionservices.v1.dto.FiscalCodePayload;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.OcpBaseClient;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.ApiClient;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.IoActivationApi;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.Activation;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationPayload;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationStatus;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.FiscalCodePayload;
+import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -21,29 +22,27 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Classe wrapper di io-function-services, con gestione del backoff
+ * Classe wrapper di io-external-channel, con gestione del backoff
  */
 @Component
 @Slf4j
-public class IoFunctionServicesClient extends OcpBaseClient {
+public class PnExternalRegistryIoClient extends BaseClient {
 
-    public static final String IO_STATUS_ACTIVE = "ACTIVE";
-    public static final String IO_STATUS_INACTIVE = "INACTIVE";
-    private DefaultApi ioApi;
+    private IoActivationApi ioApi;
     private final PnUserattributesConfig pnUserattributesConfig;
     private final PnDataVaultClient pnDataVaultClient;
 
-    public IoFunctionServicesClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient) {
+    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.pnDataVaultClient = pnDataVaultClient;
     }
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder(), pnUserattributesConfig.getClientIoactivationservicesApikey()).build());
-        apiClient.setBasePath(pnUserattributesConfig.getClientIoactivationservicesBasepath());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
 
-        this.ioApi = new DefaultApi(apiClient);
+        this.ioApi = new IoActivationApi(apiClient);
     }
 
     /**
@@ -63,7 +62,7 @@ public class IoFunctionServicesClient extends OcpBaseClient {
                 .flatMap(user -> {
                     ActivationPayload dto = new ActivationPayload();
                     dto.setFiscalCode(user.getTaxId());
-                    dto.setStatus(activated? IO_STATUS_ACTIVE : IO_STATUS_INACTIVE);
+                    dto.setStatus(activated? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
 
                     return ioApi.upsertServiceActivation(dto)
                             .retryWhen(
@@ -75,8 +74,8 @@ public class IoFunctionServicesClient extends OcpBaseClient {
                                 return getServiceActivation(internalId);
                             })
                             .map(x -> {
-                                log.info("upsertServiceActivation response taxid={} status={} serviceId={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getServiceId(), x.getVersion());
-                                return x.getStatus().equals(IO_STATUS_ACTIVE);
+                                log.info("upsertServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
+                                return x.getStatus().equals(ActivationStatus.ACTIVE);
                             });
                 });
     }
@@ -104,7 +103,7 @@ public class IoFunctionServicesClient extends OcpBaseClient {
                                             .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
                             )
                             .map(x -> {
-                                log.info("getServiceActivation response taxid={} status={} serviceId={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getServiceId(), x.getVersion());
+                                log.info("getServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
                                 return x;
                             });
                 });
