@@ -191,7 +191,7 @@ public class AddressBookService {
 
                     list.forEach(ent -> {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault
-                        String realaddress = null;
+                        String realaddress;
                         if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
                             realaddress = CourtesyChannelTypeDto.APPIO.getValue();
                         else
@@ -348,7 +348,7 @@ public class AddressBookService {
         if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
             // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb
             return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                    .onErrorResume(NotFoundException.class, (throwable) -> {
+                    .onErrorResume(NotFoundException.class, throwable -> {
                         log.info("Already not activated, nothing to delete, proceeding with io-deactivation");
                         waspresent.set(false);
                         return Mono.just(new Object());
@@ -365,7 +365,7 @@ public class AddressBookService {
                             return Mono.error(throwable);
                     })
                     .flatMap(activated -> {
-                        if (activated)
+                        if (Boolean.TRUE.equals(activated))
                         {
                             log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
                             return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
@@ -477,7 +477,7 @@ public class AddressBookService {
                             .then(Mono.error(throwable));
                 })
                 .flatMap(activated -> {
-                    if (activated)
+                    if (Boolean.TRUE.equals(activated))
                     {
                         log.info("outcome io-status is activated, creation successful");
                         return Mono.just(new Object());
@@ -520,7 +520,7 @@ public class AddressBookService {
                     List<CourtesyDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault
-                        String realaddress = null;
+                        String realaddress;
                         if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
                             realaddress = CourtesyChannelTypeDto.APPIO.getValue();
                         else
