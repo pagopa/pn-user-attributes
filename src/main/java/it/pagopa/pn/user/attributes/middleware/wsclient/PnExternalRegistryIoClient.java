@@ -55,7 +55,7 @@ public class PnExternalRegistryIoClient extends BaseClient {
      */
     public Mono<Boolean> upsertServiceActivation(String internalId, boolean activated)
     {
-        log.info("upsertServiceActivation internalId:{} activated:{}", internalId, activated);
+        log.info("upsertServiceActivation internalId={} activated={}", internalId, activated);
 
         return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                 .take(1).next()
@@ -89,7 +89,7 @@ public class PnExternalRegistryIoClient extends BaseClient {
      */
     public Mono<Activation> getServiceActivation(String internalId)
     {
-        log.info("getServiceActivation internalId:{}", internalId);
+        log.info("getServiceActivation internalId={}", internalId);
 
         return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                 .take(1).next()
