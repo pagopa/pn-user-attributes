@@ -29,10 +29,12 @@ public class CourtesyIoController implements CourtesyApi {
 
     @Override
     public  Mono<ResponseEntity<IoCourtesyDigitalAddressActivationDto>> getCourtesyAddressIo(String xPagopaPnCxId, final ServerWebExchange exchange) {
+        log.info("[enter] getCourtesyAddressIo xPagopaPnCxId={}", xPagopaPnCxId);
         return this.addressBookService.isAppIoEnabledByRecipient(xPagopaPnCxId)
                 .map(x -> {
                     IoCourtesyDigitalAddressActivationDto addressActivationDto = new IoCourtesyDigitalAddressActivationDto();
                     addressActivationDto.setActivationStatus(x);
+                    log.info("[exit] getCourtesyAddressIo xPagopaPnCxId={}", xPagopaPnCxId);
                     return ResponseEntity.status(HttpStatus.OK).body(addressActivationDto);
                 });
     }

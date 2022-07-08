@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 
 
 /**
@@ -30,6 +32,9 @@ public class AddressBookEntity extends BaseEntity {
 
     public static final String SENDER_ID_DEFAULT = "default";
     public static final String COL_ADDRESSHASH = "addresshash";
+
+    public static final String APP_IO_ENABLED = "ENABLED";
+    public static final String APP_IO_DISABLED = "DISABLED";
 
     public AddressBookEntity(String recipientId, String addressType, String senderId, String channelType){
         this.setPk(PK_PREFIX + recipientId);

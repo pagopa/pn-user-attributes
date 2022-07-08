@@ -158,16 +158,22 @@ public class AddressBookDao extends BaseDao {
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
     }
 
+    public Mono<AddressBookEntity> getAddressBook(AddressBookEntity entity)
+    {
+        log.debug("getAddressBook recipientId={} addressType={} channelType={} senderId={}", entity.getRecipientId(), entity.getAddressType(), entity.getChannelType(), entity.getSenderId());
+
+        return Mono.fromFuture(() -> addressBookTable.getItem(entity));
+    }
 
     public Mono<VerificationCodeEntity> getVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("getVerificationCode recipientId:{} channelType:{}", entity.getRecipientId(), entity.getChannelType());
+        log.debug("getVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
         return Mono.fromFuture(() -> verificationCodeTable.getItem(entity));
     }
 
     public Mono<CHECK_RESULT> validateHashedAddress(String recipientId, String hashedAddress)
     {
-        log.debug("validateHashedAddress recipientId:{} hashedAddress:{}", recipientId, hashedAddress);
+        log.debug("validateHashedAddress recipientId={} hashedAddress={}", recipientId, hashedAddress);
         VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
@@ -197,7 +203,7 @@ public class AddressBookDao extends BaseDao {
      */
     public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress) {
 
-        log.debug("saveAddressBookAndVerifiedAddress recipientId:{} channeltype:{} senderId:{} hashedaddress:{}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());
+        log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());
         TransactUpdateItemEnhancedRequest <AddressBookEntity> updRequest = TransactUpdateItemEnhancedRequest.builder(AddressBookEntity.class)
                 .item(addressBook)
                 .build();
@@ -231,7 +237,7 @@ public class AddressBookDao extends BaseDao {
 
         //NB: gli step li eseguo comunque in memoria, perchè così eseguo una richiesta unica a dynamo e non si suppone siano molti indirizzi
         return this.getAllAddressesByRecipient(addressBook.getRecipientId(), null).collectList().flatMap(list -> {
-            log.info("deleteVerifiedAddressIfItsLastRemained there are {} for recipientId:{}", list.size(), addressBook.getRecipientId());
+            log.info("deleteVerifiedAddressIfItsLastRemained there are size={} for recipientId={}", list.size(), addressBook.getRecipientId());
             // step 1
             AtomicReference<String> hashedAddressToCheck = new AtomicReference<>();
                list.forEach(ab -> {
@@ -255,15 +261,15 @@ public class AddressBookDao extends BaseDao {
                // step 3
                if (count.get() == 1)
                {
-                   log.info("deleteVerifiedAddressIfItsLastRemained this was the last one address for hash:{} and channelType:{}, removing verifiedaddress", hashedAddressToCheck.get(), addressBook.getChannelType());
+                   log.info("deleteVerifiedAddressIfItsLastRemained this was the last one address for hash={} and channelType={}, removing verifiedaddress", hashedAddressToCheck.get(), addressBook.getChannelType());
                    VerifiedAddressEntity verifiedAddressToDelete =new VerifiedAddressEntity(addressBook.getRecipientId(), hashedAddressToCheck.get(), addressBook.getChannelType());
                    return Mono.fromFuture(this.verifiedAddressTable.deleteItem(verifiedAddressToDelete)).then();
                }
                else
-                   log.info("deleteVerifiedAddressIfItsLastRemained there are more than one address for hash:{} and channelType:{}", hashedAddressToCheck.get(), addressBook.getChannelType());
+                   log.info("deleteVerifiedAddressIfItsLastRemained there are more than one address for hash={} and channelType={}", hashedAddressToCheck.get(), addressBook.getChannelType());
            }
            else
-               log.info("deleteVerifiedAddressIfItsLastRemained there aren't previous addresses for recipient and channeltype recipientId:{} and channelType:{}, nothing to remove", addressBook.getRecipientId(), addressBook.getChannelType());
+               log.info("deleteVerifiedAddressIfItsLastRemained there aren't previous addresses for recipient and channeltype recipientId={} and channelType={}, nothing to remove", addressBook.getRecipientId(), addressBook.getChannelType());
 
            return Mono.empty();
         });

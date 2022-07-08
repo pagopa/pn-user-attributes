@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.config;
 
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ public class PnUserattributesConfig {
     private String dynamodbTableName;
 
     private String clientDatavaultBasepath;
+    private String clientDeliveryBasepath;
     private String clientExternalregistryBasepath;
     private String clientExternalchannelsBasepath;
 
@@ -43,6 +45,15 @@ public class PnUserattributesConfig {
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;
     private String verificationCodeMessageEMAILSubject;
+
+    private Topics topics;
+
+    @Data
+    public static class Topics {
+
+        private String actions;
+
+    }
 
     @Value("${pn.env.runtime}")
     private String envRuntime;

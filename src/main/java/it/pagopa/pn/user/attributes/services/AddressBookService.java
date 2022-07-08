@@ -2,7 +2,6 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -15,6 +14,7 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class AddressBookService {
     private final PnExternalRegistryIoClient ioFunctionServicesClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
+    private final IONotificationService ioNotificationService;
 
     Random rnd = new SecureRandom();
 
@@ -52,13 +54,14 @@ public class AddressBookService {
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
                               PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient ioFunctionServicesClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
-                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto) {
+                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto, IONotificationService ioNotificationService) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.pnExternalChannelClient = pnExternalChannelClient;
         this.ioFunctionServicesClient = ioFunctionServicesClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
+        this.ioNotificationService = ioNotificationService;
     }
 
 
@@ -343,46 +346,51 @@ public class AddressBookService {
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
-        AtomicBoolean waspresent = new AtomicBoolean(true);
-
         if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
-            // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb
-            return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                    .onErrorResume(NotFoundException.class, throwable -> {
-                        log.info("Already not activated, nothing to delete, proceeding with io-deactivation");
-                        waspresent.set(false);
-                        return Mono.just(new Object());
-                    })
-                    .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, false))
-                    .onErrorResume(throwable -> {
-                        if (waspresent.get())
-                        {
-                            log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
-                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
-                                    .then(Mono.error(throwable));
-                        }
-                        else
-                            return Mono.error(throwable);
-                    })
-                    .flatMap(activated -> {
-                        if (Boolean.TRUE.equals(activated))
-                        {
-                            log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
-                            return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
-                                    .then(Mono.error(new InternalErrorException()));
-                        }
-                        else
-                        {
-                            log.info("outcome io-status is not activated, deletion successful");
-                            return Mono.just(new Object());
-                        }
-                    })
-                    .then(Mono.just(new Object()));
+            // le richieste da APPIO hanno una gestione complessa dedicata
+            return deleteAddressBookAppIo(addressBookEntity);
         }
         else {
             return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
                     .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
         }
+    }
+
+    @NotNull
+    private Mono<Object> deleteAddressBookAppIo(AddressBookEntity addressBookEntity) {
+        // le richieste da APPIO non hanno "indirizzo", posso procedere con l'eliminazione in dynamodb, che però è solo logica, quindi vado a impostare il flag a FALSE
+        AtomicBoolean waspresent = new AtomicBoolean(true);
+        addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_DISABLED);
+
+        return dao.getAddressBook(addressBookEntity)
+                .switchIfEmpty(Mono.fromSupplier(() -> {
+                    log.info("Never activated, proceeding with io-deactivation");
+                    waspresent.set(false);
+                    return addressBookEntity;
+                }))
+                .then(saveInDynamodb(addressBookEntity))
+                .then(this.ioFunctionServicesClient.upsertServiceActivation(addressBookEntity.getRecipientId(), false))
+                .onErrorResume(throwable -> {
+                    if (waspresent.get()) {
+                        log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
+                        addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
+                        return saveInDynamodb(addressBookEntity)
+                                .then(Mono.error(throwable));
+                    } else
+                        return Mono.error(throwable);
+                })
+                .flatMap(activated -> {
+                    if (Boolean.TRUE.equals(activated)) {
+                        log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
+                        addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
+                        return saveInDynamodb(addressBookEntity)
+                                .then(Mono.error(new InternalErrorException()));
+                    } else {
+                        log.info("outcome io-status is not activated, deletion successful");
+                        return Mono.just(new Object());
+                    }
+                })
+                .then(Mono.just(new Object()));
     }
 
     /**
@@ -449,10 +457,11 @@ public class AddressBookService {
     {
         String hashedaddress = hashAddress(realaddress);
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
+        addressBookEntity.setAddresshash(hashedaddress);
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
         return this.dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress)
-                .then(saveInDynamodb(recipientId, hashedaddress, legal, senderId, channelType))
+                .then(saveInDynamodb(addressBookEntity))
                 .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
     }
 
@@ -467,20 +476,55 @@ public class AddressBookService {
      */
     private Mono<SAVE_ADDRESS_RESULT> sendToIoActivationServiceAndSaveInDynamodb(String recipientId, String legal, String senderId, String channelType)
     {
+        //NB: il metodo deve anche leggere l'eventuale AB presente, perchè deve poi schedulare l'invio di eventuali notifiche "recenti" (Xgg), e c'è bisogno di sapere se
+        // il flag era già stato impostato nel periodo tra ORA e ORA-Xgg, perchè vuol dire che le eventuali notifiche fino a quel momento sono già state notificate via IO
+        // Morale della favola: devo trovare il MAX tra "ORA-Xgg" e "lastUpdate" se presente.
+        // NB: non devo sovrascrivere se già presente
+
         log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db uid:{} channel:{} legal:{}", recipientId, channelType, legal);
-        return saveInDynamodb(recipientId, CourtesyChannelTypeDto.APPIO.getValue(), legal, senderId, channelType)
-                .then(this.ioFunctionServicesClient.upsertServiceActivation(recipientId, true))
-                .onErrorResume(throwable -> {
-                    log.error("Saving to io-activation-service failed, deleting from addressbook appio channeltype");
-                    // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db
-                    return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                            .then(Mono.error(throwable));
+        AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
+        addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
+
+        return dao.getAddressBook(addressBookEntity)        //(1) chiedo lo stato corrente di APPIO per l'utente
+                .switchIfEmpty(Mono.fromSupplier(() -> {
+                    // (2) se non lo trovo, ne creo uno fittizio di disabilitato, con data di ultima modifica molto vecchia
+                    AddressBookEntity defAddressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
+                    defAddressBook.setAddresshash(AddressBookEntity.APP_IO_DISABLED);   // non trovarla equivale a disabilitata
+                    defAddressBook.setLastModified(Instant.EPOCH);  // setto la data di ultima modifica ad un valore "molto" indietro nel tempo
+                    return defAddressBook;
+                }))
+                .zipWhen(ab -> {
+                    // (3) se era già presente ed abilitato, non c'è altro da fare, altrimenti va creata (caso più probabile)
+                    Instant lastUpdate = ab.getLastModified();
+                    if (ab.getAddresshash().equals(AddressBookEntity.APP_IO_ENABLED))
+                    {
+                        // non c'è niente da fare, era già presente un record con APPIO abilitata
+                        return Mono.just(ab);
+                    }
+                    else
+                    {
+                        // non era presente, devo ovviamente salvarlo
+                        return saveInDynamodb(addressBookEntity)
+                                .then(Mono.just(ab));
+                    }
+                }, (ab, r) -> ab)
+                .zipWhen(ab -> this.ioFunctionServicesClient.upsertServiceActivation(recipientId, true)
+                                .onErrorResume(throwable -> {
+                                    log.error("Saving to io-activation-service failed, deleting from addressbook appio channeltype");
+                                    // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db
+                                    return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
+                                            .then(Mono.error(throwable));
+                                })
+                        , (previousAddressBook0, activated0) -> new Object(){
+                    public final AddressBookEntity previousAddressBook=previousAddressBook0;
+                    public final Boolean activated = activated0;
                 })
-                .flatMap(activated -> {
-                    if (Boolean.TRUE.equals(activated))
+                .flatMap(zipRes -> {
+                    if (Boolean.TRUE.equals(zipRes.activated))
                     {
                         log.info("outcome io-status is activated, creation successful");
-                        return Mono.just(new Object());
+                        return ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(recipientId, zipRes.previousAddressBook.getLastModified())
+                                .then(Mono.just(new Object()));
                     }
                     else
                     {
@@ -495,19 +539,13 @@ public class AddressBookService {
     /**
      * Salva in dynamodb l'id offuscato
      *
-     * @param recipientId id utente
-     * @param hashedaddress hash indirizzo
-     * @param legal tipo indirizzo legale
-     * @param senderId id mittente
-     * @param channelType tipo canale
+     * @param addressBook addressBook da salvare, COMPLETO di hashedaddress impostato
      * @return nd
      */
-    private Mono<Void> saveInDynamodb(String recipientId, String hashedaddress, String legal, String senderId, String channelType){
-        log.info("saving address in db uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
-        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
-        addressBook.setAddresshash(hashedaddress);
+    private Mono<Void> saveInDynamodb(AddressBookEntity addressBook){
+        log.info("saving address in db uid:{} hashedaddress:{} channel:{} legal:{}", addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType(), addressBook.getAddressType());
 
-        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedaddress, channelType);
+        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType());
 
         return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity);
     }
