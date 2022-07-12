@@ -107,6 +107,35 @@ class CourtesyIoControllerTest {
         Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
     }
 
+    @Test
+    void setCourtesyAddressIoDisable() {
+        // Given
+        String url = "/address-book-io/v1/digital-address/courtesy";
+
+        // When
+
+        IoCourtesyDigitalAddressActivationDto ioCourtesyDigitalAddressActivationDto = new IoCourtesyDigitalAddressActivationDto();
+        ioCourtesyDigitalAddressActivationDto.setActivationStatus(false);
+
+        Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenReturn(Mono.just(new Object()));
+
+        // Then
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(ioCourtesyDigitalAddressActivationDto)
+                .header(HEADER_API_KEY, "secret")
+                .header(HEADER_CX_ID, "abcd")
+                .exchange()
+                .expectStatus().isNoContent();
+
+        Mockito.verify(logEvent).generateSuccess(Mockito.any());
+        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+    }
+
 
     @Test
     void setCourtesyAddressIo_FAIL() {
@@ -121,6 +150,35 @@ class CourtesyIoControllerTest {
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
                         Mockito.any(),
+                        Mockito.any(),
+                        Mockito.any()))
+                .thenReturn(Mono.error(new InternalErrorException()));
+
+        // Then
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(ioCourtesyDigitalAddressActivationDto)
+                .header(HEADER_API_KEY, "secret")
+                .header(HEADER_CX_ID, "abcd")
+                .exchange()
+                .expectStatus().is5xxServerError();
+
+        Mockito.verify(logEvent).generateFailure(Mockito.any());
+        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void setCourtesyAddressIoDisableFail() {
+        // Given
+        String url = "/address-book-io/v1/digital-address/courtesy";
+
+        // When
+
+        IoCourtesyDigitalAddressActivationDto ioCourtesyDigitalAddressActivationDto = new IoCourtesyDigitalAddressActivationDto();
+        ioCourtesyDigitalAddressActivationDto.setActivationStatus(false);
+
+        Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
                         Mockito.any(),
                         Mockito.any()))
                 .thenReturn(Mono.error(new InternalErrorException()));

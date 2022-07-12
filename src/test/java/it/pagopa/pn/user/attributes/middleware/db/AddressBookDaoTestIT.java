@@ -97,6 +97,44 @@ class AddressBookDaoTestIT {
     }
 
     @Test
+    void deleteAddressBookAPPIO() {
+
+        //Given
+        String hashed = AddressBookEntity.APP_IO_ENABLED;
+        AddressBookEntity addressBookToDelete = newAddress(true);
+        addressBookToDelete.setAddresshash(hashed);
+
+        VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity(addressBookToDelete.getRecipientId(), hashed, addressBookToDelete.getChannelType());
+        try {
+            testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
+        } catch (Exception e) {
+            System.out.println("error removing");
+        }
+
+        //When
+        addressBookDao.deleteAddressBook(addressBookToDelete.getRecipientId(), addressBookToDelete.getSenderId(), addressBookToDelete.getAddressType(), addressBookToDelete.getChannelType()).block(d);
+
+        //Then
+        try {
+            AddressBookEntity elementFromDb = testDao.get(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            Assertions.assertNull(elementFromDb);
+            VerifiedAddressEntity elementFromDb1 = testVADao.get(verifiedAddress.getPk(), verifiedAddress.getSk());
+            Assertions.assertNull(elementFromDb1);
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+
+        }
+    }
+
+    @Test
     void deleteAddressBookButNotVerifiedAddress() {
 
         //Given
@@ -528,8 +566,15 @@ class AddressBookDaoTestIT {
 
         public static AddressBookEntity newAddress(boolean isLegal, String senderId) {
             if (isLegal)
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", senderId, "PEC");
+                return newAddress(isLegal, senderId, "PEC");
             else
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", senderId, "EMAIL");
+                return newAddress(isLegal, senderId, "EMAIL");
+        }
+
+        public static AddressBookEntity newAddress(boolean isLegal, String senderId, String channelType) {
+            if (isLegal)
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", senderId, channelType);
+            else
+                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", senderId, channelType);
         }
     }
