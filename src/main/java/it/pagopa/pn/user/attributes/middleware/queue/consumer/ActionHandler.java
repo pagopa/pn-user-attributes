@@ -22,9 +22,10 @@ public class ActionHandler {
     public Consumer<Message<Action>> pnUserAttributesSendMessageActionConsumer() {
         return message -> {
             try {
-                log.info("pnUserAttributesSendMessageActionConsumer, message {}", message);
+                log.info("[enter] pnUserAttributesSendMessageActionConsumer, message {}", message);
                 Action action = message.getPayload();
-                ioNotificationService. .handleRefinement(action.getIun(), action.getRecipientIndex());
+                ioNotificationService.consumeIoSendMessageEvent(action.getInternalId(), action.getSentNotification()).block();
+                log.info("[exit] pnUserAttributesSendMessageActionConsumer");
             } catch (Exception ex) {
                 HandleEventUtils.handleException(message.getHeaders(), ex);
                 throw ex;
@@ -36,9 +37,10 @@ public class ActionHandler {
     public Consumer<Message<Action>> pnUserAttributesIoActivatedActionConsumer() {
         return message -> {
             try {
-                log.info("pnUserAttributesIoActivatedActionConsumer, message {}", message);
+                log.info("[enter] pnUserAttributesIoActivatedActionConsumer, message {}", message);
                 Action action = message.getPayload();
-                digitalWorkFlowHandler.startScheduledNextWorkflow(action.getIun(), action.getRecipientIndex());
+                ioNotificationService.consumeIoActivationEvent(action.getInternalId(), action.getCheckFromWhen()).then().block();
+                log.info("[exit] pnUserAttributesIoActivatedActionConsumer");
             } catch (Exception ex) {
                 HandleEventUtils.handleException(message.getHeaders(), ex);
                 throw ex;

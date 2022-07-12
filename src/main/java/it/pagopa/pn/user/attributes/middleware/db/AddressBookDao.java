@@ -59,7 +59,7 @@ public class AddressBookDao extends BaseDao {
     // Crea o modifica l'entity VerificationCodeEntity
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
-        log.debug("deleteAddressBook recipientId:{} senderId:{} legalType:{} channelType:{}", recipientId, senderId, legal, channelType);
+        log.debug("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -89,7 +89,7 @@ public class AddressBookDao extends BaseDao {
 
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
-        log.debug("getAddresses recipientId:{} senderId:{} legalType:{}", recipientId, senderId, legalType);
+        log.debug("getAddresses recipientId={} senderId={} legalType={}", recipientId, senderId, legalType);
 
         if (senderId == null)
             senderId = AddressBookEntity.SENDER_ID_DEFAULT;
@@ -100,9 +100,17 @@ public class AddressBookDao extends BaseDao {
         if (!senderId.equals(AddressBookEntity.SENDER_ID_DEFAULT))
             addressBook.setSk(legalType);
 
+
+        Expression exp = Expression.builder()
+                .expression(AddressBookEntity.COL_ADDRESSHASH + " <> :disabled")
+                .expressionValues(Map.of(":disabled", AttributeValue.builder().s(AddressBookEntity.APP_IO_DISABLED).build()))
+                .build();
+
+
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
                 .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(addressBook.getPk(), addressBook.getSk())))
+                .filterExpression(exp)
                 .scanIndexForward(true)
                 .build();
 
@@ -131,11 +139,18 @@ public class AddressBookDao extends BaseDao {
 
 
     public Flux<AddressBookEntity> getAllAddressesByRecipient(String recipientId, @Nullable String legalType) {
-        log.debug("getAllAddressesByRecipient recipientId:{} legaltype:{}", recipientId, legalType);
+        log.debug("getAllAddressesByRecipient recipientId={} legaltype={}", recipientId, legalType);
 
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, null, null, null);
+
+        Expression exp = Expression.builder()
+                .expression(AddressBookEntity.COL_ADDRESSHASH + " <> :disabled")
+                .expressionValues(Map.of(":disabled", AttributeValue.builder().s(AddressBookEntity.APP_IO_DISABLED).build()))
+                .build();
+
         QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
                 .builder()
+                .filterExpression(exp)
                 .scanIndexForward(true);
 
         if (legalType != null)
@@ -153,7 +168,7 @@ public class AddressBookDao extends BaseDao {
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("saveVerificationCode recipientId:{} channelType:{}", entity.getRecipientId(), entity.getChannelType());
+        log.debug("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
     }

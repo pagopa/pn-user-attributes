@@ -46,6 +46,8 @@ public class PnUserattributesConfig {
     private String verificationCodeMessageEMAIL;
     private String verificationCodeMessageEMAILSubject;
 
+    private int ioactivationSendolderthandays;
+
     private Topics topics;
 
     @Data

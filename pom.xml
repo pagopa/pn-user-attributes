@@ -35,6 +35,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-stream</artifactId>
     </dependency>
+    <dependency>
+      <groupId>de.idealo.spring</groupId>
+      <artifactId>spring-cloud-stream-binder-sqs</artifactId>
+      <version>1.5.0</version>
+    </dependency>
 
     <dependency>
       <groupId>io.swagger</groupId>
@@ -268,7 +273,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/724a492df6de8be5931916e2a26dc56f1f54abce/docs/openapi/api-private-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/0dab4218395211ceca865bf2b9d27ee196ef8293/docs/openapi/api-private-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>

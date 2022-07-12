@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.SendMessageRequest;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
 import lombok.*;
 
 import java.time.Instant;
@@ -17,9 +17,9 @@ public class Action {
 
     private String internalId;
 
-    private Instant lastDisabledStateTransitionTimestamp;
+    private Instant checkFromWhen;
 
-    private SendMessageRequest messageRequest;
+    private SentNotification sentNotification;
 
     private Instant timestamp;
 

@@ -495,7 +495,6 @@ public class AddressBookService {
                 }))
                 .zipWhen(ab -> {
                     // (3) se era già presente ed abilitato, non c'è altro da fare, altrimenti va creata (caso più probabile)
-                    Instant lastUpdate = ab.getLastModified();
                     if (ab.getAddresshash().equals(AddressBookEntity.APP_IO_ENABLED))
                     {
                         // non c'è niente da fare, era già presente un record con APPIO abilitata
@@ -523,8 +522,16 @@ public class AddressBookService {
                     if (Boolean.TRUE.equals(zipRes.activated))
                     {
                         log.info("outcome io-status is activated, creation successful");
-                        return ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(recipientId, zipRes.previousAddressBook.getLastModified())
-                                .then(Mono.just(new Object()));
+                        if (zipRes.previousAddressBook.getAddresshash().equals(AddressBookEntity.APP_IO_DISABLED))
+                        {
+                            return ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(recipientId, zipRes.previousAddressBook.getLastModified())
+                                    .then(Mono.just(new Object()));
+                        }
+                        else
+                        {
+                            log.info("previous address-book io-status was already enabled, no need to schedule checknotificationtosend");
+                            return Mono.just(new Object());
+                        }
                     }
                     else
                     {
