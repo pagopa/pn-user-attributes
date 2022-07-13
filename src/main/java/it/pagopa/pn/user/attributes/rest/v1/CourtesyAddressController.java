@@ -34,6 +34,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_DEL:PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .uid(recipientId)
                 .build();
         logEvent.log();
         return this.addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType)
@@ -65,6 +66,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_INSUP:PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
+                .uid(recipientId)
                 .build();
         logEvent.log();
         return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)

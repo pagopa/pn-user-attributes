@@ -33,6 +33,7 @@ public class ConsentsController implements ConsentsApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
+                .uid(recipientId)
                 .build();
         logEvent.log();
         return consentActionDto.flatMap(dto -> {
