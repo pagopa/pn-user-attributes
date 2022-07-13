@@ -10,10 +10,10 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,19 +34,19 @@ class IONotificationServiceTest {
 
 
 
-    @InjectMocks
+    @Autowired
     private IONotificationService service;
 
-    @Mock
+    @MockBean
     private MomProducer< ActionEvent > actionsQueue;
 
-    @Mock
+    @MockBean
     PnUserattributesConfig pnUserattributesConfig;
 
-    @Mock
+    @MockBean
     PnExternalRegistryIoClient pnExternalRegistryIoClient;
 
-    @Mock
+    @MockBean
     PnDeliveryClient pnDeliveryClient;
 
 
