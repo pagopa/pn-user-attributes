@@ -59,7 +59,7 @@ public class AddressBookDao extends BaseDao {
     // Crea o modifica l'entity VerificationCodeEntity
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
-        log.debug("deleteAddressBook recipientId:{} senderId:{} legalType:{} channelType:{}", recipientId, senderId, legal, channelType);
+        log.debug("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -89,7 +89,7 @@ public class AddressBookDao extends BaseDao {
 
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
-        log.debug("getAddresses recipientId:{} senderId:{} legalType:{}", recipientId, senderId, legalType);
+        log.debug("getAddresses recipientId={} senderId={} legalType={}", recipientId, senderId, legalType);
 
         if (senderId == null)
             senderId = AddressBookEntity.SENDER_ID_DEFAULT;
@@ -100,9 +100,17 @@ public class AddressBookDao extends BaseDao {
         if (!senderId.equals(AddressBookEntity.SENDER_ID_DEFAULT))
             addressBook.setSk(legalType);
 
+
+        Expression exp = Expression.builder()
+                .expression(AddressBookEntity.COL_ADDRESSHASH + " <> :disabled")
+                .expressionValues(Map.of(":disabled", AttributeValue.builder().s(AddressBookEntity.APP_IO_DISABLED).build()))
+                .build();
+
+
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
                 .queryConditional(QueryConditional.sortBeginsWith(getKeyBuild(addressBook.getPk(), addressBook.getSk())))
+                .filterExpression(exp)
                 .scanIndexForward(true)
                 .build();
 
@@ -131,11 +139,18 @@ public class AddressBookDao extends BaseDao {
 
 
     public Flux<AddressBookEntity> getAllAddressesByRecipient(String recipientId, @Nullable String legalType) {
-        log.debug("getAllAddressesByRecipient recipientId:{} legaltype:{}", recipientId, legalType);
+        log.debug("getAllAddressesByRecipient recipientId={} legaltype={}", recipientId, legalType);
 
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, null, null, null);
+
+        Expression exp = Expression.builder()
+                .expression(AddressBookEntity.COL_ADDRESSHASH + " <> :disabled")
+                .expressionValues(Map.of(":disabled", AttributeValue.builder().s(AddressBookEntity.APP_IO_DISABLED).build()))
+                .build();
+
         QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
                 .builder()
+                .filterExpression(exp)
                 .scanIndexForward(true);
 
         if (legalType != null)
@@ -153,21 +168,27 @@ public class AddressBookDao extends BaseDao {
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("saveVerificationCode recipientId:{} channelType:{}", entity.getRecipientId(), entity.getChannelType());
+        log.debug("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
     }
 
+    public Mono<AddressBookEntity> getAddressBook(AddressBookEntity entity)
+    {
+        log.debug("getAddressBook recipientId={} addressType={} channelType={} senderId={}", entity.getRecipientId(), entity.getAddressType(), entity.getChannelType(), entity.getSenderId());
+
+        return Mono.fromFuture(() -> addressBookTable.getItem(entity));
+    }
 
     public Mono<VerificationCodeEntity> getVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("getVerificationCode recipientId:{} channelType:{}", entity.getRecipientId(), entity.getChannelType());
+        log.debug("getVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
         return Mono.fromFuture(() -> verificationCodeTable.getItem(entity));
     }
 
     public Mono<CHECK_RESULT> validateHashedAddress(String recipientId, String hashedAddress)
     {
-        log.debug("validateHashedAddress recipientId:{} hashedAddress:{}", recipientId, hashedAddress);
+        log.debug("validateHashedAddress recipientId={} hashedAddress={}", recipientId, hashedAddress);
         VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, "");
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
@@ -197,7 +218,7 @@ public class AddressBookDao extends BaseDao {
      */
     public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress) {
 
-        log.debug("saveAddressBookAndVerifiedAddress recipientId:{} channeltype:{} senderId:{} hashedaddress:{}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());
+        log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());
         TransactUpdateItemEnhancedRequest <AddressBookEntity> updRequest = TransactUpdateItemEnhancedRequest.builder(AddressBookEntity.class)
                 .item(addressBook)
                 .build();
@@ -231,7 +252,7 @@ public class AddressBookDao extends BaseDao {
 
         //NB: gli step li eseguo comunque in memoria, perchè così eseguo una richiesta unica a dynamo e non si suppone siano molti indirizzi
         return this.getAllAddressesByRecipient(addressBook.getRecipientId(), null).collectList().flatMap(list -> {
-            log.info("deleteVerifiedAddressIfItsLastRemained there are {} for recipientId:{}", list.size(), addressBook.getRecipientId());
+            log.info("deleteVerifiedAddressIfItsLastRemained there are size={} for recipientId={}", list.size(), addressBook.getRecipientId());
             // step 1
             AtomicReference<String> hashedAddressToCheck = new AtomicReference<>();
                list.forEach(ab -> {
@@ -255,15 +276,15 @@ public class AddressBookDao extends BaseDao {
                // step 3
                if (count.get() == 1)
                {
-                   log.info("deleteVerifiedAddressIfItsLastRemained this was the last one address for hash:{} and channelType:{}, removing verifiedaddress", hashedAddressToCheck.get(), addressBook.getChannelType());
+                   log.info("deleteVerifiedAddressIfItsLastRemained this was the last one address for hash={} and channelType={}, removing verifiedaddress", hashedAddressToCheck.get(), addressBook.getChannelType());
                    VerifiedAddressEntity verifiedAddressToDelete =new VerifiedAddressEntity(addressBook.getRecipientId(), hashedAddressToCheck.get(), addressBook.getChannelType());
                    return Mono.fromFuture(this.verifiedAddressTable.deleteItem(verifiedAddressToDelete)).then();
                }
                else
-                   log.info("deleteVerifiedAddressIfItsLastRemained there are more than one address for hash:{} and channelType:{}", hashedAddressToCheck.get(), addressBook.getChannelType());
+                   log.info("deleteVerifiedAddressIfItsLastRemained there are more than one address for hash={} and channelType={}", hashedAddressToCheck.get(), addressBook.getChannelType());
            }
            else
-               log.info("deleteVerifiedAddressIfItsLastRemained there aren't previous addresses for recipient and channeltype recipientId:{} and channelType:{}, nothing to remove", addressBook.getRecipientId(), addressBook.getChannelType());
+               log.info("deleteVerifiedAddressIfItsLastRemained there aren't previous addresses for recipient and channeltype recipientId={} and channelType={}, nothing to remove", addressBook.getRecipientId(), addressBook.getChannelType());
 
            return Mono.empty();
         });

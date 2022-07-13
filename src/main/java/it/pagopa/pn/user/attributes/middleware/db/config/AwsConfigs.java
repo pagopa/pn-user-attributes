@@ -11,15 +11,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("aws")
 public class AwsConfigs {
 
-    private String profileName;
-    private String regionCode;
-    private String bucketName;
-    private String endpointUrl;
-    private Boolean useAwsKeyspace;
-
-    private String accessKeyId;
-    private String secretAccessKey;
-
     private String dynamodbTable;
     private String dynamodbTableHistory;
 }

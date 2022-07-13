@@ -1,6 +1,7 @@
 {
   "Parameters" : {
     "ExternalChannelBasePath": "https://w0t7lzj7a1.execute-api.eu-south-1.amazonaws.com/dev/",
-    "HeaderValueExternalChannelCxId": "pn-delivery-001"
+    "HeaderValueExternalChannelCxId": "pn-delivery-001",
+    "IoActivationSendOlderThanDays": 7
   }
 }

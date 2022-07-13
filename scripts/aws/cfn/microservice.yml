@@ -86,7 +86,11 @@ Parameters:
   Version:
     Type: String
     Description: 'keep track of used projects commitIds'
-  
+
+  UserAttributesActionsQueueName:
+    Type: String
+    Description: 'Send and pull ready-to-do actions th this queue'
+
 Resources:
 
   # PN-User-Attributes microservice
@@ -107,6 +111,11 @@ Resources:
         ContainerEnvEntry5: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
+        ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_IOACTIVATIONSENDOLDERTHANDAYS=${IoActivationSendOlderThanDays}'
+        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_TOPICS_ACTIONS=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry12: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds

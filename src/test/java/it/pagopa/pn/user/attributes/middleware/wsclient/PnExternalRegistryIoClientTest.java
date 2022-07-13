@@ -7,6 +7,8 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregi
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationPayload;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationStatus;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.FiscalCodePayload;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +45,12 @@ class PnExternalRegistryIoClientTest {
 
     @MockBean
     PnDataVaultClient pnDataVaultClient;
+
+    @MockBean
+    ActionHandler actionHandler;
+
+    @MockBean
+    SqsActionProducer sqsActionProducer;
 
 
     private static ClientAndServer mockServer;
