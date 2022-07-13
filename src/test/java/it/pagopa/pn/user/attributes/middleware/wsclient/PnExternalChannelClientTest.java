@@ -5,6 +5,8 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,12 @@ class PnExternalChannelClientTest {
 
     @MockBean
     PnAuditLogBuilder pnAuditLogBuilder;
+
+    @MockBean
+    ActionHandler actionHandler;
+
+    @MockBean
+    SqsActionProducer sqsActionProducer;
 
     private static ClientAndServer mockServer;
 
