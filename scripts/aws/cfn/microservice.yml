@@ -89,8 +89,11 @@ Parameters:
 
   UserAttributesActionsQueueName:
     Type: String
-    Description: 'Send and pull ready-to-do actions th this queue'
-  
+    Description: 'Send and pull actions'
+  UserAttributesActionsQueueARN:
+    Type: String
+    Description: 'Send and pull actions'
+
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
@@ -150,6 +153,19 @@ Resources:
               - dynamodb:UpdateItem
             Resource:
               - !Ref UserAttributesTableArn
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:ChangeMessageVisibilityBatch
+              - sqs:DeleteMessage
+              - sqs:DeleteMessageBatch
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+              - sqs:SendMessageBatch
+            Resource:
+              - !Ref UserAttributesActionsQueueARN
 
   # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
