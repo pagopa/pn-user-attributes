@@ -39,12 +39,32 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true
+  
+  UserAttributesActionsQueue:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-user-attributes-actions'
+        DelaySeconds: 1
 
 Outputs:
+
+  # Actions Queue parameters
+  UserAttributesActionsQueueName:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.QueueName
+    Description: pn-user-attributes-actions input queue name
+  UserAttributesActionsQueueURL:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.QueueURL
+    Description: pn-user-attributes-actions input queue URL
+  UserAttributesActionsQueueARN:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.QueueARN
+    Description: pn-user-attributes-actions input queue ARN
+  
+  # Table parameters
   UserAttributesTableName:
     Description: Dynamo Name used by application to access the key-value store
     Value: !Ref UserAttributesTable
-
   UserAttributesTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store
     Value: !Sub '${UserAttributesTable.Arn}'

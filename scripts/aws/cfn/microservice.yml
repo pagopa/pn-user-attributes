@@ -90,6 +90,10 @@ Parameters:
   UserAttributesActionsQueueName:
     Type: String
     Description: 'Send and pull ready-to-do actions th this queue'
+  
+  IoActivationSendOlderThanDays:
+    Type: String
+    Description: 'Parametro per il toc toc di Io'
 
 Resources:
 
