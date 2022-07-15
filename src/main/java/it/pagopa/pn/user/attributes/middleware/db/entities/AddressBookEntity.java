@@ -49,6 +49,11 @@ public class AddressBookEntity extends BaseEntity {
     }
 
     @DynamoDbIgnore
+    public String getAppioStatus() {
+        return addresshash;
+    }
+
+    @DynamoDbIgnore
     public String getChannelType() {
         return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_CHANNEL_TYPE];
     }

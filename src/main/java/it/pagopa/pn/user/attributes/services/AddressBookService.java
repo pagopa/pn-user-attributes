@@ -199,7 +199,7 @@ public class AddressBookService {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault
                         String realaddress;
                         if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
-                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                            realaddress = ent.getAppioStatus();
                         else
                             realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre,
 
@@ -232,6 +232,7 @@ public class AddressBookService {
 
     private Mono<List<CourtesyDigitalAddressDto>> enrichWithAppIo(String recipientId, List<CourtesyDigitalAddressDto> source)
     {
+        log.info("enrichWithAppIo recipientId={}", recipientId);
         // devo controllare che l'APPIO non sia presente tra i risultati.
         // se è presente, è perchè è abilitata, e quindi non serve fare altro.
         // altrimenti, devo chiedere al BE di IO se l'utente è un utente di APPIO o no
@@ -243,11 +244,17 @@ public class AddressBookService {
                     .map(user -> {
                         // se non è attivo su IO, ritorno il dto SENZA APPIO
                         if (user.getStatus() == UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE)
+                        {
+                            log.info("enrichWithAppIo appio is not available, not returning appio courtesy recipientId={}", recipientId);
                             return source;
+                        }
                         else if (user.getStatus() == UserStatusResponse.StatusEnum.ERROR)
+                        {
                             throw new InternalErrorException();
+                        }
                         else
                         {
+                            log.info("enrichWithAppIo appio is available, adding appio courtesy as disabled recipientId={}", recipientId);
                             // altrimenti, vuol dire che è presente ma disabilitato.
                             // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
                             // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
@@ -263,7 +270,10 @@ public class AddressBookService {
                     });
         }
         else
+        {
+            log.info("enrichWithAppIo appio courtesy is already enabled recipientId={}", recipientId);
             return Mono.just(source);
+        }
     }
 
     /**
@@ -612,7 +622,7 @@ public class AddressBookService {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault
                         String realaddress;
                         if (ent.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
-                            realaddress = CourtesyChannelTypeDto.APPIO.getValue();
+                            realaddress = ent.getAppioStatus();
                         else
                             realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
 
