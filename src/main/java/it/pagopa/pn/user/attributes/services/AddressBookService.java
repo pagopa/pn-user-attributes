@@ -244,18 +244,22 @@ public class AddressBookService {
                         // se non è attivo su IO, ritorno il dto SENZA APPIO
                         if (user.getStatus() == UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE)
                             return source;
-
-                        // altrimenti, vuol dire che è presente ma disabilitato.
-                        // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
-                        // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
-                        CourtesyDigitalAddressDto add = new CourtesyDigitalAddressDto();
-                        add.setValue(AddressBookEntity.APP_IO_DISABLED);
-                        add.setRecipientId(recipientId);
-                        add.setChannelType(CourtesyChannelTypeDto.APPIO);
-                        add.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
-                        add.setSenderId(AddressBookEntity.SENDER_ID_DEFAULT);
-                        source.add(add);
-                        return source;
+                        else if (user.getStatus() == UserStatusResponse.StatusEnum.ERROR)
+                            throw new InternalErrorException();
+                        else
+                        {
+                            // altrimenti, vuol dire che è presente ma disabilitato.
+                            // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
+                            // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
+                            CourtesyDigitalAddressDto add = new CourtesyDigitalAddressDto();
+                            add.setValue(AddressBookEntity.APP_IO_DISABLED);
+                            add.setRecipientId(recipientId);
+                            add.setChannelType(CourtesyChannelTypeDto.APPIO);
+                            add.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+                            add.setSenderId(AddressBookEntity.SENDER_ID_DEFAULT);
+                            source.add(add);
+                            return source;
+                        }
                     });
         }
         else
