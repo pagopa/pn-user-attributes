@@ -5,6 +5,7 @@ import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.dto.MvpUser;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -38,7 +40,7 @@ public class AddressBookService {
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
-    private final PnExternalRegistryIoClient ioFunctionServicesClient;
+    private final PnExternalRegistryIoClient pnExternalRegistryClient;
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
     private final IONotificationService ioNotificationService;
@@ -53,12 +55,12 @@ public class AddressBookService {
 
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
-                              PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient ioFunctionServicesClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
+                              PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient pnExternalRegistryClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto, IONotificationService ioNotificationService) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.pnExternalChannelClient = pnExternalChannelClient;
-        this.ioFunctionServicesClient = ioFunctionServicesClient;
+        this.pnExternalRegistryClient = pnExternalRegistryClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
         this.ioNotificationService = ioNotificationService;
@@ -139,6 +141,7 @@ public class AddressBookService {
         return dao.getAllAddressesByRecipient(recipientId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
                 .collectList()
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
+                .flatMap(list -> enrichWithAppIo(recipientId, list))
                 .flatMapIterable(x -> x);
     }
 
@@ -218,7 +221,47 @@ public class AddressBookService {
                     dto.setCourtesy(new ArrayList<>());
                     dto.setLegal(new ArrayList<>());
                     return Mono.just(dto);
-                }));
+                }))
+                .zipWhen(dto -> enrichWithAppIo(recipientId, dto.getCourtesy()),
+                        (dto, courtesy) -> {
+                            dto.setCourtesy(courtesy);
+                            return dto;
+                        }
+                );
+    }
+
+    private Mono<List<CourtesyDigitalAddressDto>> enrichWithAppIo(String recipientId, List<CourtesyDigitalAddressDto> source)
+    {
+        // devo controllare che l'APPIO non sia presente tra i risultati.
+        // se è presente, è perchè è abilitata, e quindi non serve fare altro.
+        // altrimenti, devo chiedere al BE di IO se l'utente è un utente di APPIO o no
+        Optional<CourtesyDigitalAddressDto> appioAddress = source.stream().filter(x -> x.getChannelType().getValue().equals(CourtesyChannelTypeDto.APPIO.getValue())).findFirst();
+        if (appioAddress.isEmpty())
+        {
+            // mi ricavo il CF da datavault, poi lo uso per recuperare se è un utente valido
+            return this.dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
+                    .take(1).next()
+                    .flatMap(baseRecipientDtoDto -> this.pnExternalRegistryClient.checkValidUsers(baseRecipientDtoDto.getTaxId()))
+                    .map(user -> {
+                        // se non è attivo su IO, ritorno il dto SENZA APPIO
+                        if (user.getStatus() == MvpUser.StatusEnum.APPIO_NOT_ACTIVE)
+                            return source;
+
+                        // altrimenti, vuol dire che è presente ma disabilitato.
+                        // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
+                        // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
+                        CourtesyDigitalAddressDto add = new CourtesyDigitalAddressDto();
+                        add.setValue(AddressBookEntity.APP_IO_DISABLED);
+                        add.setRecipientId(recipientId);
+                        add.setChannelType(CourtesyChannelTypeDto.APPIO);
+                        add.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+                        add.setSenderId(AddressBookEntity.SENDER_ID_DEFAULT);
+                        source.add(add);
+                        return source;
+                    });
+        }
+        else
+            return Mono.just(source);
     }
 
     /**
@@ -369,7 +412,7 @@ public class AddressBookService {
                     return addressBookEntity;
                 }))
                 .then(saveInDynamodb(addressBookEntity))
-                .then(this.ioFunctionServicesClient.upsertServiceActivation(addressBookEntity.getRecipientId(), false))
+                .then(this.pnExternalRegistryClient.upsertServiceActivation(addressBookEntity.getRecipientId(), false))
                 .onErrorResume(throwable -> {
                     if (waspresent.get()) {
                         log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
@@ -507,7 +550,7 @@ public class AddressBookService {
                                 .then(Mono.just(ab));
                     }
                 }, (ab, r) -> ab)
-                .zipWhen(ab -> this.ioFunctionServicesClient.upsertServiceActivation(recipientId, true)
+                .zipWhen(ab -> this.pnExternalRegistryClient.upsertServiceActivation(recipientId, true)
                                 .onErrorResume(throwable -> {
                                     log.error("Saving to io-activation-service failed, deleting from addressbook appio channeltype");
                                     // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db

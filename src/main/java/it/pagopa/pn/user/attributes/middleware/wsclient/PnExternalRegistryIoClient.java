@@ -11,9 +11,12 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregi
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.SendIoMessageApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.api.MvpContextApi;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.dto.MvpUser;
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -31,6 +34,7 @@ public class PnExternalRegistryIoClient extends BaseClient {
 
     private IoActivationApi ioApi;
     private SendIoMessageApi ioMessageApi;
+    private MvpContextApi ioValidUserApi;
     private final PnUserattributesConfig pnUserattributesConfig;
     private final PnDataVaultClient pnDataVaultClient;
     private final PnAuditLogBuilder auditLogBuilder;
@@ -52,6 +56,12 @@ public class PnExternalRegistryIoClient extends BaseClient {
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
 
         this.ioMessageApi = new SendIoMessageApi(apiClient);
+
+        it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.ApiClient apiclientMvp =
+                new it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiclientMvp.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
+        this.ioValidUserApi = new MvpContextApi(apiclientMvp);
+
     }
 
     /**
@@ -87,6 +97,14 @@ public class PnExternalRegistryIoClient extends BaseClient {
                                 return x.getStatus().equals(ActivationStatus.ACTIVE);
                             });
                 });
+    }
+
+    public Mono<MvpUser> checkValidUsers(String body) throws WebClientResponseException {
+        return this.ioValidUserApi.checkValidUsers(body)
+                .retryWhen(
+                        Retry.backoff(2, Duration.ofMillis(25))
+                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
+                );
     }
 
     /**
