@@ -132,7 +132,11 @@ public class IONotificationService   {
     public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotification sentNotification) {
         log.info("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
         SendMessageRequest sendMessageRequest = this.getSendMessageRequest(sentNotification, internalId);
-        return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest).then();
+        return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest)
+                .flatMap(res -> {
+                    log.info("consumeIoSendMessageEvent sent message with result res={} iun={} internalId={}", res, sentNotification.getIun(), internalId);
+                    return Mono.empty();
+                });
     }
 
 

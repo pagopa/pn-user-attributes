@@ -10,7 +10,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientTypeDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.dto.MvpUser;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.UserStatusResponse;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -583,8 +583,8 @@ class AddressBookServiceTest {
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
 
-        final MvpUser user = new MvpUser();
-        user.setStatus(MvpUser.StatusEnum.APPIO_NOT_ACTIVE);
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
         user.setTaxId(baseRecipientDtoDto.getTaxId());
 
         when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
@@ -632,8 +632,8 @@ class AddressBookServiceTest {
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
 
-        final MvpUser user = new MvpUser();
-        user.setStatus(MvpUser.StatusEnum.PN_NOT_ACTIVE);
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.PN_NOT_ACTIVE);
         user.setTaxId(baseRecipientDtoDto.getTaxId());
 
         when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
@@ -766,8 +766,8 @@ class AddressBookServiceTest {
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
 
-        final MvpUser user = new MvpUser();
-        user.setStatus(MvpUser.StatusEnum.APPIO_NOT_ACTIVE);
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
         user.setTaxId(baseRecipientDtoDto.getTaxId());
 
         when(addressBookDao.getAllAddressesByRecipient (Mockito.any(), Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));

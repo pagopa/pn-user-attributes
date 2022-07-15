@@ -5,7 +5,7 @@ import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.validuser.io.v1.dto.MvpUser;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.UserStatusResponse;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -239,12 +239,10 @@ public class AddressBookService {
         if (appioAddress.isEmpty())
         {
             // mi ricavo il CF da datavault, poi lo uso per recuperare se è un utente valido
-            return this.dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
-                    .take(1).next()
-                    .flatMap(baseRecipientDtoDto -> this.pnExternalRegistryClient.checkValidUsers(baseRecipientDtoDto.getTaxId()))
+            return this.pnExternalRegistryClient.checkValidUsers(recipientId)
                     .map(user -> {
                         // se non è attivo su IO, ritorno il dto SENZA APPIO
-                        if (user.getStatus() == MvpUser.StatusEnum.APPIO_NOT_ACTIVE)
+                        if (user.getStatus() == UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE)
                             return source;
 
                         // altrimenti, vuol dire che è presente ma disabilitato.

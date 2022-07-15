@@ -48,7 +48,7 @@ public class ConsentDaoTestIT {
 
     @BeforeEach
     void setup() {
-        testDao = new TestDao(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), ConsentEntity.class);
+        testDao = new TestDao<>(dynamoDbEnhancedAsyncClient, pnUserattributesConfig.getDynamodbTableName(), ConsentEntity.class);
     }
 
     @Test
