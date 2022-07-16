@@ -21,6 +21,16 @@ Parameters:
     Description: 'keep track of used projects commitIds'
 
 Resources:
+  ## KINESIS SOURCE STREAM FOR USER ATTRIBUTES Change Data Capture
+  UserAttributesCdcKinesis:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/kinesis-stream.yaml"
+      Parameters:
+        StreamName: !Sub '${ProjectName}-user-attributes-cdc-stream'
+        StreamRetentionPeriodHours: 24
+        StreamShardCount: 10
+  
   UserAttributesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -39,6 +49,10 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true
+      KinesisStreamSpecification:
+        StreamArn: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamArn
+      StreamSpecification: 
+        StreamViewType: NEW_IMAGE
   
   UserAttributesActionsQueue:
     Type: AWS::CloudFormation::Stack
@@ -69,4 +83,16 @@ Outputs:
     Description: ARM Dynamo Name used by application to access the key-value store
     Value: !Sub '${UserAttributesTable.Arn}'
 
-
+  # UserAttributes Change Data Capture kinesis stream
+  UserAttributesCdcKinesisStreamName:
+    Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamName
+    Description: kinesis stream name for mandate dynamo table
+  UserAttributesCdcKinesisStreamArn:
+    Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamArn
+    Description: kinesis stream Arn for mandate dynamo table
+  UserAttributesCdcKinesisKeyArn:
+    Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamKeyArn
+    Description: KMS key arn for mandate stream decryption
+  UserAttributesCdcKinesisStreamReadOnlyRoleArn:
+    Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamReadOnlyRoleArn
+    Description: KMS key arn for mandate stream decryption
