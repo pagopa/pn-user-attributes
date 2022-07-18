@@ -128,6 +128,7 @@ public class AddressBookService {
         return dao.getAddresses(recipientId, senderId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
                 .collectList()
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
+                .flatMap(list -> enrichWithAppIo(recipientId, list))
                 .flatMapIterable(x -> x);
     }
 
