@@ -14,6 +14,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregi
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -86,6 +87,21 @@ public class PnExternalRegistryIoClient extends BaseClient {
                                 log.info("upsertServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
                                 return x.getStatus().equals(ActivationStatus.ACTIVE);
                             });
+                });
+    }
+
+    public Mono<UserStatusResponse> checkValidUsers(String internalId) throws WebClientResponseException {
+
+        return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
+                .take(1).next()
+                .flatMap(user -> {
+                    UserStatusRequest userStatusRequest = new UserStatusRequest();
+                    userStatusRequest.setTaxId(user.getTaxId());
+                    return this.ioMessageApi.userStatus(userStatusRequest)
+                            .retryWhen(
+                                    Retry.backoff(2, Duration.ofMillis(25))
+                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
+                            );
                 });
     }
 
