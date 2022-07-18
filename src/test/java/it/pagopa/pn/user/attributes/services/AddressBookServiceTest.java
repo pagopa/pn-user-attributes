@@ -519,8 +519,21 @@ class AddressBookServiceTest {
         resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
+
+        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("utente test");
+        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
+        baseRecipientDtoDto.setInternalId("123456");
+
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
+        user.setTaxId(baseRecipientDtoDto.getTaxId());
+
         when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
+        when(pnDatavaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(List.of(baseRecipientDtoDto)));
+        when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
@@ -530,6 +543,61 @@ class AddressBookServiceTest {
         try {
             Assertions.assertNotNull(result.get(0).getSenderId());
             Assertions.assertEquals(2, result.size());
+            Assertions.assertTrue(result.contains(result.get(0)));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+
+    @Test
+    void getCourtesyAddressByRecipientAndSenderWithAPPIO() {
+        //Given
+        List<AddressBookEntity> listFromDb = new ArrayList<>();
+        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
+        listFromDb.add(AddressBookDaoTestIT.newAddress(false));
+
+        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
+        AddressDtoDto dto = new AddressDtoDto();
+        dto.setValue("email@pec.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
+        dto = new AddressDtoDto();
+        dto.setValue("email@email.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
+
+        final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
+        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
+        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setSenderId(listFromDb.get(0).getSenderId());
+        resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
+        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
+        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
+
+
+        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("utente test");
+        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
+        baseRecipientDtoDto.setInternalId("123456");
+
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.PN_NOT_ACTIVE);
+        user.setTaxId(baseRecipientDtoDto.getTaxId());
+
+        when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
+        when(pnDatavaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(List.of(baseRecipientDtoDto)));
+        when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
+        when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
+
+        //When
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
+
+        //Then
+        try {
+            Assertions.assertNotNull(result.get(0).getSenderId());
+            Assertions.assertEquals(3, result.size());
             Assertions.assertTrue(result.contains(result.get(0)));
         } catch (Exception e) {
             fail(e);
