@@ -3,10 +3,7 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.Activation;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationPayload;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.ActivationStatus;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.FiscalCodePayload;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import org.junit.jupiter.api.AfterEach;
@@ -246,5 +243,112 @@ class PnExternalRegistryIoClientTest {
 
         //Then
         Assertions.assertNotNull( limitedProfile );
+    }
+
+
+
+    @Test
+    void sendIOMessage() {
+        //Given
+        SendMessageRequest req = new SendMessageRequest();
+        req.setRecipientTaxID("EEEEEE00E00E000A");
+
+        SendMessageResponse responseDto = new SendMessageResponse();
+        responseDto.setResult(SendMessageResponse.ResultEnum.SENT_COURTESY);
+        responseDto.setId("123123");
+
+        byte[] responseBodyBites = new byte[0];
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerFor( SendMessageResponse.class );
+        try {
+            responseBodyBites = mapper.writeValueAsBytes( responseDto );
+        } catch ( JsonProcessingException e ){
+            e.printStackTrace();
+        }
+
+
+        FiscalCodePayload fiscalCodePayload = new FiscalCodePayload();
+        fiscalCodePayload.setFiscalCode( "EEEEEE00E00E000A" );
+        byte[] reqBodyBites = new byte[0];
+
+        mapper.writerFor( FiscalCodePayload.class );
+        try {
+            reqBodyBites = mapper.writeValueAsBytes( responseDto );
+        } catch ( JsonProcessingException e ){
+            e.printStackTrace();
+        }
+
+
+        new MockServerClient( "localhost", 9999 )
+                .when( request()
+                        .withMethod( "POST" )
+                        .withPath( "/ext-registry-private/io/v1/sendmessage" ))
+                .respond( response()
+                        .withBody( responseBodyBites )
+                        .withContentType( MediaType.APPLICATION_JSON )
+                        .withStatusCode( 200 ));
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId("PF-abcd");
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+
+        //When
+        SendMessageResponse res = client.sendIOMessage( req ).block();
+
+        //Then
+        Assertions.assertNotNull( res );
+        Assertions.assertEquals(SendMessageResponse.ResultEnum.SENT_COURTESY , res.getResult());
+    }
+
+
+
+    @Test
+    void checkValidUsers() {
+        //Given
+        String internalId = "PF-123123123";
+        byte[] responseBodyBites = new byte[0];
+
+        UserStatusResponse responseDto = new UserStatusResponse();
+        responseDto.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerFor( UserStatusResponse.class );
+        try {
+            responseBodyBites = mapper.writeValueAsBytes( responseDto );
+        } catch ( JsonProcessingException e ){
+            e.printStackTrace();
+        }
+
+
+
+        new MockServerClient( "localhost", 9999 )
+                .when( request()
+                        .withMethod( "POST" )
+                        .withPath( "/ext-registry-private/io/v1/user-status" ))
+                .respond( response()
+                        .withBody( responseBodyBites )
+                        .withContentType( MediaType.APPLICATION_JSON )
+                        .withStatusCode( 200 ));
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId("PF-abcd");
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+
+        //When
+        UserStatusResponse res = client.checkValidUsers( internalId ).block();
+
+        //Then
+        Assertions.assertNotNull( res );
+        Assertions.assertEquals(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE, res.getStatus());
     }
 }
