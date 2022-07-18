@@ -148,7 +148,12 @@ public class PnExternalRegistryIoClient extends BaseClient {
                     return Mono.error(throwable);
                 })
                 .map(res -> {
-                    logEvent.generateSuccess().log();
+                    if (res.getResult() == SendMessageResponse.ResultEnum.ERROR_COURTESY
+                        || res.getResult() == SendMessageResponse.ResultEnum.ERROR_OPTIN
+                        || res.getResult() == SendMessageResponse.ResultEnum.ERROR_USER_STATUS)
+                        logEvent.generateFailure("Send message with ERROR outcome={} id={}", res.getResult(), res.getId()).log();
+                    else
+                        logEvent.generateSuccess("Send message outcome={} id={}", res.getResult(), res.getId()).log();
                     return res;
                 });
     }
