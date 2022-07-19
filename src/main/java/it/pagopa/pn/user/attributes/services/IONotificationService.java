@@ -157,7 +157,9 @@ public class IONotificationService   {
 
         sendMessageRequest.setSenderDenomination(notification.getSenderDenomination());
         sendMessageRequest.setIun(notification.getIun());
-        sendMessageRequest.setSubject(notification.getSubject());
+
+        String subject = notification.getSenderDenomination() +"-"+ notification.getSubject();
+        sendMessageRequest.setSubject(subject);
 
         if(recipient.get().getPayment() != null){
             sendMessageRequest.setNoticeNumber(recipient.get().getPayment().getNoticeCode());
