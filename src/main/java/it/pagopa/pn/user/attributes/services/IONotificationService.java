@@ -151,7 +151,7 @@ public class IONotificationService   {
         sendMessageRequest.setAmount(notification.getAmount());
         if (notification.getPaymentExpirationDate() != null)
             sendMessageRequest.setDueDate(DateFormatUtils.parseDate(notification.getPaymentExpirationDate()).toOffsetDateTime());
-
+        sendMessageRequest.setRequestAcceptedDate(notification.getSentAt());
 
         sendMessageRequest.setRecipientTaxID(recipient.get().getTaxId());
 
