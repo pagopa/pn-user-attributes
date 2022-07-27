@@ -26,6 +26,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -360,7 +361,7 @@ public class AddressBookService {
         }
         else {
             return addressVerificationDto
-                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
+                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()), channelType)
                             , (r, alreadyverifiedoutcome) -> new Object() {
                                 public final String verificationCode = r.getVerificationCode();
                                 public final String realaddress = r.getValue();
@@ -467,6 +468,8 @@ public class AddressBookService {
         return dao.getVerificationCode(verificationCodeEntity)
                 .flatMap(r -> {
                     if (!r.getVerificationCode().equals(verificationCode))
+                        return Mono.error(new InvalidVerificationCodeException());
+                    if (r.getCreated().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
                         return Mono.error(new InvalidVerificationCodeException());
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);

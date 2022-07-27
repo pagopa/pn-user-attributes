@@ -186,10 +186,10 @@ public class AddressBookDao extends BaseDao {
         return Mono.fromFuture(() -> verificationCodeTable.getItem(entity));
     }
 
-    public Mono<CHECK_RESULT> validateHashedAddress(String recipientId, String hashedAddress)
+    public Mono<CHECK_RESULT> validateHashedAddress(String recipientId, String hashedAddress, String channelType)
     {
         log.debug("validateHashedAddress recipientId={} hashedAddress={}", recipientId, hashedAddress);
-        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, "");
+        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(recipientId, hashedAddress, channelType);
 
         QueryEnhancedRequest qeRequest = QueryEnhancedRequest
                 .builder()
