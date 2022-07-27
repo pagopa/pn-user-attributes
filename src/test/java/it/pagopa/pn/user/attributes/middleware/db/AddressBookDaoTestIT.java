@@ -509,8 +509,8 @@ class AddressBookDaoTestIT {
             }
 
             //When
-            AddressBookDao.CHECK_RESULT result1 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525WRONG").block(d);
-            AddressBookDao.CHECK_RESULT result2 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525").block(d);
+            AddressBookDao.CHECK_RESULT result1 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525WRONG", "SMS").block(d);
+            AddressBookDao.CHECK_RESULT result2 = addressBookDao.validateHashedAddress(verifiedAddress.getRecipientId(), "hashAddressgahs67323525", "SMS").block(d);
             //Then
             try {
                 Assertions.assertEquals(AddressBookDao.CHECK_RESULT.NOT_EXISTS, result1);

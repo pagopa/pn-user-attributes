@@ -361,7 +361,7 @@ public class AddressBookService {
         }
         else {
             return addressVerificationDto
-                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()))
+                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()), channelType)
                             , (r, alreadyverifiedoutcome) -> new Object() {
                                 public final String verificationCode = r.getVerificationCode();
                                 public final String realaddress = r.getValue();
