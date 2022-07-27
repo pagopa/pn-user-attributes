@@ -29,7 +29,6 @@ Resources:
       Parameters:
         StreamName: !Sub '${ProjectName}-user-attributes-cdc-stream'
         StreamRetentionPeriodHours: 24
-        StreamShardCount: 10
   
   UserAttributesTable:
     Type: AWS::DynamoDB::Table
