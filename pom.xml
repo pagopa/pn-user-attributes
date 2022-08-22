@@ -84,7 +84,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-junit-jupiter</artifactId>
-      <version>5.11.1</version>
+      <version>5.14.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
