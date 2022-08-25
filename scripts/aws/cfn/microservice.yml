@@ -181,6 +181,16 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+  UserAttributesMicroservicePublicWebApiWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-UserAttributes-web'
+        WAFRuleVendors: "AWS, AWS, AWS, AWS"
+        WAFRuleNames: "AWSManagedRulesBotControlRuleSet, AWSManagedRulesKnownBadInputsRuleSet, AWSManagedRulesAdminProtectionRuleSet, AWSManagedRulesCommonRuleSet"
+        APIGatewayARN: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
+
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -196,6 +206,15 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+  AddressBookMicroservicePublicWebApiWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub '${ProjectName}-AddressBook-web'
+        WAFRuleVendors: "AWS, AWS, AWS, AWS"
+        WAFRuleNames: "AWSManagedRulesBotControlRuleSet, AWSManagedRulesKnownBadInputsRuleSet, AWSManagedRulesAdminProtectionRuleSet, AWSManagedRulesCommonRuleSet"
+        APIGatewayARN: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
@@ -211,3 +230,4 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+  
