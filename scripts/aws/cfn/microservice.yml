@@ -189,7 +189,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-UserAttributes-web'
         WAFRuleVendors: "AWS, AWS, AWS, AWS"
         WAFRuleNames: "AWSManagedRulesBotControlRuleSet, AWSManagedRulesKnownBadInputsRuleSet, AWSManagedRulesAdminProtectionRuleSet, AWSManagedRulesCommonRuleSet"
-        APIGatewayARN: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
+        APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
 
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
@@ -214,7 +214,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-AddressBook-web'
         WAFRuleVendors: "AWS, AWS, AWS, AWS"
         WAFRuleNames: "AWSManagedRulesBotControlRuleSet, AWSManagedRulesKnownBadInputsRuleSet, AWSManagedRulesAdminProtectionRuleSet, AWSManagedRulesCommonRuleSet"
-        APIGatewayARN: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
+        APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
