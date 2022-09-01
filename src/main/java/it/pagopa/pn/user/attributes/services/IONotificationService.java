@@ -2,9 +2,9 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.abstractions.MomProducer;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationRecipient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.SendMessageRequest;
@@ -24,6 +24,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_MISSING_RECIPIENTID;
 
 @Service
 @Slf4j
@@ -145,7 +147,7 @@ public class IONotificationService   {
 
         Optional<NotificationRecipient> recipient = notification.getRecipients().stream().filter(rec -> rec.getInternalId().equals(internalId)).findFirst();
         if (recipient.isEmpty())
-            throw new InternalErrorException();
+            throw new PnInternalException("recipient is empty", ERROR_CODE_MISSING_RECIPIENTID);
 
         SendMessageRequest sendMessageRequest = new SendMessageRequest();
         sendMessageRequest.setAmount(notification.getAmount());

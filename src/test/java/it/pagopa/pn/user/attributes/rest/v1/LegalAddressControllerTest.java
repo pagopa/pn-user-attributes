@@ -2,7 +2,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
@@ -261,7 +261,7 @@ class LegalAddressControllerTest {
                         Mockito.anyString(),
                         Mockito.any(),
                         Mockito.any()))
-                .thenThrow(new InvalidVerificationCodeException());
+                .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then
         webTestClient.post()
