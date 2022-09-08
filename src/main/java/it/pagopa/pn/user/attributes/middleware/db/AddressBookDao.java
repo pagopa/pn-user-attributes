@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
-import it.pagopa.pn.user.attributes.exceptions.NotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_DELETE_ADDRESS_FAILED;
 
 @Repository
 @Slf4j
@@ -80,9 +82,9 @@ public class AddressBookDao extends BaseDao {
                 .then(Mono.fromFuture(() -> addressBookTable.deleteItem(delRequest)
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof ConditionalCheckFailedException)
-                        throw new NotFoundException();
+                        throw new PnAddressNotFoundException();
                     else {
-                        throw new InternalErrorException();
+                        throw new PnInternalException("error deleting unused verified address", ERROR_CODE_USERATTRIBUTES_DELETE_ADDRESS_FAILED, throwable);
                     }
                 })));
     }

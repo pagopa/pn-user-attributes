@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.config;
 
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +18,8 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE;
 
 @Getter
 @Setter
@@ -76,7 +78,7 @@ public class PnUserattributesConfig {
             return IOUtils.toString(in, StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             log.error("cannot load message from resources", e);
-            throw new InternalErrorException();
+            throw new PnInternalException("template not found", ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE);
         }
     }
 

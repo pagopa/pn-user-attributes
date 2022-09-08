@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
-import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -151,7 +151,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto));
-        assertThrows(InvalidVerificationCodeException.class, () -> mono.block(d));
+        assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
 
 
         //THEN
@@ -182,7 +182,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto));
-        assertThrows(InvalidVerificationCodeException.class, () -> mono.block(d));
+        assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
 
         verificationCode.setCreated(Instant.now().minus(1, ChronoUnit.MINUTES));
 
@@ -340,7 +340,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
-        assertThrows(InternalErrorException.class, () -> {
+        assertThrows(PnInternalException.class, () -> {
             mono.block(d);
         });
 
@@ -401,7 +401,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
-        assertThrows(InvalidVerificationCodeException.class, () -> mono.block(d));
+        assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
 
 
         //THEN
@@ -529,7 +529,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
-        assertThrows(InternalErrorException.class, () -> {
+        assertThrows(PnInternalException.class, () -> {
             mono.block(d);
         });
 
@@ -802,7 +802,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        assertThrows(InternalErrorException.class, () -> {
+        assertThrows(PnInternalException.class, () -> {
             List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
         });
 

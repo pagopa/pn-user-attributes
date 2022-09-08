@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto.IoCourtesyDigitalAddressActivationDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import org.junit.jupiter.api.BeforeEach;
@@ -153,7 +153,7 @@ class CourtesyIoControllerTest {
                         Mockito.any(),
                         Mockito.any(),
                         Mockito.any()))
-                .thenReturn(Mono.error(new InternalErrorException()));
+                .thenReturn(Mono.error(new PnInternalException("test", "test")));
 
         // Then
         webTestClient.put()
@@ -182,7 +182,7 @@ class CourtesyIoControllerTest {
         Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
                         Mockito.any(),
                         Mockito.any()))
-                .thenReturn(Mono.error(new InternalErrorException()));
+                .thenReturn(Mono.error(new PnInternalException("test", "test")));
 
         // Then
         webTestClient.put()

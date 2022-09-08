@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.exceptions.InternalErrorException;
-import it.pagopa.pn.user.attributes.exceptions.InvalidVerificationCodeException;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.*;
 
 @Service
 @Slf4j
@@ -252,7 +254,7 @@ public class AddressBookService {
                         }
                         else if (user.getStatus() == UserStatusResponse.StatusEnum.ERROR)
                         {
-                            throw new InternalErrorException();
+                            throw new PnInternalException("IO user check status failed", ERROR_CODE_IO_ERROR);
                         }
                         else
                         {
@@ -441,7 +443,7 @@ public class AddressBookService {
                         log.error("outcome io-status is activated, re-adding to addressbook appio channeltype");
                         addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
                         return saveInDynamodb(addressBookEntity)
-                                .then(Mono.error(new InternalErrorException()));
+                                .then(Mono.error(new PnInternalException("IO deactivation failed", ERROR_CODE_IO_DEACTIVATION_FAILED)));
                     } else {
                         log.info("outcome io-status is not activated, deletion successful");
                         return Mono.just(new Object());
@@ -468,14 +470,14 @@ public class AddressBookService {
         return dao.getVerificationCode(verificationCodeEntity)
                 .flatMap(r -> {
                     if (!r.getVerificationCode().equals(verificationCode))
-                        return Mono.error(new InvalidVerificationCodeException());
+                        return Mono.error(new PnInvalidVerificationCodeException());
                     if (r.getCreated().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
-                        return Mono.error(new InvalidVerificationCodeException());
+                        return Mono.error(new PnInvalidVerificationCodeException());
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
                     return sendToDataVaultAndSaveInDynamodb(recipientId, realaddress, legal, senderId, channelType);
                 })
-                .switchIfEmpty(Mono.error(new InvalidVerificationCodeException()));
+                .switchIfEmpty(Mono.error(new PnInvalidVerificationCodeException()));
     }
 
     /**
@@ -596,7 +598,7 @@ public class AddressBookService {
                     {
                         log.error("outcome io-status is not-activated, re-deleting to addressbook appio channeltype");
                         return dao.deleteAddressBook(recipientId, senderId, legal, channelType)
-                                .then(Mono.error(new InternalErrorException()));
+                                .then(Mono.error(new PnInternalException("IO activation failed", ERROR_CODE_IO_ACTIVATION_FAILED)));
                     }
                 })
                 .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
