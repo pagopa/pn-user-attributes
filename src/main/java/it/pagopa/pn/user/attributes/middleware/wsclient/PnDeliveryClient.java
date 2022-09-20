@@ -57,7 +57,7 @@ public class PnDeliveryClient extends BaseClient {
     {
         log.info("searchNotificationPrivate internalId={} startDate={} endDate={}", internalId, startDate, endDate);
 
-        return this.pnDeliveryApi.searchNotificationsPrivate(startDate, endDate, internalId, true,
+        return this.pnDeliveryApi.searchNotificationsPrivate(startDate, endDate, internalId, true, null,
                         List.of(NotificationStatus.ACCEPTED, NotificationStatus.DELIVERING, NotificationStatus.DELIVERED), 100, null)
                 .retryWhen(
                         Retry.backoff(2, Duration.ofMillis(25))
