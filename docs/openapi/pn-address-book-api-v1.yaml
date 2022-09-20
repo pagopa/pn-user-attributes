@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: |
     OpenApi definition for PN User Attributes - Address Book
-  version: v1
+  version: '1.0.0'
   title: PN User Attributes - Address Book
   termsOfService: 'http://swagger.io/terms/'
   contact:
@@ -177,7 +177,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'pn-errors.yaml#/components/schemas/Problem'
-        '406':
+        '422':
           description: Verification code failure
           content:
             application/problem+json:
@@ -237,7 +237,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'pn-errors.yaml#/components/schemas/Problem'
-        '406':
+        '422':
           description: Verification code failure
           content:
             application/problem+json:
