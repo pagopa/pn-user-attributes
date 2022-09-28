@@ -1,0 +1,167 @@
+openapi: 3.0.0
+info:
+  description: |
+    OpenApi definition for PN User Attributes - Consents
+  version: v1
+  title: PN User Attributes Consents
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    email: pn@pagopa.it
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: 'https://webapi.pn.pagopa.it/v1'
+tags:
+  - name: consents
+    description: PN User Consents
+    
+paths:
+  /user-consents/v1/consents:
+    get:
+      summary: Get all recipient consents
+      description: Returns all consents for the recipient. Return empty array if none is present.
+      operationId: getConsents
+      tags:
+        - consents
+#      security:                                                                # ONLY EXTERNAL
+#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      parameters:                                                               # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'          # NO EXTERNAL
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Consent'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+  /user-consents/v1/consents/{consentType}:
+    parameters:
+      - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'            # NO EXTERNAL
+      - $ref: '#/components/parameters/consentType'
+      - $ref: '#/components/parameters/queryVersion'
+    get:
+      summary: Get single consent by type 
+      description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+      operationId: getConsentByType
+      tags:
+        - consents
+#      security:                                                                # ONLY EXTERNAL
+#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      responses:
+        '200':  
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+    put:
+      summary: Accept a single consent type 
+      description: Accept single consent type for the recipient
+      operationId: consentAction
+      tags:
+        - consents
+#      security:                                                                # ONLY EXTERNAL
+#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentAction'
+      responses:
+        '200':  
+          description: successful operation
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+components:
+  
+  parameters:
+    consentType:
+      name: consentType
+      in: path
+      description: A cosa sto dando il consenso
+      required: true
+      schema:
+        $ref: '#/components/schemas/ConsentType'
+    queryVersion:
+      name: version
+      in: query
+      description: La versione del consenso. se non presente il default è V001
+      required: false
+      schema:
+        $ref: '#/components/schemas/ConsentVersion'
+  
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  
+  
+  schemas:
+    ConsentVersion:
+      type: string
+      description: version of consent, default to V001
+      pattern: '^[V]\d{3}$'
+
+    ConsentType:
+      type: string
+      description: type of consent
+      enum:
+        - TOS
+        - DATAPRIVACY
+
+    ConsentAction:
+      type: object
+      properties:
+        action: 
+          type: string
+          description: action on consent
+          enum:
+            - ACCEPT
+            - DECLINE
+    
+    Consent:
+      type: object
+      required:
+        - consentType
+        - recipientId
+        - consentVersion
+      properties:
+        recipientId:
+          example: '123e4567-e89b-12d3-a456-426614174000'
+          type: string
+        consentType:
+          $ref: '#/components/schemas/ConsentType'
+        accepted:
+          type: boolean
+        consentVersion:
+          $ref: '#/components/schemas/ConsentVersion'
+
+#  securitySchemes:                                      # ONLY EXTERNAL
+#    bearerAuth:                                         # ONLY EXTERNAL
+#      type: http                                        # ONLY EXTERNAL
+#      scheme: bearer                                    # ONLY EXTERNAL
+#      bearerFormat: JWT                                 # ONLY EXTERNAL
+#security:                                               # ONLY EXTERNAL
+# - bearerAuth: []                                       # ONLY EXTERNAL

@@ -28,8 +28,8 @@ paths:
       operationId: getAddressesByRecipient
       tags:
         - all
-      parameters:
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -42,59 +42,8 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
-  /address-book-private/v1/digital-address/legal/{recipientId}/{senderId}:
-    get:
-      summary: get the legal digital addresses of the recipient to the sender 
-      description: Returns a legal digital address for the recipient to the sender specified
-      operationId: getLegalAddressBySender
-      tags:
-        - legal
-      parameters:
-        - $ref: '#/components/parameters/recipientId'
-        - $ref: '#/components/parameters/senderId'
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/LegalDigitalAddress'
-        '400':
-          description: Invalid input
-          content:
-            application/problem+json:
-              schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
-
-  /address-book-private/v1/digital-address/courtesy/{recipientId}/{senderId}:
-    get:
-      summary: get the courtesy digital addresses of the recipient to the sender 
-      description: Returns a courtesy digital address for the recipient to the sender specified
-      operationId: getCourtesyAddressBySender
-      tags:
-        - courtesy
-      parameters:
-        - $ref: '#/components/parameters/recipientId'
-        - $ref: '#/components/parameters/senderId'
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                   $ref: '#/components/schemas/CourtesyDigitalAddress'
-        '400':
-          description: Invalid input
-          content:
-            application/problem+json:
-              schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
   
   /address-book/v1/digital-address/legal:
     get:
@@ -102,8 +51,8 @@ paths:
       operationId: getLegalAddressByRecipient
       tags:
         - legal
-      parameters:
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -118,7 +67,7 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
   
   /address-book/v1/digital-address/courtesy:
     get:
@@ -126,8 +75,8 @@ paths:
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
-      parameters:
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -142,12 +91,11 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
 
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     parameters:
-      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -160,6 +108,8 @@ paths:
       operationId: postRecipientLegalAddress
       tags:
         - legal
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -176,19 +126,21 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '422':
           description: Verification code failure
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address with legal value
       operationId: deleteRecipientLegalAddress
       tags:
         - legal
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '204':
           description: successful operation
@@ -197,17 +149,16 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '404':
           description: Digital Address not found
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
   /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
     parameters:
-      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -220,6 +171,8 @@ paths:
       operationId: postRecipientCourtesyAddress
       tags:
         - courtesy
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -236,19 +189,21 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '422':
           description: Verification code failure
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address without legal value
       operationId: deleteRecipientCourtesyAddress
       tags:
         - courtesy
+      security:                                                                # ONLY EXTERNAL
+        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '204':
           description: successful operation
@@ -257,13 +212,13 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '404':
           description: Digital Address not found
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
 
 components:
@@ -386,3 +341,11 @@ components:
       maxLength: 5
       pattern: '^\d{5}$'
       example: '12345'
+
+  securitySchemes:                                      # ONLY EXTERNAL
+    bearerAuth:                                         # ONLY EXTERNAL
+      type: http                                        # ONLY EXTERNAL
+      scheme: bearer                                    # ONLY EXTERNAL
+      bearerFormat: JWT                                 # ONLY EXTERNAL
+security:                                               # ONLY EXTERNAL
+ - bearerAuth: []                                       # ONLY EXTERNAL

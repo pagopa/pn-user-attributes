@@ -114,7 +114,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-v1.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-internal-v1.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
               <modelNameSuffix>Dto</modelNameSuffix>
@@ -143,7 +143,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-v1.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-internal-v1.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
               <modelNameSuffix>Dto</modelNameSuffix>
