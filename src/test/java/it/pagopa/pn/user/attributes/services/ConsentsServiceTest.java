@@ -4,6 +4,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.ConsentDaoTestIT;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,11 +70,12 @@ class ConsentsServiceTest {
 
     
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
+        Object result = service.consentAction(recipientId, CxTypeAuthFleetDto.PF, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );
     }
+
 
     @Test
     void consentAction_Decline() {
@@ -92,7 +95,7 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        Object result = service.consentAction(recipientId, consentTypeDto, consentActionDto, null).block(d);
+        Object result = service.consentAction(recipientId, CxTypeAuthFleetDto.PF, consentTypeDto, consentActionDto, null).block(d);
 
         //THEN
         assertNotNull( result );
@@ -110,10 +113,48 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        ConsentDto result = service.getConsentByType(recipientId, dto, null).block(d);
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
 
         //THEN
         assertEquals( expected, result );
+    }
+
+    @Test
+    void getConsentByType_differentCxType() {
+        //GIVEN
+        String recipientId = "recipientid";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        ConsentDto PFexpected = new ConsentDto();
+        PFexpected.setAccepted(true);
+        ConsentDto PGexpected = new ConsentDto();
+        PFexpected.setAccepted(false);
+
+        String PFrecipientId = CxTypeAuthFleetDto.PF + "-" + recipientId;
+        String PGrecipientId = CxTypeAuthFleetDto.PG + "-" + recipientId;
+
+        ConsentEntity PFconsentEntity = new ConsentEntity();
+        PFconsentEntity.setLastModified(Instant.now());
+        PFconsentEntity.setAccepted(true);
+        PFconsentEntity.setPk(PFrecipientId);
+        PFconsentEntity.setSk(dto.getValue());
+
+        ConsentEntity PGconsentEntity = new ConsentEntity();
+        PGconsentEntity.setLastModified(Instant.now());
+        PGconsentEntity.setAccepted(false);
+        PGconsentEntity.setPk(PFrecipientId);
+        PGconsentEntity.setSk(dto.getValue());
+
+
+        Mockito.when(consentDao.getConsentByType(Mockito.eq(PFrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PFconsentEntity));
+        Mockito.when(consentEntityConsentDtoMapper.toDto(PFconsentEntity)).thenReturn(PFexpected);
+        Mockito.when(consentDao.getConsentByType(Mockito.eq(PGrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PGconsentEntity));
+        Mockito.when(consentEntityConsentDtoMapper.toDto(PGconsentEntity)).thenReturn(PGexpected);
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
+
+        //THEN
+        assertEquals( PFexpected, result );
     }
 
     @Test
@@ -128,7 +169,7 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        Mono<ConsentDto> mono =  service.getConsentByType(recipientId, dto, null);
+        Mono<ConsentDto> mono =  service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null);
         ConsentDto res = mono.block(d);
 
         //THEN
@@ -152,7 +193,7 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        List<ConsentDto> result = service.getConsents(recipientId).collectList().block(d);
+        List<ConsentDto> result = service.getConsents(recipientId, CxTypeAuthFleetDto.PF).collectList().block(d);
 
         //THEN
         assertNotNull(result);
@@ -171,7 +212,7 @@ class ConsentsServiceTest {
 
 
         // WHEN
-        Mono<List<ConsentDto>> mono = service.getConsents(recipientId).collectList();
+        Mono<List<ConsentDto>> mono = service.getConsents(recipientId, CxTypeAuthFleetDto.PF).collectList();
         List<ConsentDto> res = mono.block(d);
 
         //THEN

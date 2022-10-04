@@ -5,6 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,7 +61,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.just(new Object()));
 
         // Then
@@ -89,7 +90,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -117,7 +118,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsentByType(RECIPIENTID, ConsentTypeDto.TOS, null))
+        Mockito.when(svc.getConsentByType(RECIPIENTID, CxTypeAuthFleetDto.PF, ConsentTypeDto.TOS, null))
                 .thenReturn( Mono.just(consentDto) );
 
         // Then
@@ -140,7 +141,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsents(RECIPIENTID))
+        Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
                 .thenReturn( Flux.just(consentDto) );
 
         // Then
@@ -163,7 +164,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsents(RECIPIENTID))
+        Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
                 .thenReturn( Flux.empty() );
 
         // Then

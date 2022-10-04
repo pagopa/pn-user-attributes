@@ -7,6 +7,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.Con
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,8 +29,8 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> consentAction(String recipientId, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, ServerWebExchange exchange) {
-        String logMessage = String.format("consentAction - recipientId=%s - consentType=%s - version=%s", recipientId, consentType, version);
+    public Mono<ResponseEntity<Void>> consentAction(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, final ServerWebExchange exchange) {
+        String logMessage = String.format("consentAction - xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", recipientId, xPagopaPnCxType, consentType, version);
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
@@ -37,8 +38,8 @@ public class ConsentsController implements ConsentsApi {
                 .build();
         logEvent.log();
         return consentActionDto.flatMap(dto -> {
-                    String messageAction = String.format("recipientId=%s - consentType=%s - version=%s - consentAction=%s", recipientId, consentType, version, dto.getAction().toString());
-                    return this.consentsService.consentAction(recipientId, consentType, dto, version)
+                    String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", recipientId, xPagopaPnCxType, consentType, version, dto.getAction().toString());
+                    return this.consentsService.consentAction(recipientId, xPagopaPnCxType,  consentType, dto, version)
                             .onErrorResume(throwable -> {
                                 logEvent.generateFailure(throwable.getMessage()).log();
                                 return Mono.error(throwable);
@@ -49,19 +50,19 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, ConsentTypeDto consentType, String version, ServerWebExchange exchange) {
-        log.info("getConsentByType - recipientId={} - consentType={} - version={}", recipientId, consentType, version);
+    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version,  final ServerWebExchange exchange) {
+        log.info("getConsentByType - xPagopaPnUid={} - xPagopaPnCxType={} - consentType={} - version={}", recipientId, xPagopaPnCxType, consentType, version);
 
-        return this.consentsService.getConsentByType(recipientId, consentType, version)
+        return this.consentsService.getConsentByType(recipientId, xPagopaPnCxType, consentType, version)
                 .map(ResponseEntity::ok);
 
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, ServerWebExchange exchange) {
-        log.info("getConsents - recipientId={} ", recipientId);
+    public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType,  final ServerWebExchange exchange) {
+        log.info("getConsents - recipientId={} - xPagopaPnCxType={}", recipientId, xPagopaPnCxType);
 
-        return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId)));
+        return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId, xPagopaPnCxType)));
     }
 }
 
