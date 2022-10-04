@@ -77,17 +77,3 @@ Outputs:
   UserAttributesTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store
     Value: !Sub '${UserAttributesTable.Arn}'
-
-  # UserAttributes Change Data Capture kinesis stream
-  # UserAttributesCdcKinesisStreamName:
-  #   Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamName
-  #   Description: kinesis stream name for mandate dynamo table
-  # UserAttributesCdcKinesisStreamArn:
-  #   Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamArn
-  #   Description: kinesis stream Arn for mandate dynamo table
-  # UserAttributesCdcKinesisKeyArn:
-  #   Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamKeyArn
-  #   Description: KMS key arn for mandate stream decryption
-  # UserAttributesCdcKinesisStreamReadOnlyRoleArn:
-  #   Value: !GetAtt UserAttributesCdcKinesis.Outputs.KinesisStreamReadOnlyRoleArn
-  #   Description: KMS key arn for mandate stream decryption
