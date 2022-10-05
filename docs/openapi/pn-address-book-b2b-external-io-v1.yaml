@@ -43,13 +43,13 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '404':
           description: recipient not found
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
     put:
       summary: set courtesy message activation on IO
       description: Set IO activation for courtesy message
@@ -72,7 +72,7 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: 'pn-errors.yaml#/components/schemas/Problem'
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
 components:
   parameters:

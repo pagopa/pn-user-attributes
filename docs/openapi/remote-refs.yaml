@@ -12,3 +12,11 @@ components:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/c1abe92c463a236209534e806c085afe5d169bcd/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/uidAuthFleet'
     cxTaxIdAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/49b7f5dbda112680d3c5aa79123388736b1c215f/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxTaxIdAuthFleet'
+
+  schemas:
+
+    ############################################################################################
+    ###                          STRUTTURE DATI DI PN-ERROR                                  ###
+    ############################################################################################
+    Problem:
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-commons/61cdf0712f133c8c69e056abfad6ce5223242ba0/docs/openapi/pn-errors.yaml#/components/schemas/Problem'
