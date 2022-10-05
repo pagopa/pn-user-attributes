@@ -22,8 +22,10 @@ import reactor.core.publisher.Mono;
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "x-pagopa-pn-uid";
+    private static final String PA_CX_TYPE = "x-pagopa-pn-cx-type";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
+    private static final String CX_TYPE = "PF";
 
     @Autowired
     WebTestClient webTestClient;
@@ -70,6 +72,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
 
@@ -99,6 +102,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().is5xxServerError();
 
@@ -126,6 +130,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -149,6 +154,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -172,6 +178,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk().expectBodyList(ConsentDto.class).hasSize(0);
     }
