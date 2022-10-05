@@ -30,7 +30,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.*;
@@ -48,7 +47,7 @@ public class AddressBookService {
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
     private final IONotificationService ioNotificationService;
 
-    Random rnd = new SecureRandom();
+    SecureRandom rnd = new SecureRandom();
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
