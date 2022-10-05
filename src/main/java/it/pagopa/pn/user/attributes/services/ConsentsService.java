@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.services;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
@@ -35,8 +36,8 @@ public class ConsentsService {
      * @param consentActionDto azione consenso
      * @return nd
      */
-    public Mono<Object> consentAction(String recipientId, ConsentTypeDto consentType, ConsentActionDto consentActionDto, String version) {
-        ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(recipientId, consentType, consentActionDto, version);
+    public Mono<Object> consentAction(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, ConsentActionDto consentActionDto, String version) {
+        ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(computeRecipientIdWithCxType(recipientId, xPagopaPnCxType), consentType, consentActionDto, version);
         return consentDao.consentAction(consentEntity);
     }
 
@@ -47,8 +48,8 @@ public class ConsentsService {
      * @param consentType tipologia
      * @return il consenso
      */
-    public Mono<ConsentDto> getConsentByType(String recipientId, ConsentTypeDto consentType, String version) {
-        return consentDao.getConsentByType(recipientId, consentType.getValue(), version)
+    public Mono<ConsentDto> getConsentByType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
+        return consentDao.getConsentByType(computeRecipientIdWithCxType(recipientId, xPagopaPnCxType), consentType.getValue(), version)
                 .map(consentEntityConsentDtoMapper::toDto)
                 .defaultIfEmpty(ConsentDto.builder()
                         .consentType(consentType)
@@ -65,8 +66,12 @@ public class ConsentsService {
      * @param recipientId id utente
      * @return lista consensi
      */
-    public Flux<ConsentDto> getConsents(String recipientId) {
-        return consentDao.getConsents(recipientId)
+    public Flux<ConsentDto> getConsents(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType) {
+        return consentDao.getConsents(computeRecipientIdWithCxType(recipientId, xPagopaPnCxType))
                 .map(consentEntityConsentDtoMapper::toDto);
+    }
+
+    private String computeRecipientIdWithCxType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType){
+        return xPagopaPnCxType.getValue() + "-" + recipientId;
     }
 }

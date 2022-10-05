@@ -28,6 +28,7 @@ paths:
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       parameters:                                                               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'          # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'            # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -47,6 +48,7 @@ paths:
   /user-consents/v1/consents/{consentType}:
     parameters:
       - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'            # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'            # NO EXTERNAL
       - $ref: '#/components/parameters/consentType'
       - $ref: '#/components/parameters/queryVersion'
     get:

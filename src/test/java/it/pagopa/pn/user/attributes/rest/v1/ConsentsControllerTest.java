@@ -5,6 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +22,10 @@ import reactor.core.publisher.Mono;
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "x-pagopa-pn-uid";
+    private static final String PA_CX_TYPE = "x-pagopa-pn-cx-type";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
+    private static final String CX_TYPE = "PF";
 
     @Autowired
     WebTestClient webTestClient;
@@ -60,7 +63,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.just(new Object()));
 
         // Then
@@ -69,6 +72,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
 
@@ -89,7 +93,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -98,6 +102,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().is5xxServerError();
 
@@ -117,7 +122,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsentByType(RECIPIENTID, ConsentTypeDto.TOS, null))
+        Mockito.when(svc.getConsentByType(RECIPIENTID, CxTypeAuthFleetDto.PF, ConsentTypeDto.TOS, null))
                 .thenReturn( Mono.just(consentDto) );
 
         // Then
@@ -125,6 +130,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -140,7 +146,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsents(RECIPIENTID))
+        Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
                 .thenReturn( Flux.just(consentDto) );
 
         // Then
@@ -148,6 +154,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -163,7 +170,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsents(RECIPIENTID))
+        Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
                 .thenReturn( Flux.empty() );
 
         // Then
@@ -171,6 +178,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk().expectBodyList(ConsentDto.class).hasSize(0);
     }
