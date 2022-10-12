@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "http://internal-pn-in-Appli-1HXGA7HK0CJQ3-1346751104.eu-south-1.elb.amazonaws.com:8080",
+    "ExternalChannelBasePath": "Mock",
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": "7"
   }
