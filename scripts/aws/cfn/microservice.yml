@@ -200,6 +200,7 @@ Resources:
       Parameters:
         WAFName: !Sub '${ProjectName}-UserAttributes-web'
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
+        Limit: 3000
 
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
@@ -223,6 +224,7 @@ Resources:
       Parameters:
         WAFName: !Sub '${ProjectName}-AddressBook-web'
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
+        Limit: 3000
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
