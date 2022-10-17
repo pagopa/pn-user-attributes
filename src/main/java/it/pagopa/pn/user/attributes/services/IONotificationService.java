@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.api.dto.events.StandardEventHeader;
-import it.pagopa.pn.commons.abstractions.MomProducer;
+import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
