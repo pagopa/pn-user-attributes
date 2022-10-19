@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.commons.abstractions.MomProducer;
+import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationRecipient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
