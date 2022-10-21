@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.sqs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pn.commons.abstractions.impl.AbstractSqsMomProducer;
+import it.pagopa.pn.api.dto.events.AbstractSqsMomProducer;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
