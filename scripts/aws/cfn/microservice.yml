@@ -248,3 +248,29 @@ Resources:
         WAFName: !Sub '${ProjectName}-AddressBook-io'
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.APIGatewayARN
   
+  ## Dashboard
+  UserAttributesMicroserviceCloudWatchDashboard:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/microservice-cloudwatch-dashboard.yaml"
+      Parameters:
+        DashboardName: !Sub "${ProjectName}-user-attributes"
+        DynamoDBTableNames: !Join 
+          - ',' 
+          - - !Ref UserAttributesTableName 
+        RestApiStageArns: !Join
+          - ','
+          - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiStageArn
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiStageArn
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiStageArn
+        RestApiNames: !Join
+          - ','
+          - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiName
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiName
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
+        AlarmArns: !Join
+          - ','
+          - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
+        QueueArns: !Join
+          - ','
+          - - !Ref UserAttributesActionsQueueARN
