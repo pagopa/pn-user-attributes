@@ -271,6 +271,7 @@ Resources:
         AlarmArns: !Join
           - ','
           - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
+            - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
