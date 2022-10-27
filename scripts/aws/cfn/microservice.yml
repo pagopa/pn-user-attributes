@@ -90,6 +90,7 @@ Parameters:
   UserAttributesActionsQueueName:
     Type: String
     Description: 'Send and pull actions'
+  
   UserAttributesActionsQueueARN:
     Type: String
     Description: 'Send and pull actions'
@@ -97,6 +98,18 @@ Parameters:
   UserAttributesActionsQueueAlarmARN:
     Type: String
     Description: pn-user-attributes-actions input queue alarm ARN
+
+  ExternalChannels2UserAttributesQueueName:
+    Type: String
+    Description: 'external channels to user attributes queue name'
+  
+  ExternalChannels2UserAttributesQueueARN:
+    Type: String
+    Description: 'external channels to user attributes queue ARN'
+
+  ExternalChannels2UserAttributesQueueAlarmARN:
+    Type: String
+    Description: external channels to user attributes queue alarm ARN
 
   IoActivationSendOlderThanDays:
     Type: String
@@ -280,6 +293,8 @@ Resources:
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
             - !Ref UserAttributesActionsQueueAlarmARN
+            - !Ref ExternalChannels2UserAttributesQueueAlarmARN
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
+            - !Ref ExternalChannels2UserAttributesQueueARN
