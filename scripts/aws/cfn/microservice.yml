@@ -94,6 +94,10 @@ Parameters:
     Type: String
     Description: 'Send and pull actions'
 
+  UserAttributesActionsQueueAlarmARN:
+    Type: String
+    Description: pn-user-attributes-actions input queue alarm ARN
+
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
@@ -272,6 +276,10 @@ Resources:
           - ','
           - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
             - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
+            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
+            - !Ref UserAttributesActionsQueueAlarmARN
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
