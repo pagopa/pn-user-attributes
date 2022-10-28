@@ -69,7 +69,10 @@ Outputs:
   UserAttributesActionsQueueARN:
     Value: !GetAtt UserAttributesActionsQueue.Outputs.QueueARN
     Description: pn-user-attributes-actions input queue ARN
-  
+  UserAttributesActionsQueueAlarmARN:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.SqsDLQAlarmArn
+    Description: pn-user-attributes-actions input queue alarm ARN
+
   # Table parameters
   UserAttributesTableName:
     Description: Dynamo Name used by application to access the key-value store
