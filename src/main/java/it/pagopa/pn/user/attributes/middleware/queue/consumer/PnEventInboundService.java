@@ -7,7 +7,6 @@ package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.MDCWebFilter;
-import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -16,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_IO_ERROR;
 
 import java.util.UUID;
 
@@ -23,24 +23,19 @@ import java.util.UUID;
 @Slf4j
 public class PnEventInboundService {
 
-    private final PnUserattributesConfig cfg;
-
-    public PnEventInboundService(PnUserattributesConfig cfg) {
-        this.cfg = cfg;
-    }
 
     @Bean
     public MessageRoutingCallback customRouter() {
        return message -> {
            MessageHeaders messageHeaders = message.getHeaders();
-           String trace_id = "";
+           String traceId = "";
 
            if (messageHeaders.containsKey("aws_messageId"))
-               trace_id = messageHeaders.get("aws_messageId", String.class);
+               traceId = messageHeaders.get("aws_messageId", String.class);
            else
-               trace_id = "trace_id:" + UUID.randomUUID().toString();
+               traceId = "traceId:" + UUID.randomUUID().toString();
 
-           MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, trace_id);
+           MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
 
            return handleMessage(message);
        };
@@ -57,10 +52,10 @@ public class PnEventInboundService {
                 return "pnUserAttributesSendMessageActionConsumer";
         }else {
             log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
-            throw new PnInternalException("eventType not present, cannot start scheduled action");
+            throw new PnInternalException("eventType not present, cannot start scheduled action",ERROR_CODE_IO_ERROR);
         }
 
-        throw new PnInternalException("eventType is not valid, cannot start scheduled action");
+        throw new PnInternalException("eventType is not valid, cannot start scheduled action",ERROR_CODE_IO_ERROR);
     }
 
     

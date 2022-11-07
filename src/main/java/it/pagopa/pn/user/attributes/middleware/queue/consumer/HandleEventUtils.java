@@ -8,6 +8,7 @@ import org.springframework.messaging.MessageHeaders;
 import java.time.Instant;
 
 import static it.pagopa.pn.api.dto.events.StandardEventHeader.*;
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_IO_ERROR;
 
 @Slf4j
 public class HandleEventUtils {
@@ -33,7 +34,7 @@ public class HandleEventUtils {
         } else {
             String msg = "Headers cannot be null in mapStandardEventHeader";
             log.error(msg);
-            throw new PnInternalException(msg);            
+            throw new PnInternalException(msg,ERROR_CODE_IO_ERROR);
         }
     }
 

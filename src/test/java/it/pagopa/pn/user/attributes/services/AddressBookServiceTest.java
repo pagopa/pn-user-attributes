@@ -802,12 +802,14 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        assertThrows(PnInternalException.class, () -> {
+        PnInternalException pnInternalException = null;
+        try{
             List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
-        });
-
+        }catch(PnInternalException exception){
+            pnInternalException = exception;
+        }
+        assertNotNull(pnInternalException);
         //Then
-
     }
 
     @Test
