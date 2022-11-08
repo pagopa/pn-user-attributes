@@ -804,7 +804,7 @@ class AddressBookServiceTest {
 
         //When
         Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList();
-        assertThrows(WebClientResponseException.class, () -> addressBookServiceMono.block(d));
+        assertThrows(PnInternalException.class, () -> addressBookServiceMono.block(d));
 
         //Then
     }
