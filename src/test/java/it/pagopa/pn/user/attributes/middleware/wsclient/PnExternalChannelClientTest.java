@@ -21,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -56,6 +57,8 @@ class PnExternalChannelClientTest {
     SqsActionProducer sqsActionProducer;
 
     private static ClientAndServer mockServer;
+
+    private final Duration duration = Duration.ofMillis(3000);
 
     PnAuditLogEvent logEvent;
 
@@ -142,13 +145,8 @@ class PnExternalChannelClientTest {
                         .withStatusCode(500));
 
         //When
-        WebClientResponseException webClientResponseException = null;
-        try{
-            pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
-        }catch(WebClientResponseException exception){
-            webClientResponseException = exception;
-        }
-        assertNotNull(webClientResponseException);
+        Mono<Void> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
         Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
         Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
@@ -215,14 +213,8 @@ class PnExternalChannelClientTest {
                         .withStatusCode(500));
 
         //When
-        WebClientResponseException webClientResponseException = null;
-        try{
-            pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
-        }catch(WebClientResponseException exception){
-            webClientResponseException = exception;
-        }
-        assertNotNull(webClientResponseException);
-
+        Mono<Void> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
         Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
         Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
@@ -278,13 +270,8 @@ class PnExternalChannelClientTest {
                         .withStatusCode(500));
 
         //When
-        WebClientResponseException webClientResponseException = null;
-        try{
-            pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
-        }catch(WebClientResponseException exception){
-            webClientResponseException = exception;
-        }
-        assertNotNull(webClientResponseException);
+        Mono<Void> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
         Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
         Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
