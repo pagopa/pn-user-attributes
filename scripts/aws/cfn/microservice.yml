@@ -210,6 +210,7 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
   UserAttributesMicroservicePublicWebApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -234,6 +235,7 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
   AddressBookMicroservicePublicWebApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -257,6 +259,7 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
   AddressBookMicroservicePublicIoApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
