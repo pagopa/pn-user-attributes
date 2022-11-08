@@ -208,6 +208,7 @@ public class PnExternalChannelClient extends BaseClient {
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                         digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                        digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.PLAIN);
                         if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                             digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
 
