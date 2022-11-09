@@ -64,7 +64,7 @@ class IONotificationServiceTest {
         SentNotification sentNotification = new SentNotification();
 
         Mockito.when(pnUserattributesConfig.getIoactivationSendolderthandays()).thenReturn(7);
-
+        service = new IONotificationService(actionsQueue,pnExternalRegistryIoClient,pnDeliveryClient,pnUserattributesConfig);
         // WHEN
         Mono<Void> mono = service.scheduleCheckNotificationToSendAfterIOActivation(recipientId, Instant.now());
         assertDoesNotThrow(() -> {
@@ -77,8 +77,6 @@ class IONotificationServiceTest {
         //GIVEN
         String recipientId = "recipientid";
         SentNotification sentNotification = new SentNotification();
-
-        Mockito.when(pnUserattributesConfig.getIoactivationSendolderthandays()).thenReturn(-1);
 
         // WHEN
         Mono<Void> mono = service.scheduleCheckNotificationToSendAfterIOActivation(recipientId, Instant.now());
