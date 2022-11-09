@@ -24,14 +24,10 @@ public class VerificationCodeEntity extends BaseEntity {
 
 
     public VerificationCodeEntity(String recipientId, String address, String channelType){
-        this.setPk(PK_PREFIX + recipientId);
         this.setSk(address + ITEMS_SEPARATOR + (channelType==null?"":channelType));
+        this.setPk(PK_PREFIX + recipientId);
     }
 
-    @DynamoDbIgnore
-    public String getRecipientId() {
-        return getPk().split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
-    }
     @DynamoDbIgnore
     public String getChannelType() {
         return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_CHANNEL_TYPE];
@@ -40,6 +36,11 @@ public class VerificationCodeEntity extends BaseEntity {
     public String getHashedAddress() {
         return getSk().split(ITEMS_SEPARATOR)[SK_ITEMS_HASHED_ADDRESS];
     }
+    @DynamoDbIgnore
+    public String getRecipientId() {
+        return getPk().split(ITEMS_SEPARATOR)[PK_ITEMS_RECIPIENTID];
+    }
+
 
     @Getter(onMethod=@__({@DynamoDbAttribute("verificationCode")}))  private String verificationCode;
 
