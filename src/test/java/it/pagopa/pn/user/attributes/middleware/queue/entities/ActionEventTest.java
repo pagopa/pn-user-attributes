@@ -30,6 +30,25 @@ class ActionEventTest {
         assertTrue(equals);
     }
 
+    @Test
+    void testNotEquals() {
+        ActionEvent toCompare = new ActionEvent(standardEventHeader,null);
+        boolean equals = actionEvent.equals(toCompare);
+        assertFalse(equals);
+    }
+
+    @Test
+    void NotcanEqual() {
+        Object toCompare = new Object();
+        boolean equals = actionEvent.canEqual(toCompare);
+        assertFalse(equals);
+    }
+
+    @Test
+    void testNoArgConstr() {
+        ActionEvent actionEventNoargs = new ActionEvent();
+        assertNotNull(actionEventNoargs);
+    }
 
     @Test
     void testHashCode() {
@@ -65,5 +84,6 @@ class ActionEventTest {
         ActionEvent toCompare = ActionEvent.builder().header(standardEventHeader).payload(action).build();
         assertEquals(actionEvent,toCompare);
     }
+
 
 }

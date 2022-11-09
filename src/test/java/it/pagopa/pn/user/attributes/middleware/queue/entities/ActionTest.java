@@ -41,11 +41,31 @@ class ActionTest {
     }
 
     @Test
+    void testNotEquals() {
+        Action toCompare = new Action("NOT",internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        boolean equals = action.equals(toCompare);
+        assertFalse(equals);
+    }
+
+    @Test
+    void NotcanEqual() {
+        Object toCompare = new Object();
+        boolean equals = action.canEqual(toCompare);
+        assertFalse(equals);
+    }
+
+    @Test
     void builder() {
         Action toCompare = Action.builder().actionId(actionId).internalId(internalId)
                 .checkFromWhen(checkFromWhen).sentNotification(sentNotification)
                 .timestamp(timeStamp).type(actionType).build();
         assertEquals(action,toCompare);
+    }
+
+    @Test
+    void testNoArgConstr() {
+        Action actionNoargs = new Action();
+        assertNotNull(actionNoargs);
     }
 
 
