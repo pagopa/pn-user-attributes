@@ -32,7 +32,8 @@ class ActionEventTest {
 
     @Test
     void testHashCode() {
-        assertNotNull(actionEvent.hashCode());
+        ActionEvent toCompare = new ActionEvent(standardEventHeader,action);
+        assertEquals(actionEvent.hashCode(),toCompare.hashCode());
     }
 
     @Test

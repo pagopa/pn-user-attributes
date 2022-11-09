@@ -29,13 +29,14 @@ class ActionTest {
     @Test
     void testEquals() {
         Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
-        assertTrue(action.equals(toCompare));
+        assertEquals(action,toCompare);
     }
 
 
     @Test
     void testHashCode() {
-        assertNotNull(action.hashCode());
+        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        assertEquals(action.hashCode(),toCompare.hashCode());
     }
 
     @Test
