@@ -23,13 +23,6 @@ class VerifiedAddressEntityTest {
         verifiedAddress = new VerifiedAddressEntity(recipientId,address,channelType);
     }
 
-    @Test
-    void nullChannellTypeConstr() {
-        VerifiedAddressEntity verifiedAddressOne = new VerifiedAddressEntity(recipientId,address,null);
-        VerifiedAddressEntity verifiedAddressTwo = new VerifiedAddressEntity(recipientId,address,null);
-        boolean equals = verifiedAddressOne.equals(verifiedAddressTwo);
-        assertTrue(equals);
-    }
 
     @Test
     void noArgConstr() {
@@ -58,24 +51,6 @@ class VerifiedAddressEntityTest {
     void testToString() {
         assertNotNull(verifiedAddress.toString());
     }
+    
 
-    @Test
-    void testEquals() {
-        VerifiedAddressEntity toCompare = new VerifiedAddressEntity(recipientId,address,channelType);
-        boolean equals = verifiedAddress.equals(toCompare);
-        assertTrue(equals);
-    }
-
-    @Test
-    void canEqual() {
-        VerifiedAddressEntity toCompare = new VerifiedAddressEntity(recipientId,address,channelType);
-        boolean equals = verifiedAddress.canEqual(toCompare);
-        assertTrue(equals);
-    }
-
-    @Test
-    void testHashCode() {
-        VerifiedAddressEntity toCompare = new VerifiedAddressEntity(recipientId,address,channelType);
-        assertEquals(verifiedAddress.hashCode(),toCompare.hashCode());
-    }
 }
