@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import org.junit.jupiter.api.Assertions;
