@@ -29,6 +29,22 @@ class ActionTest {
     @Test
     void testEquals() {
         Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        boolean equals = action.equals(toCompare);
+        assertTrue(equals);
+    }
+
+    @Test
+    void canEqual() {
+        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        boolean equals = action.canEqual(toCompare);
+        assertTrue(equals);
+    }
+
+    @Test
+    void builder() {
+        Action toCompare = Action.builder().actionId(actionId).internalId(internalId)
+                .checkFromWhen(checkFromWhen).sentNotification(sentNotification)
+                .timestamp(timeStamp).type(actionType).build();
         assertEquals(action,toCompare);
     }
 

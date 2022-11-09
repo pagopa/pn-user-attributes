@@ -26,7 +26,8 @@ class ActionEventTest {
     @Test
     void testEquals() {
         ActionEvent toCompare = new ActionEvent(standardEventHeader,action);
-        assertEquals(actionEvent,toCompare);
+        boolean equals = actionEvent.equals(toCompare);
+        assertTrue(equals);
     }
 
 
@@ -51,5 +52,18 @@ class ActionEventTest {
         assertNotNull(actionEvent.toString());
     }
 
+
+    @Test
+    void canEqual() {
+        ActionEvent toCompare = new ActionEvent(standardEventHeader,action);
+        boolean equals = actionEvent.canEqual(toCompare);
+        assertTrue(equals);
+    }
+
+    @Test
+    void builder() {
+        ActionEvent toCompare = ActionEvent.builder().header(standardEventHeader).payload(action).build();
+        assertEquals(actionEvent,toCompare);
+    }
 
 }
