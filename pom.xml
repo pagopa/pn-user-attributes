@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>it.pagopa.pn</groupId>
     <artifactId>pn-parent</artifactId>
     <version>1.0.0</version>
-    <relativePath/>
+    <relativePath />
   </parent>
   <groupId>it.pagopa.pn.user.attributes</groupId>
   <artifactId>pn-user-attributes</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>pn-user-attributes</name>
   <description>TODO</description>
   <scm>
     <connection>${git.conn}</connection>
     <developerConnection>${git.devConn}</developerConnection>
     <url>${git.url}</url>
+    <tag>v1.0.0</tag>
   </scm>
 
 
@@ -318,7 +317,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               </configOptions>
               <modelPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.dto</modelPackage>
               <apiPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.api</apiPackage>
-              <modelNameSuffix></modelNameSuffix>
+              <modelNameSuffix />
             </configuration>
           </execution>
           <execution>
@@ -341,7 +340,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
               </configOptions>
               <modelPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.dto</modelPackage>
               <apiPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.api</apiPackage>
-              <modelNameSuffix></modelNameSuffix>
+              <modelNameSuffix />
             </configuration>
           </execution>
         </executions>
