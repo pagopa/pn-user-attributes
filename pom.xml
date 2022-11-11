@@ -9,22 +9,18 @@
   </parent>
   <groupId>it.pagopa.pn.user.attributes</groupId>
   <artifactId>pn-user-attributes</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>pn-user-attributes</name>
   <description>TODO</description>
   <scm>
     <connection>${git.conn}</connection>
     <developerConnection>${git.devConn}</developerConnection>
     <url>${git.url}</url>
-    <tag>v1.0.0</tag>
   </scm>
-
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <springdoc-openapi-webflux-version>1.6.7</springdoc-openapi-webflux-version>
     <software.amazon.awssdk-version>2.17.174</software.amazon.awssdk-version>
-
     <awspring.version>2.3.2</awspring.version>
     <testcontainers.version>1.16.2</testcontainers.version>
   </properties>
