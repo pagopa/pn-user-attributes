@@ -6,7 +6,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
   <parent>
     <groupId>it.pagopa.pn</groupId>
     <artifactId>pn-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <relativePath/>
   </parent>
   <groupId>it.pagopa.pn.user.attributes</groupId>
@@ -14,6 +14,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
   <version>0.0.1-SNAPSHOT</version>
   <name>pn-user-attributes</name>
   <description>TODO</description>
+  <scm>
+    <connection>${git.conn}</connection>
+    <developerConnection>${git.devConn}</developerConnection>
+    <url>${git.url}</url>
+  </scm>
 
 
   <properties>
@@ -48,12 +53,12 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-commons</artifactId>
-      <version>0.0.2-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-model</artifactId>
-      <version>0.0.2-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
 
     <dependency>
