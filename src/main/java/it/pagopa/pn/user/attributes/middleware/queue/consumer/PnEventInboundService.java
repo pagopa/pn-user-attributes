@@ -27,19 +27,21 @@ public class PnEventInboundService {
 
     @Bean
     public MessageRoutingCallback customRouter() {
-       return message -> {
-           MessageHeaders messageHeaders = message.getHeaders();
-           String traceId = "";
+        return new MessageRoutingCallback() {
+            @Override
+            public FunctionRoutingResult routingResult(Message<?> message) {
+                MessageHeaders messageHeaders = message.getHeaders();
+                String traceId = "";
 
-           if (messageHeaders.containsKey("aws_messageId"))
-               traceId = messageHeaders.get("aws_messageId", String.class);
-           else
-               traceId = "traceId:" + UUID.randomUUID().toString();
+                if (messageHeaders.containsKey("aws_messageId"))
+                    traceId = messageHeaders.get("aws_messageId", String.class);
+                else
+                    traceId = "traceId:" + UUID.randomUUID();
 
-           MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
-
-           return handleMessage(message);
-       };
+                MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
+                return new FunctionRoutingResult(handleMessage(message));
+            }
+        };
     }
 
     private String handleMessage(Message<?> message) {
