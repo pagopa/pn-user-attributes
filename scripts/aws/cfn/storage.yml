@@ -48,7 +48,9 @@ Resources:
         StreamArn: !Ref CdcKinesisSourceStreamArn
       StreamSpecification: 
         StreamViewType: NEW_IMAGE
-  
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true 
+          
   UserAttributesActionsQueue:
     Type: AWS::CloudFormation::Stack
     Properties:
