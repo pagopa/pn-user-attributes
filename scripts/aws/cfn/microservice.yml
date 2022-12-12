@@ -295,6 +295,9 @@ Resources:
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
         QueueArns: !Join
