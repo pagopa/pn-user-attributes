@@ -13,6 +13,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
+import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
@@ -83,6 +84,25 @@ public class AddressBookService {
     }
 
     /**
+     * Il metodo si occupa di salvare un indirizzo di tipo LEGALE. Per le persone giuridiche è prevista una validazione
+     * di accesso.
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param legalChannelType tipologia canale legale
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param pnCxType user's type
+     * @param pnCxGroups user's groups
+     * @param pnCxRole user's role
+     * @return risultato operazione
+     */
+    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, Mono<AddressVerificationDto> addressVerificationDto,
+                                                          CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r ->saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
+    }
+
+    /**
      * Il metodo si occupa di salvare un indirizzo di tipo CORTESIA
      *
      * @param recipientId id utente
@@ -93,6 +113,25 @@ public class AddressBookService {
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
         return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto);
+    }
+
+    /**
+     * Il metodo si occupa di salvare un indirizzo di tipo CORTESIA. Per le persone giuridiche è prevista una validazione
+     * di accesso.
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param courtesyChannelType tipologia canale cortesia
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param pnCxType user's type
+     * @param pnCxRole user's role
+     * @param pnCxGroups user's groups
+     * @return risultato operazione
+     */
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto,
+                                                             CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto));
     }
 
     /**
@@ -108,6 +147,23 @@ public class AddressBookService {
     }
 
     /**
+     * Elimina un indirizzo di tipo LEGALE. Per le persone giuridiche è prevista una validazione di accesso.
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @param legalChannelType tipo canale legale
+     * @param pnCxType user's type
+     * @param pnCxRole user's role
+     * @param pnCxGroups user's groups
+     * @return nd
+     */
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType,
+                                               CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> deleteLegalAddressBook(recipientId, senderId, legalChannelType));
+    }
+
+    /**
      * Elimina un indirizzo di tipo CORTESIA
      *
      * @param recipientId id utente
@@ -117,6 +173,23 @@ public class AddressBookService {
      */
     public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
         return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
+    }
+
+    /**
+     * Elimina un indirizzo di tipo CORTESIA. Per le persone giuridiche è prevista una validazione di accesso.
+     *
+     * @param recipientId id utente
+     * @param senderId id mittente
+     * @param courtesyChannelType tipo canale cortesia
+     * @param pnCxType user's type
+     * @param pnCxGroups user's groups
+     * @param pnCxRole user's role
+     * @return nd
+     */
+    public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType,
+                                                  CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> deleteCourtesyAddressBook(recipientId, senderId, courtesyChannelType));
     }
 
     /**
@@ -148,8 +221,22 @@ public class AddressBookService {
                 .flatMapIterable(x -> x);
     }
 
-    public Mono<Boolean> isAppIoEnabledByRecipient(String recipientId)
-    {
+    /**
+     * Ritorna gli indirizzi di CORTESIA in base al recipientId. Per le persone giuridiche è prevista una validazione
+     * di accesso.
+     *
+     * @param recipientId id utente
+     * @param pnCxType user's type
+     * @param pnCxGroups user's groups
+     * @param pnCxRole user's role
+     * @return lista indirizzi
+     */
+    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId, CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMapMany(r -> getCourtesyAddressByRecipient(recipientId));
+    }
+
+    public Mono<Boolean> isAppIoEnabledByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue())
                 .filter(x -> x.getChannelType().equals(CourtesyChannelTypeDto.APPIO.getValue()))
                 .take(1).next()
@@ -182,6 +269,36 @@ public class AddressBookService {
                 .collectList()
                 .flatMap(list -> deanonimizeLegal(recipientId, list))
                 .flatMapIterable(x -> x);
+    }
+
+    /**
+     * Lista indirizzi in base al recipient. Per le persone giuridiche è prevista una validazione di accesso.
+     *
+     * @param recipientId id utente
+     * @param pnCxType user's type
+     * @param pnCxRole user's role
+     * @param pnCxGroups user's groups
+     * @return lista indirizzi
+     */
+    public Flux<LegalDigitalAddressDto> getLegalAddressByRecipient(String recipientId, CxTypeAuthFleetDto pnCxType,
+                                                                   List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMapMany(r -> getLegalAddressByRecipient(recipientId));
+    }
+
+    /**
+     * Ritorna gli indirizzi LEGALI e di CORTESIA per il recipient. Per le persone giuridiche è prevista una validazione
+     * di accesso.
+     *
+     * @param recipientId id utente
+     * @param pnCxType user's type
+     * @param pnCxRole user's role
+     * @param pnCxGroups user's groups
+     * @return oggetto contenente le liste LEGALI e di CORTESIA
+     */
+    public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId, CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> getAddressesByRecipient(recipientId));
     }
 
     /**
@@ -340,7 +457,6 @@ public class AddressBookService {
      * -- CASO B: mi viene passato un codice di verifica (valido): è il secondo step della procedura, in cui l'utente convalida l'indirizzo.
      *    - Recupero il VerificationCode, e lo valido.
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
-     *
      *
      * @param recipientId id utente
      * @param senderId eventuale id PA

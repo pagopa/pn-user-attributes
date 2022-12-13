@@ -8,6 +8,8 @@ components:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/c1abe92c463a236209534e806c085afe5d169bcd/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxTypeAuthFleet'
     cxIdAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/c1abe92c463a236209534e806c085afe5d169bcd/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxIdAuthFleet'
+    cxGroupsAuthFleet:
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/c1abe92c463a236209534e806c085afe5d169bcd/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxGroupsAuthFleet'
     uidAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/c1abe92c463a236209534e806c085afe5d169bcd/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/uidAuthFleet'
     cxTaxIdAuthFleet:

@@ -4,9 +4,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -29,15 +29,23 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
-        String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
+    public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId,
+                                                                     CxTypeAuthFleetDto pnCxType,
+                                                                     String senderId,
+                                                                     CourtesyChannelTypeDto channelType,
+                                                                     List<String> pnCxGroups,
+                                                                     String pnCxRole,
+                                                                     ServerWebExchange exchange) {
+        String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
+                recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_DEL:PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_DEL : PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
                 .uid(recipientId)
                 .build();
         logEvent.log();
-        return this.addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType)
+
+        return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
                     return Mono.error(throwable);
@@ -49,36 +57,49 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId, ServerWebExchange exchange) {
-        log.info("getCourtesyAddressByRecipient - recipientId={}", recipientId);
-        return Mono.fromSupplier(() ->  ResponseEntity.ok(this.addressBookService.getCourtesyAddressByRecipient(recipientId)));
+    public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
+                                                                                               CxTypeAuthFleetDto pnCxType,
+                                                                                               List<String> pnCxGroups,
+                                                                                               String pnCxRole,
+                                                                                               ServerWebExchange exchange) {
+        log.info("getCourtesyAddressByRecipient - recipientId={} - cxType={} - cxRole={} - cxGroups={}", recipientId, pnCxType, pnCxRole, pnCxGroups);
+        return Mono.fromSupplier(() -> ResponseEntity.ok(addressBookService.getCourtesyAddressByRecipient(recipientId, pnCxType, pnCxGroups, pnCxRole)));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressBySender(String recipientId, String senderId, ServerWebExchange exchange) {
         log.info("getCourtesyAddressBySender - recipientId={} - senderId={}", recipientId, senderId);
-        return Mono.fromSupplier(() ->  ResponseEntity.ok(this.addressBookService.getCourtesyAddressByRecipientAndSender(recipientId, senderId)));
+        return Mono.fromSupplier(() ->  ResponseEntity.ok(addressBookService.getCourtesyAddressByRecipientAndSender(recipientId, senderId)));
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
-        String logMessage = String.format("postRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
+    public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId,
+                                                                   CxTypeAuthFleetDto pnCxType,
+                                                                   String senderId,
+                                                                   CourtesyChannelTypeDto channelType,
+                                                                   Mono<AddressVerificationDto> addressVerificationDto,
+                                                                   List<String> pnCxGroups,
+                                                                   String pnCxRole,
+                                                                   ServerWebExchange exchange) {
+        String logMessage = String.format("postRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
+                recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_INSUP:PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
+                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_INSUP : PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
                 .uid(recipientId)
                 .build();
         logEvent.log();
-        return this.addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto)
+
+        return addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();
                     return Mono.error(throwable);
                 })
                 .map(m -> {
                     log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                    if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED)
+                    if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
                         return ResponseEntity.status(HttpStatus.OK).body(null);
-                    else {
+                    } else {
                         logEvent.generateSuccess(logMessage).log();
                         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                     }

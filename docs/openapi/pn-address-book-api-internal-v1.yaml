@@ -32,6 +32,9 @@ paths:
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       parameters:                                                               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -106,8 +109,11 @@ paths:
         - legal
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
-      parameters:                                                                                                # NO EXTERNAL
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                          # NO EXTERNAL
+      parameters:                                                               # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -132,8 +138,11 @@ paths:
         - courtesy
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
-      parameters:                                                                                           # NO EXTERNAL
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
+      parameters:                                                               # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -153,7 +162,10 @@ paths:
 
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     parameters:
-      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'           # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'         # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'       # NO EXTERNAL
+      - $ref: '#/components/parameters/cxRoleAuthFleet'                         # NO EXTERNAL
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -218,6 +230,9 @@ paths:
   /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
     parameters:
       - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+      - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -296,6 +311,13 @@ components:
       description: sender Id or 'default' for general addresses not associated to a sender
       example: 'default'
       required: true
+      schema:
+        type: string
+    cxRoleAuthFleet:
+      name: x-pagopa-pn-cx-role
+      in: header
+      description: Ruolo (estratto da token di Self Care)
+      required: false
       schema:
         type: string
     

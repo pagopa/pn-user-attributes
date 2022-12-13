@@ -26,7 +26,6 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -315,10 +314,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
-        assertThrows(RuntimeException.class, () -> {
-            mono.block(d);
-        });
-
+        assertThrows(RuntimeException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -341,10 +337,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
-        assertThrows(PnInternalException.class, () -> {
-            mono.block(d);
-        });
-
+        assertThrows(PnInternalException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -504,18 +497,12 @@ class AddressBookServiceTest {
         Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
-
         // WHEN
         Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
-        assertThrows(RuntimeException.class, () -> {
-            mono.block(d);
-        });
-
+        assertThrows(RuntimeException.class, () -> mono.block(d));
 
         //THEN
     }
-
-
 
     @Test
     void deleteCourtesyAddressBookAPPIO_FAIL2() {
@@ -527,13 +514,9 @@ class AddressBookServiceTest {
         Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
-
         // WHEN
         Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
-        assertThrows(PnInternalException.class, () -> {
-            mono.block(d);
-        });
-
+        assertThrows(PnInternalException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -705,7 +688,8 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+                .collectList().block(d);
 
         //Then
         assertNotNull(result);
@@ -754,7 +738,8 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+                .collectList().block(d);
 
         //Then
         assertNotNull(result);
@@ -803,7 +788,8 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList();
+        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+                .collectList();
         assertThrows(PnInternalException.class, () -> addressBookServiceMono.block(d));
 
         //Then
@@ -938,7 +924,7 @@ class AddressBookServiceTest {
 
 
         //When
-        UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDb.get(0).getRecipientId()).block(d);
+        UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDb.get(0).getRecipientId(), null, null, null).block(d);
 
         //Then
         assertNotNull(result);

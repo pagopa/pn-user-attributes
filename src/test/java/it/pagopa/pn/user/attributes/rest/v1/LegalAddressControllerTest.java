@@ -18,9 +18,16 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 @WebFluxTest(controllers = {LegalAddressController.class})
 class LegalAddressControllerTest {
+
     private static final String PA_ID = "x-pagopa-pn-cx-id";
+    private static final String PN_CX_TYPE_HEADER = "x-pagopa-pn-cx-type";
+    private static final String PN_CX_TYPE_PF = "PF";
     private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
     private static final String CHANNELTYPE = "PEC";
@@ -31,23 +38,21 @@ class LegalAddressControllerTest {
     @Autowired
     WebTestClient webTestClient;
 
-
     @MockBean
     PnAuditLogBuilder pnAuditLogBuilder;
 
     PnAuditLogEvent logEvent;
 
     @BeforeEach
-    public void init(){
+    public void init() {
         logEvent = Mockito.mock(PnAuditLogEvent.class);
 
-        Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
-        Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(pnAuditLogBuilder.uid(Mockito.anyString())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.log()).thenReturn(logEvent);
-
+        when(pnAuditLogBuilder.build()).thenReturn(logEvent);
+        when(pnAuditLogBuilder.before(any(), any(), any())).thenReturn(pnAuditLogBuilder);
+        when(pnAuditLogBuilder.uid(anyString())).thenReturn(pnAuditLogBuilder);
+        when(logEvent.generateSuccess(any())).thenReturn(logEvent);
+        when(logEvent.generateFailure(any(), any())).thenReturn(logEvent);
+        when(logEvent.log()).thenReturn(logEvent);
     }
 
     @Test
@@ -59,22 +64,21 @@ class LegalAddressControllerTest {
 
         // When
         Mono<Object> voidReturn  = Mono.just("");
-        Mockito.when(svc.deleteLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any()))
+        when(svc.deleteLegalAddressBook(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
         webTestClient.delete()
                 .uri(url)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isNoContent();
+                .expectStatus()
+                .isNoContent();
 
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+        verify(logEvent).generateSuccess(any());
+        verify(logEvent, never()).generateFailure(any(), any());
     }
-
 
     @Test
     void deleteRecipientLegalAddress_FAIL() {
@@ -84,21 +88,20 @@ class LegalAddressControllerTest {
                 .replace("{channelType}", CHANNELTYPE);
 
         // When
-        Mono<Object> voidReturn  = Mono.just("");
-        Mockito.when(svc.deleteLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any()))
+        when(svc.deleteLegalAddressBook(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
         webTestClient.delete()
                 .uri(url)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus()
+                .is5xxServerError();
 
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
+        verify(logEvent).generateFailure(any(), any());
+        verify(logEvent, never()).generateSuccess(any());
     }
 
     @Test
@@ -113,7 +116,7 @@ class LegalAddressControllerTest {
         Flux<LegalDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
-        Mockito.when(svc.getLegalAddressByRecipient(Mockito.anyString()))
+        when(svc.getLegalAddressByRecipient(anyString()))
                 .thenReturn(retValue);
 
         // Then
@@ -121,8 +124,10 @@ class LegalAddressControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus()
+                .isOk();
     }
 
     @Test
@@ -138,7 +143,7 @@ class LegalAddressControllerTest {
         Flux<LegalDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
-        Mockito.when(svc.getLegalAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString()))
                 .thenReturn(retValue);
 
         // Then
@@ -162,10 +167,7 @@ class LegalAddressControllerTest {
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -174,13 +176,14 @@ class LegalAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerification)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isNoContent();
+                .expectStatus()
+                .isNoContent();
 
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+        verify(logEvent).generateSuccess(any());
+        verify(logEvent, never()).generateFailure(any(), any());
     }
-
 
     @Test
     void postRecipientLegalAddress_FAIL() {
@@ -194,11 +197,7 @@ class LegalAddressControllerTest {
         addressVerification.setValue("value");
 
         // When
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -207,13 +206,14 @@ class LegalAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerification)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus()
+                .is5xxServerError();
 
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
+        verify(logEvent).generateFailure(any(), any());
+        verify(logEvent, never()).generateSuccess(any());
     }
-
 
     @Test
     void postRecipientLegalAddressVerCodeNeeded() {
@@ -228,10 +228,7 @@ class LegalAddressControllerTest {
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -240,8 +237,10 @@ class LegalAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerification)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus()
+                .isOk();
     }
 
     @Test
@@ -256,11 +255,7 @@ class LegalAddressControllerTest {
         addressVerification.setValue("value");
 
         // When
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        Mockito.when(svc.saveLegalAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then
