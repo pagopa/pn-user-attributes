@@ -99,6 +99,10 @@ Parameters:
     Type: String
     Description: pn-user-attributes-actions input queue alarm ARN
 
+  UserAttributesActionsQueueAgeAlarmARN:
+    Type: String
+    Description: pn-user-attributes-actions input queue age alarm ARN
+
   ExternalChannels2UserAttributesQueueName:
     Type: String
     Description: 'external channels to user attributes queue name'
@@ -110,6 +114,10 @@ Parameters:
   ExternalChannels2UserAttributesQueueAlarmARN:
     Type: String
     Description: external channels to user attributes queue alarm ARN
+
+  ExternalChannels2UserAttributesQueueAgeAlarmARN:
+    Type: String
+    Description: external channels to user attributes queue age alarm ARN
 
   IoActivationSendOlderThanDays:
     Type: String
@@ -297,6 +305,8 @@ Resources:
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
+            - !Ref UserAttributesActionsQueueAgeAlarmARN
+            - !Ref ExternalChannels2UserAttributesQueueAgeAlarmARN
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
