@@ -166,13 +166,11 @@ Resources:
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
 
-  UserAttributesMicroserviceTaskPolicy:
-    Type: AWS::IAM::Policy
+  UserAttributesMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !Sub '${ProjectName}-UserAttributes-CustomTaskPolicy'
-      Roles:
-        - !GetAtt UserAttributesMicroservice.Outputs.TaskRoleName
       PolicyDocument:
         Version: 2012-10-17
         Statement:
