@@ -127,6 +127,10 @@ Parameters:
     Type: String
     Description: 'Kinesis stream that receive logs'
 
+  AlbSecurityGroup:
+    Type: String
+    Description: 'Application load balancer security group'
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBasePath, "Mock" ]
 
@@ -166,13 +170,12 @@ Resources:
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        AlbSecurityGroup: !Ref AlbSecurityGroup
+        TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
 
-  UserAttributesMicroserviceTaskPolicy:
-    Type: AWS::IAM::Policy
+  UserAttributesMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !Sub '${ProjectName}-UserAttributes-CustomTaskPolicy'
-      Roles:
-        - !GetAtt UserAttributesMicroservice.Outputs.TaskRoleName
       PolicyDocument:
         Version: 2012-10-17
         Statement:
