@@ -127,10 +127,10 @@ public class AddressBookDao extends BaseDao {
                         // se invcece il senderId era null (che equivale a volere quello di default), cerco direttamente quelli di default
                         List<AddressBookEntity> res = new ArrayList<>();
                         // inserisco tutti gli elementi che hanno il senderid specificato
-                        res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(finalSenderId)).collect(Collectors.toList()));
+                        res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(finalSenderId)).toList());
                         // inserisco tutti gli elementi che hanno il senderid di default e il channeltype NON era già presente nella lista dei risultati
                         res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(AddressBookEntity.SENDER_ID_DEFAULT)
-                                && res.stream().noneMatch(rab -> rab.getChannelType().equals(ab.getChannelType()))).collect(Collectors.toList()));
+                                && res.stream().noneMatch(rab -> rab.getChannelType().equals(ab.getChannelType()))).toList());
                         return  res;
                     }
                     else
