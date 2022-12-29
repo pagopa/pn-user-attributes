@@ -19,6 +19,12 @@
     <tag>HEAD</tag>
   </scm>
 
+  <properties>
+    <sonar.coverage.exclusions>
+      src/main/java/it/pagopa/pn/user/attributes/springbootcfg/**
+    </sonar.coverage.exclusions>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>it.pagopa.pn</groupId>
