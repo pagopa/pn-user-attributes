@@ -48,7 +48,6 @@ class CourtesyIoControllerTest {
 
         Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
         Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(pnAuditLogBuilder.uid(Mockito.anyString())).thenReturn(pnAuditLogBuilder);
         Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
         Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
         Mockito.when(logEvent.log()).thenReturn(logEvent);
