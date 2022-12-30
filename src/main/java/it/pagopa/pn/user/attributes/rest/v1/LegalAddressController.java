@@ -33,7 +33,6 @@ public class LegalAddressController implements LegalApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_DEL, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
         return this.addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType)
@@ -65,7 +64,6 @@ public class LegalAddressController implements LegalApi {
 
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
         return this.addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto)
