@@ -301,8 +301,7 @@ Resources:
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
         AlarmArns: !Join
           - ','
-          - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
-            - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
+          - - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
