@@ -21,17 +21,16 @@ import reactor.core.publisher.Mono;
 public class CourtesyAddressController implements CourtesyApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public CourtesyAddressController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public CourtesyAddressController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, ServerWebExchange exchange) {
         String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_DEL:PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
                 .build();
@@ -63,6 +62,7 @@ public class CourtesyAddressController implements CourtesyApi {
     public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId, String senderId, CourtesyChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         String logMessage = String.format("postRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO?PnAuditLogEventType.AUD_AB_DA_IO_INSUP:PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
                 .build();

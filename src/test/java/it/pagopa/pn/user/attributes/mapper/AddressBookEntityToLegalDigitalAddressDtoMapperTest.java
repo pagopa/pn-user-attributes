@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.mapper;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
@@ -16,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @ActiveProfiles("test")
 @ContextConfiguration(classes = {
-        PnAuditLogBuilder.class,
         AddressBookEntityToLegalDigitalAddressDtoMapper.class
 })
 class AddressBookEntityToLegalDigitalAddressDtoMapperTest {

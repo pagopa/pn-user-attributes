@@ -18,7 +18,6 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
 import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -41,7 +40,6 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
  */
 @Component
 @Slf4j
-@Import(PnAuditLogBuilder.class)
 public class PnExternalChannelClient extends BaseClient {
 
     public static final String EVENT_TYPE_VERIFICATION_CODE = "VerificationCode";
@@ -49,14 +47,10 @@ public class PnExternalChannelClient extends BaseClient {
     private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
     private DigitalLegalMessagesApi digitalLegalMessagesApi;
     private final PnDataVaultClient dataVaultClient;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-
-    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig,
-                                   PnDataVaultClient dataVaultClient, PnAuditLogBuilder pnAuditLogBuilder) {
+    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.dataVaultClient = dataVaultClient;
-        this.auditLogBuilder = pnAuditLogBuilder;
     }
 
     @PostConstruct
@@ -96,6 +90,7 @@ public class PnExternalChannelClient extends BaseClient {
                 "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                 recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_VERIFY_PEC, logMessage)
                 .build();
@@ -151,6 +146,7 @@ public class PnExternalChannelClient extends BaseClient {
                     "sendCourtesyVerificationCode SMS sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                     recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
                     .build();
@@ -191,6 +187,7 @@ public class PnExternalChannelClient extends BaseClient {
                     "sendCourtesyVerificationCode EMAIL sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                     recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();

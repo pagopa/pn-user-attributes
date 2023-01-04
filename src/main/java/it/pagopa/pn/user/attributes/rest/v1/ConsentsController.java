@@ -21,17 +21,16 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class ConsentsController implements ConsentsApi {
     private final ConsentsService consentsService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public ConsentsController(ConsentsService consentsService, PnAuditLogBuilder pnAuditLogBuilder) {
+    public ConsentsController(ConsentsService consentsService) {
         this.consentsService = consentsService;
-        this.auditLogBuilder = pnAuditLogBuilder;
     }
 
     @Override
     public Mono<ResponseEntity<Void>> consentAction(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, final ServerWebExchange exchange) {
         String logMessage = String.format("consentAction - xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", recipientId, xPagopaPnCxType, consentType, version);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
