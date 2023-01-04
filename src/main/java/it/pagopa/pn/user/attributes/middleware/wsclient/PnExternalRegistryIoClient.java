@@ -34,12 +34,10 @@ public class PnExternalRegistryIoClient extends BaseClient {
     private SendIoMessageApi ioMessageApi;
     private final PnUserattributesConfig pnUserattributesConfig;
     private final PnDataVaultClient pnDataVaultClient;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient, PnAuditLogBuilder pnAuditLogBuilder) {
+    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.pnDataVaultClient = pnDataVaultClient;
-        this.auditLogBuilder = pnAuditLogBuilder;
     }
 
     @PostConstruct
@@ -137,6 +135,7 @@ public class PnExternalRegistryIoClient extends BaseClient {
     public Mono<SendMessageResponse> sendIOMessage(SendMessageRequest sendMessageRequest) {
         log.info("sendIOMessage sendMessageRequest iun={}", sendMessageRequest.getIun());
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder.before(PnAuditLogEventType.AUD_AD_SEND_IO, "sendIOMessage")
                 .iun(sendMessageRequest.getIun())
                 .build();

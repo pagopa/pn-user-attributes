@@ -20,11 +20,9 @@ import reactor.core.publisher.Mono;
 public class CourtesyIoController implements CourtesyApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public CourtesyIoController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public CourtesyIoController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
@@ -48,6 +46,7 @@ public class CourtesyIoController implements CourtesyApi {
         return ioCourtesyDigitalAddressActivationDto
                 .flatMap(dto -> {
 
+                    PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
                     if (dto.getActivationStatus())
                     {
                         PnAuditLogEvent logEvent = auditLogBuilder

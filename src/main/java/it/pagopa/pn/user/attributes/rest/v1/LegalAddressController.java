@@ -20,17 +20,16 @@ import reactor.core.publisher.Mono;
 public class LegalAddressController implements LegalApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public LegalAddressController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public LegalAddressController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deleteRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, ServerWebExchange exchange) {
         String logMessage = String.format("deleteRecipientLegalAddress - recipientId: %s - senderId: %s - channelType: %s", recipientId, senderId, channelType);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_DEL, logMessage)
                 .build();
@@ -62,6 +61,7 @@ public class LegalAddressController implements LegalApi {
     public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId, String senderId, LegalChannelTypeDto channelType, Mono<AddressVerificationDto> addressVerificationDto, ServerWebExchange exchange) {
         String logMessage = String.format("postRecipientLegalAddress - recipientId=%s - senderId=%s - channelType=%s", recipientId, senderId, channelType);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
                 .build();
