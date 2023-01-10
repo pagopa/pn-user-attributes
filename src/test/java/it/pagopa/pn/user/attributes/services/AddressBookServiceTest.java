@@ -159,6 +159,7 @@ class AddressBookServiceTest {
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
+        verificationCode.setLastModified(Instant.now().minus(1000, ChronoUnit.MINUTES));
         verificationCode.setCreated(Instant.now().minus(1000, ChronoUnit.MINUTES));
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
@@ -171,9 +172,39 @@ class AddressBookServiceTest {
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto));
         assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
 
+        verificationCode.setLastModified(Instant.now().minus(1, ChronoUnit.MINUTES));
         verificationCode.setCreated(Instant.now().minus(1, ChronoUnit.MINUTES));
 
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono_ok = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto));
+        assertDoesNotThrow(() -> mono_ok.block(d));
+
+        //THEN
+    }
+
+    @Test
+    void saveLegalAddressBookWithInvalidVerificationCodeTooLateLastModified() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setVerificationCode("12345");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("12345");
+        verificationCode.setLastModified(Instant.now().minus(1, ChronoUnit.MINUTES));
+        verificationCode.setCreated(Instant.now().minus(1000, ChronoUnit.MINUTES));
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
 
         // WHEN

@@ -470,7 +470,7 @@ public class AddressBookService {
                 .flatMap(r -> {
                     if (!r.getVerificationCode().equals(verificationCode))
                         return Mono.error(new PnInvalidVerificationCodeException());
-                    if (r.getCreated().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
+                    if (r.getLastModified().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
                         return Mono.error(new PnInvalidVerificationCodeException());
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
