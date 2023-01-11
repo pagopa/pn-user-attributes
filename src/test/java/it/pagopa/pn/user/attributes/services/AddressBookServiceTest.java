@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -290,6 +291,74 @@ class AddressBookServiceTest {
         assertNotNull( result );
         assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
     }
+
+
+    @Test
+    void saveCourtesyAddressBookSMS_invalid() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.SMS;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("123345345");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("12345");
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
+        assertThrows(PnInvalidInputException.class, () -> {
+            mono.block(d);
+        });
+
+        //THEN
+    }
+
+
+    @Test
+    void saveCourtesyAddressBookEMAIL_invalid() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("abcd");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("12345");
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
+        assertThrows(PnInvalidInputException.class, () -> {
+            mono.block(d);
+        });
+
+        //THEN
+    }
+
+
+    @Test
+    void saveCourtesyAddressBookPEC_invalid() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        LegalChannelTypeDto legalChannelTypeDto = LegalChannelTypeDto.PEC;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("abcd");
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelTypeDto, Mono.just(addressVerificationDto));
+        assertThrows(PnInvalidInputException.class, () -> {
+            mono.block(d);
+        });
+
+        //THEN
+    }
+
+
 
     @Test
     void saveCourtesyAddressBookAPPIO() {

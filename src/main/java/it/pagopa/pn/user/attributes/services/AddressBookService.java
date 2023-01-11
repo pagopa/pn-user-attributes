@@ -1,6 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.exceptions.PnExceptionsCodes;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.*;
 
@@ -366,6 +369,7 @@ public class AddressBookService {
         }
         else {
             return addressVerificationDto
+                    .map(r -> validateAddress(legalChannelType, courtesyChannelType, r))
                     .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()), channelType)
                             , (r, alreadyverifiedoutcome) -> new Object() {
                                 public final String verificationCode = r.getVerificationCode();
@@ -392,6 +396,35 @@ public class AddressBookService {
                     });
         }
     }
+
+    // sonar segnalerebbe un potenziale problema di stackoverflow per input troppo lunghi, pertanto è stato eseguito il test
+    // preventivamente sulla lunghezza "sensata" della mail e ignorato il warning di sonarlint
+    @java.lang.SuppressWarnings("java:S5998")
+    private AddressVerificationDto validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+        String emailfield = "value";
+        if ((legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC))
+                || (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL)))
+        {
+            String emailaddress = addressVerificationDto.getValue();
+            if (emailaddress.length() > 500)
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+
+            // sonar segnalerebbe un potenziale problema di stackoverflow per input troppo lunghi, pertanto è stato eseguito il test
+            // preventivamente sulla lunghezza "sensata" della mail e ignorato il warning di sonarlint
+            final Pattern emailRegex = Pattern.compile("^\\w+([\\.-]?\\w+)*@\\w+([\\.-]?\\w+)*(\\.\\w{2,3})+$", Pattern.CASE_INSENSITIVE);
+            if (!emailRegex.matcher(emailaddress).matches())
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+        }
+        else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
+        {
+            final Pattern phoneRegex = Pattern.compile("^3\\d{8,9}$", Pattern.CASE_INSENSITIVE);
+            if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches())
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+        }
+        return addressVerificationDto;
+    }
+
+
 
     /**
      * Elimina un indirizzo
