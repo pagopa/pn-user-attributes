@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -639,10 +639,68 @@ class AddressBookServiceTest {
         }
     }
 
+
+
+
+    @Test
+    void getCourtesyAddressByRecipientAndSender_PG() {
+        //Given
+        List<AddressBookEntity> listFromDb = new ArrayList<>();
+        listFromDb.add(AddressBookDaoTestIT.newAddress(true, null, "PEC", false));
+        listFromDb.add(AddressBookDaoTestIT.newAddress(false, null, "EMAIL", false));
+
+        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
+        AddressDtoDto dto = new AddressDtoDto();
+        dto.setValue("email@pec.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
+        dto = new AddressDtoDto();
+        dto.setValue("email@email.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
+
+        final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
+        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
+        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setSenderId(listFromDb.get(0).getSenderId());
+        resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
+        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
+        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
+
+
+        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("utente test");
+        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
+        baseRecipientDtoDto.setInternalId("123456");
+
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.PN_NOT_ACTIVE);
+        user.setTaxId(baseRecipientDtoDto.getTaxId());
+
+        when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
+        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
+        when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
+
+        //When
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
+
+        //Then
+        try {
+            Assertions.assertNotNull(result);
+            Assertions.assertEquals(2, result.size());
+            Assertions.assertNotNull(result.get(0).getSenderId());
+            Assertions.assertTrue(result.contains(result.get(0)));
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        verify(ioFunctionServicesClient, never()).checkValidUsers(Mockito.any());
+    }
+
     @Test
     void isAppIoEnabledByRecipient(){
         //Given
-        AddressBookEntity addressBook = AddressBookDaoTestIT.newAddress(true, null, "APPIO");
+        AddressBookEntity addressBook = AddressBookDaoTestIT.newAddress(true, null, "APPIO", true);
         addressBook.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
 
 
