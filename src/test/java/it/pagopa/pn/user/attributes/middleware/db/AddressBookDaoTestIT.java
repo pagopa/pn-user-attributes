@@ -558,15 +558,15 @@ class AddressBookDaoTestIT {
 
         public static AddressBookEntity newAddress(boolean isLegal, String senderId) {
             if (isLegal)
-                return newAddress(isLegal, senderId, "PEC");
+                return newAddress(isLegal, senderId, "PEC", true);
             else
-                return newAddress(isLegal, senderId, "EMAIL");
+                return newAddress(isLegal, senderId, "EMAIL", true);
         }
 
-        public static AddressBookEntity newAddress(boolean isLegal, String senderId, String channelType) {
+        public static AddressBookEntity newAddress(boolean isLegal, String senderId, String channelType, boolean isPF) {
             if (isLegal)
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "LEGAL", senderId, channelType);
+                return new AddressBookEntity((isPF?"PF-":"PG-") + "123e4567-e89b-12d3-a456-426714174000", "LEGAL", senderId, channelType);
             else
-                return new AddressBookEntity("123e4567-e89b-12d3-a456-426714174000", "COURTESY", senderId, channelType);
+                return new AddressBookEntity((isPF?"PF-":"PG-") + "123e4567-e89b-12d3-a456-426714174000", "COURTESY", senderId, channelType);
         }
     }
