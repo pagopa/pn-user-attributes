@@ -339,6 +339,31 @@ class AddressBookServiceTest {
     }
 
 
+
+    @Test
+    void saveCourtesyAddressBookEMAIL_invalid_evil() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("abcd");
+
+        // questo indirizzo crea problemi con alcune regex per check delle email
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("somethingverylong@hereandthereseemore-.com");
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
+        assertThrows(PnInvalidInputException.class, () -> {
+            mono.block(d);
+        });
+
+        //THEN
+    }
+
+
     @Test
     void saveCourtesyAddressBookPEC_invalid() {
         //GIVEN
