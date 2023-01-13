@@ -348,11 +348,11 @@ class AddressBookServiceTest {
         String senderId = null;
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("abcd");
+        addressVerificationDto.setValue("somethingverylong@hereandthereseemore-.com");
 
-        // questo indirizzo crea problemi con alcune regex per check delle email
+        // questo indirizzo crea problemi con alcune regex per check dellel email
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
-        verificationCode.setVerificationCode("somethingverylong@hereandthereseemore-.com");
+        verificationCode.setVerificationCode("12345");
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
