@@ -19,7 +19,7 @@ tags:
     description: Receiver Digital Domicile
   - name: courtesy
     description: Receiver Digital Addresses
-    
+
 paths:
   /address-book/v1/digital-address:
     get:
@@ -28,10 +28,13 @@ paths:
       operationId: getAddressesByRecipient
       tags:
         - all
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       parameters:                                                               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -71,7 +74,7 @@ paths:
             application/problem+json:                                                                            # NO EXTERNAL
               schema:                                                                                            # NO EXTERNAL
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'                                             # NO EXTERNAL
-                                                                                                                 # NO EXTERNAL
+                # NO EXTERNAL
   /address-book-private/v1/digital-address/courtesy/{recipientId}/{senderId}:                                    # NO EXTERNAL
     get:                                                                                                         # NO EXTERNAL
       summary: get the courtesy digital addresses of the recipient to the sender                                 # NO EXTERNAL
@@ -90,24 +93,27 @@ paths:
               schema:                                                                                            # NO EXTERNAL
                 type: array                                                                                      # NO EXTERNAL
                 items:                                                                                           # NO EXTERNAL
-                   $ref: '#/components/schemas/CourtesyDigitalAddress'                                           # NO EXTERNAL
+                  $ref: '#/components/schemas/CourtesyDigitalAddress'                                           # NO EXTERNAL
         '400':                                                                                                   # NO EXTERNAL
           description: Invalid input                                                                             # NO EXTERNAL
           content:                                                                                               # NO EXTERNAL
             application/problem+json:                                                                            # NO EXTERNAL
               schema:                                                                                            # NO EXTERNAL
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'                                             # NO EXTERNAL
-  
+
   /address-book/v1/digital-address/legal:
     get:
       summary: get digital addresses with legal value
       operationId: getLegalAddressByRecipient
       tags:
         - legal
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
-      parameters:                                                                                                # NO EXTERNAL
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                          # NO EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      parameters:                                                               # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -123,17 +129,20 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-  
+
   /address-book/v1/digital-address/courtesy:
     get:
       summary: get digital addresses without legal value
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
-      parameters:                                                                                           # NO EXTERNAL
-        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      parameters:                                                               # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -153,7 +162,10 @@ paths:
 
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     parameters:
-      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'           # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'         # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'       # NO EXTERNAL
+      - $ref: '#/components/parameters/cxRoleAuthFleet'                         # NO EXTERNAL
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -166,8 +178,8 @@ paths:
       operationId: postRecipientLegalAddress
       tags:
         - legal
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -197,8 +209,8 @@ paths:
       operationId: deleteRecipientLegalAddress
       tags:
         - legal
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '204':
           description: successful operation
@@ -218,6 +230,9 @@ paths:
   /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
     parameters:
       - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
+      - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       - $ref: '#/components/parameters/senderId'
       - in: path
         name: channelType
@@ -230,8 +245,8 @@ paths:
       operationId: postRecipientCourtesyAddress
       tags:
         - courtesy
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -261,8 +276,8 @@ paths:
       operationId: deleteRecipientCourtesyAddress
       tags:
         - courtesy
-#      security:                                                                # ONLY EXTERNAL
-#        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       responses:
         '204':
           description: successful operation
@@ -298,16 +313,23 @@ components:
       required: true
       schema:
         type: string
-    
+    cxRoleAuthFleet:
+      name: x-pagopa-pn-cx-role
+      in: header
+      description: Ruolo (estratto da token di Self Care)
+      required: false
+      schema:
+        type: string
+
   schemas:
     AddressVerification:
       type: object
       required:
-       - value
+        - value
       properties:
         value:
           type: string
-        verificationCode: 
+        verificationCode:
           $ref: '#/components/schemas/VerificationCode'
 
     BaseDigitalAddress:
@@ -329,7 +351,7 @@ components:
           example: 'cmbo'
         channelType:
           type: string
-        value: 
+        value:
           type: string
           example: 'nome.utente@server.it'
         code:
@@ -341,7 +363,7 @@ components:
       enum:
         - PEC
         - APPIO
-    
+
     LegalDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -357,7 +379,7 @@ components:
 
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
-    
+
     CourtesyChannelType:
       type: string
       description: Communication Channel types __without__ legal value
@@ -380,7 +402,7 @@ components:
                 - COURTESY
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
-  
+
     UserAddresses:
       type: object
       properties:
@@ -392,7 +414,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CourtesyDigitalAddress'
-    
+
     VerificationCode:
       type: string
       description: Verification Code
