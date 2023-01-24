@@ -5,6 +5,7 @@ import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
@@ -16,7 +17,6 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -40,7 +40,7 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
  */
 @Component
 @Slf4j
-public class PnExternalChannelClient extends BaseClient {
+public class PnExternalChannelClient extends CommonBaseClient {
 
     public static final String EVENT_TYPE_VERIFICATION_CODE = "VerificationCode";
     private final PnUserattributesConfig pnUserattributesConfig;
@@ -55,12 +55,12 @@ public class PnExternalChannelClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);
