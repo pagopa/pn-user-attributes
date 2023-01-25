@@ -1,7 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -21,11 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -122,10 +118,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
                 .next()
                 .flatMap(digitalNotificationRequestDto -> digitalLegalMessagesApi
                         .sendDigitalLegalMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                        .retryWhen(
-                                Retry.backoff(2, Duration.ofMillis(25))
-                                        .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                        ))
+                        )
                         .onErrorResume(x -> {
                             String message = elabExceptionMessage(x);
                             String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", message);
@@ -166,10 +159,6 @@ public class PnExternalChannelClient extends CommonBaseClient {
 
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                    .retryWhen(
-                            Retry.backoff(2, Duration.ofMillis(25))
-                                    .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                    )
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
                         String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", message);
@@ -215,10 +204,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
                     .next()
                     .flatMap(digitalNotificationRequestDto -> digitalCourtesyMessagesApi
                             .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            ))
+                            )
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
