@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.api.AddressBookApi;
@@ -9,16 +9,12 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.util.List;
 
 /**
@@ -26,7 +22,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class PnDataVaultClient extends BaseClient {
+public class PnDataVaultClient extends CommonBaseClient {
     
     private AddressBookApi addressBookApi;
     private RecipientsApi recipientsApi;
@@ -38,12 +34,12 @@ public class PnDataVaultClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
         this.addressBookApi = new AddressBookApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
 
         this.recipientsApi = new RecipientsApi(apiClient);
@@ -63,11 +59,7 @@ public class PnDataVaultClient extends BaseClient {
         log.info("updateRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
         AddressDtoDto dto = new AddressDtoDto();
         dto.setValue(realaddress);
-        return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, dto)
-            .retryWhen(
-                    Retry.backoff(2, Duration.ofMillis(25))
-                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                );                             
+        return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, dto);
             
     }
 
@@ -81,11 +73,7 @@ public class PnDataVaultClient extends BaseClient {
     public Mono<RecipientAddressesDtoDto> getRecipientAddressesByInternalId(String internalId)
     {
         log.info("getRecipientAddressesByInternalId internalId:{}", internalId);
-        return addressBookApi.getRecipientAddressesByInternalId (internalId)
-            .retryWhen(
-                    Retry.backoff(2, Duration.ofMillis(25))
-                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                );
+        return addressBookApi.getRecipientAddressesByInternalId (internalId);
             
     }
 
@@ -100,11 +88,7 @@ public class PnDataVaultClient extends BaseClient {
     public Mono<Void> deleteRecipientAddressByInternalId(String internalId, String addressId)
     {
         log.info("deleteRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
-        return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId)
-                .retryWhen(
-                        Retry.backoff(2, Duration.ofMillis(25))
-                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                );
+        return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId);
 
     }
 
@@ -117,11 +101,7 @@ public class PnDataVaultClient extends BaseClient {
      */
     public Flux<BaseRecipientDtoDto> getRecipientDenominationByInternalId(List<String> internalIds)
     {
-        return recipientsApi.getRecipientDenominationByInternalId(internalIds)
-                .retryWhen(
-                        Retry.backoff(2, Duration.ofMillis(25))
-                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                );
+        return recipientsApi.getRecipientDenominationByInternalId(internalIds);
 
     }
 }

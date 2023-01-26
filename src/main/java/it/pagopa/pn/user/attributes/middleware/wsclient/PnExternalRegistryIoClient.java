@@ -1,26 +1,22 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.SendIoMessageApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.util.List;
 
 /**
@@ -28,7 +24,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class PnExternalRegistryIoClient extends BaseClient {
+public class PnExternalRegistryIoClient extends CommonBaseClient {
 
     private IoActivationApi ioApi;
     private SendIoMessageApi ioMessageApi;
@@ -42,12 +38,12 @@ public class PnExternalRegistryIoClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
 
         this.ioApi = new IoActivationApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
 
         this.ioMessageApi = new SendIoMessageApi(apiClient);
@@ -73,10 +69,6 @@ public class PnExternalRegistryIoClient extends BaseClient {
                     dto.setStatus(activated? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
 
                     return ioApi.upsertServiceActivation(dto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            )
                             .onErrorResume(throwable -> {
                                 log.error("error upserting service activation message={}", elabExceptionMessage(throwable) , throwable);
                                 return getServiceActivation(internalId);
@@ -95,11 +87,7 @@ public class PnExternalRegistryIoClient extends BaseClient {
                 .flatMap(user -> {
                     UserStatusRequest userStatusRequest = new UserStatusRequest();
                     userStatusRequest.setTaxId(user.getTaxId());
-                    return this.ioMessageApi.userStatus(userStatusRequest)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            );
+                    return this.ioMessageApi.userStatus(userStatusRequest);
                 });
     }
 
@@ -121,10 +109,6 @@ public class PnExternalRegistryIoClient extends BaseClient {
                     dto.setFiscalCode(user.getTaxId());
 
                     return ioApi.getServiceActivationByPOST(dto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            )
                             .map(x -> {
                                 log.info("getServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
                                 return x;
