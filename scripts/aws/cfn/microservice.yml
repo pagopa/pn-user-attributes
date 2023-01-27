@@ -99,6 +99,10 @@ Parameters:
     Type: String
     Description: pn-user-attributes-actions input queue alarm ARN
 
+  UserAttributesActionsQueueAgeAlarmARN:
+    Type: String
+    Description: pn-user-attributes-actions input queue age alarm ARN
+
   ExternalChannels2UserAttributesQueueName:
     Type: String
     Description: 'external channels to user attributes queue name'
@@ -111,6 +115,10 @@ Parameters:
     Type: String
     Description: external channels to user attributes queue alarm ARN
 
+  ExternalChannels2UserAttributesQueueAgeAlarmARN:
+    Type: String
+    Description: external channels to user attributes queue age alarm ARN
+
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
@@ -118,6 +126,10 @@ Parameters:
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'
+
+  AlbSecurityGroup:
+    Type: String
+    Description: 'Application load balancer security group'
 
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBasePath, "Mock" ]
@@ -158,13 +170,12 @@ Resources:
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        AlbSecurityGroup: !Ref AlbSecurityGroup
+        TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
 
-  UserAttributesMicroserviceTaskPolicy:
-    Type: AWS::IAM::Policy
+  UserAttributesMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !Sub '${ProjectName}-UserAttributes-CustomTaskPolicy'
-      Roles:
-        - !GetAtt UserAttributesMicroservice.Outputs.TaskRoleName
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -290,13 +301,17 @@ Resources:
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
         AlarmArns: !Join
           - ','
-          - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
-            - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
+          - - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
+            - !Ref UserAttributesActionsQueueAgeAlarmARN
+            - !Ref ExternalChannels2UserAttributesQueueAgeAlarmARN
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN

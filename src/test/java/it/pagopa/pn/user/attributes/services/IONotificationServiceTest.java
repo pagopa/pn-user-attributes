@@ -2,7 +2,6 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationPaymentInfo;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationRecipient;
@@ -11,16 +10,12 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregi
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,11 +27,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@ContextConfiguration(classes = {
-        PnAuditLogBuilder.class,
-})
+@ExtendWith(MockitoExtension.class)
 class IONotificationServiceTest {
 
     private final Duration d = Duration.ofMillis(3000);
@@ -61,12 +52,13 @@ class IONotificationServiceTest {
     void scheduleCheckNotificationToSendAfterIOActivation() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotification sentNotification = new SentNotification();
 
         Mockito.when(pnUserattributesConfig.getIoactivationSendolderthandays()).thenReturn(7);
         service = new IONotificationService(actionsQueue,pnExternalRegistryIoClient,pnDeliveryClient,pnUserattributesConfig);
         // WHEN
         Mono<Void> mono = service.scheduleCheckNotificationToSendAfterIOActivation(recipientId, Instant.now());
+
+        // THEN
         assertDoesNotThrow(() -> {
             mono.block(d);
         });
@@ -76,10 +68,11 @@ class IONotificationServiceTest {
     void scheduleCheckNotificationToSendAfterIOActivationIf() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotification sentNotification = new SentNotification();
 
         // WHEN
         Mono<Void> mono = service.scheduleCheckNotificationToSendAfterIOActivation(recipientId, Instant.now());
+
+        // THEN
         assertDoesNotThrow(() -> {
             mono.block(d);
         });
@@ -91,16 +84,15 @@ class IONotificationServiceTest {
         String recipientId = "recipientid";
         SentNotification sentNotification = new SentNotification();
 
+        // WHEN
         Mockito.when(this.pnDeliveryClient.searchNotificationPrivate(Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Flux.fromIterable(List.of(sentNotification)));
 
-
-        // WHEN
         Mono<Void> mono = service.consumeIoActivationEvent(recipientId, Instant.now());
+
+        //THEN
         assertDoesNotThrow(() -> {
             mono.block(d);
         });
-
-        //THEN
     }
 
     @Test
@@ -115,16 +107,15 @@ class IONotificationServiceTest {
         SendMessageResponse sendMessageResponse = new SendMessageResponse();
         sendMessageResponse.setId("23423423423");
 
+        // WHEN
         Mockito.when(this.pnExternalRegistryIoClient.sendIOMessage(Mockito.any())).thenReturn(Mono.just(sendMessageResponse));
 
-        // WHEN
+
         Mono<Void> mono = service.consumeIoSendMessageEvent(recipientId, sentNotification);
+        //THEN
         assertDoesNotThrow(() -> {
             mono.block(d);
         });
-
-
-        //THEN
 
     }
 
@@ -135,17 +126,8 @@ class IONotificationServiceTest {
         SentNotification sentNotification = new SentNotification();
         sentNotification.setRecipients(new ArrayList<>());
 
-        SendMessageResponse sendMessageResponse = new SendMessageResponse();
-        sendMessageResponse.setId("23423423423");
-
-
-        // WHEN
-        assertThrows(PnInternalException.class, () -> {
-            service.consumeIoSendMessageEvent(recipientId, sentNotification);
-        });
-
-
         //THEN
+        assertThrows(PnInternalException.class, () -> service.consumeIoSendMessageEvent(recipientId, sentNotification));
 
     }
 
@@ -164,15 +146,14 @@ class IONotificationServiceTest {
         SendMessageResponse sendMessageResponse = new SendMessageResponse();
         sendMessageResponse.setId("23423423423");
 
+        // WHEN
         Mockito.when(this.pnExternalRegistryIoClient.sendIOMessage(Mockito.any())).thenReturn(Mono.just(sendMessageResponse));
 
-        // WHEN
+        //THEN
         Mono<Void> mono = service.consumeIoSendMessageEvent(recipientId, sentNotification);
         assertDoesNotThrow(() -> {
             mono.block(d);
         });
-
-        //THEN
 
     }
 }

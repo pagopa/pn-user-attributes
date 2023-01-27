@@ -21,11 +21,9 @@ import java.util.List;
 public class CourtesyAddressController implements CourtesyApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public CourtesyAddressController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public CourtesyAddressController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
@@ -39,9 +37,9 @@ public class CourtesyAddressController implements CourtesyApi {
         String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_DEL : PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
 
@@ -84,9 +82,9 @@ public class CourtesyAddressController implements CourtesyApi {
         String logMessage = String.format("postRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_INSUP : PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
 

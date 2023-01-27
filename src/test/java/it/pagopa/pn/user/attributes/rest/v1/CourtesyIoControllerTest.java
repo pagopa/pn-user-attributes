@@ -1,11 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto.IoCourtesyDigitalAddressActivationDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -35,24 +32,6 @@ class CourtesyIoControllerTest {
 
     @Autowired
     WebTestClient webTestClient;
-
-
-    @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
-
-    PnAuditLogEvent logEvent;
-
-    @BeforeEach
-    public void init(){
-        logEvent = Mockito.mock(PnAuditLogEvent.class);
-
-        Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
-        Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(pnAuditLogBuilder.uid(Mockito.anyString())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.log()).thenReturn(logEvent);
-    }
 
     @Test
     void getCourtesyAddressIo() {
@@ -103,9 +82,6 @@ class CourtesyIoControllerTest {
                 .header(HEADER_CX_ID, "abcd")
                 .exchange()
                 .expectStatus().isNoContent();
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -132,9 +108,6 @@ class CourtesyIoControllerTest {
                 .header(HEADER_CX_ID, "abcd")
                 .exchange()
                 .expectStatus().isNoContent();
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
     }
 
 
@@ -164,9 +137,6 @@ class CourtesyIoControllerTest {
                 .header(HEADER_CX_ID, "abcd")
                 .exchange()
                 .expectStatus().is5xxServerError();
-
-        Mockito.verify(logEvent).generateFailure(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -193,8 +163,5 @@ class CourtesyIoControllerTest {
                 .header(HEADER_CX_ID, "abcd")
                 .exchange()
                 .expectStatus().is5xxServerError();
-
-        Mockito.verify(logEvent).generateFailure(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any(), Mockito.any());
     }
 }

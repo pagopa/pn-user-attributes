@@ -1,10 +1,10 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
@@ -16,17 +16,12 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -41,32 +36,27 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
  */
 @Component
 @Slf4j
-@Import(PnAuditLogBuilder.class)
-public class PnExternalChannelClient extends BaseClient {
+public class PnExternalChannelClient extends CommonBaseClient {
 
     public static final String EVENT_TYPE_VERIFICATION_CODE = "VerificationCode";
     private final PnUserattributesConfig pnUserattributesConfig;
     private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
     private DigitalLegalMessagesApi digitalLegalMessagesApi;
     private final PnDataVaultClient dataVaultClient;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-
-    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig,
-                                   PnDataVaultClient dataVaultClient, PnAuditLogBuilder pnAuditLogBuilder) {
+    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.dataVaultClient = dataVaultClient;
-        this.auditLogBuilder = pnAuditLogBuilder;
     }
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
 
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
 
         this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);
@@ -96,6 +86,7 @@ public class PnExternalChannelClient extends BaseClient {
                 "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                 recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_VERIFY_PEC, logMessage)
                 .build();
@@ -127,10 +118,7 @@ public class PnExternalChannelClient extends BaseClient {
                 .next()
                 .flatMap(digitalNotificationRequestDto -> digitalLegalMessagesApi
                         .sendDigitalLegalMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                        .retryWhen(
-                                Retry.backoff(2, Duration.ofMillis(25))
-                                        .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                        ))
+                        )
                         .onErrorResume(x -> {
                             String message = elabExceptionMessage(x);
                             String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", message);
@@ -151,6 +139,7 @@ public class PnExternalChannelClient extends BaseClient {
                     "sendCourtesyVerificationCode SMS sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                     recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
                     .build();
@@ -170,10 +159,6 @@ public class PnExternalChannelClient extends BaseClient {
 
             return digitalCourtesyMessagesApi
                     .sendCourtesyShortMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                    .retryWhen(
-                            Retry.backoff(2, Duration.ofMillis(25))
-                                    .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                    )
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
                         String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", message);
@@ -191,6 +176,7 @@ public class PnExternalChannelClient extends BaseClient {
                     "sendCourtesyVerificationCode EMAIL sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                     recipientId, LogUtils.maskNumber(address), verificationCode, courtesyChannelType.getValue(), requestId
             );
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
             PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
@@ -218,10 +204,7 @@ public class PnExternalChannelClient extends BaseClient {
                     .next()
                     .flatMap(digitalNotificationRequestDto -> digitalCourtesyMessagesApi
                             .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            ))
+                            )
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 

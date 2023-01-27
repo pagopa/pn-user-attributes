@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
@@ -12,12 +11,11 @@ import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,16 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
-@SpringBootTest
-@ActiveProfiles("test")
-@ContextConfiguration(classes = {
-        PnAuditLogBuilder.class
-})
+@ExtendWith(MockitoExtension.class)
 class ConsentsServiceTest {
 
     private final Duration d = Duration.ofMillis(3000);
-
-
 
     @InjectMocks
     private ConsentsService service;
@@ -126,11 +118,9 @@ class ConsentsServiceTest {
         ConsentTypeDto dto = ConsentTypeDto.TOS;
         ConsentDto PFexpected = new ConsentDto();
         PFexpected.setAccepted(true);
-        ConsentDto PGexpected = new ConsentDto();
         PFexpected.setAccepted(false);
 
         String PFrecipientId = CxTypeAuthFleetDto.PF + "-" + recipientId;
-        String PGrecipientId = CxTypeAuthFleetDto.PG + "-" + recipientId;
 
         ConsentEntity PFconsentEntity = new ConsentEntity();
         PFconsentEntity.setLastModified(Instant.now());
@@ -147,8 +137,6 @@ class ConsentsServiceTest {
 
         Mockito.when(consentDao.getConsentByType(Mockito.eq(PFrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PFconsentEntity));
         Mockito.when(consentEntityConsentDtoMapper.toDto(PFconsentEntity)).thenReturn(PFexpected);
-        Mockito.when(consentDao.getConsentByType(Mockito.eq(PGrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PGconsentEntity));
-        Mockito.when(consentEntityConsentDtoMapper.toDto(PGconsentEntity)).thenReturn(PGexpected);
 
         // WHEN
         ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
@@ -162,9 +150,7 @@ class ConsentsServiceTest {
         //GIVEN
         String recipientId = "recipientid";
         ConsentTypeDto dto = ConsentTypeDto.TOS;
-        ConsentDto expected = new ConsentDto();
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
         Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
 
@@ -182,7 +168,6 @@ class ConsentsServiceTest {
     void getConsents() {
         //GIVEN
         String recipientId = "recipientid";
-        ConsentTypeDto dto = ConsentTypeDto.TOS;
         ConsentDto expected = new ConsentDto();
         List<ConsentEntity> list = new ArrayList<>();
         list.add(ConsentDaoTestIT.newConsent(true));
@@ -204,10 +189,7 @@ class ConsentsServiceTest {
     void getConsents_NotFound() {
         //GIVEN
         String recipientId = "recipientid";
-        ConsentTypeDto dto = ConsentTypeDto.TOS;
-        ConsentDto expected = new ConsentDto();
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
         Mockito.when(consentDao.getConsents(Mockito.any())).thenReturn(Flux.empty());
 
 

@@ -20,11 +20,9 @@ import java.util.List;
 public class LegalAddressController implements LegalApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public LegalAddressController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public LegalAddressController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
@@ -38,9 +36,9 @@ public class LegalAddressController implements LegalApi {
         String logMessage = String.format("deleteRecipientLegalAddress - recipientId: %s - senderId: %s - channelType: %s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_DEL, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
 
@@ -82,9 +80,9 @@ public class LegalAddressController implements LegalApi {
         String logMessage = String.format("postRecipientLegalAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
                 .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
-                .uid(recipientId)
                 .build();
         logEvent.log();
 

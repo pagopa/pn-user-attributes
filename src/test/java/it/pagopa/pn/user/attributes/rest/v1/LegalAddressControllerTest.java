@@ -1,13 +1,10 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,22 +35,6 @@ class LegalAddressControllerTest {
     @Autowired
     WebTestClient webTestClient;
 
-    @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
-
-    PnAuditLogEvent logEvent;
-
-    @BeforeEach
-    public void init() {
-        logEvent = Mockito.mock(PnAuditLogEvent.class);
-
-        when(pnAuditLogBuilder.build()).thenReturn(logEvent);
-        when(pnAuditLogBuilder.before(any(), any(), any())).thenReturn(pnAuditLogBuilder);
-        when(pnAuditLogBuilder.uid(anyString())).thenReturn(pnAuditLogBuilder);
-        when(logEvent.generateSuccess(any())).thenReturn(logEvent);
-        when(logEvent.generateFailure(any(), any())).thenReturn(logEvent);
-        when(logEvent.log()).thenReturn(logEvent);
-    }
 
     @Test
     void deleteRecipientLegalAddress() {
@@ -75,9 +56,6 @@ class LegalAddressControllerTest {
                 .exchange()
                 .expectStatus()
                 .isNoContent();
-
-        verify(logEvent).generateSuccess(any());
-        verify(logEvent, never()).generateFailure(any(), any());
     }
 
     @Test
@@ -99,9 +77,6 @@ class LegalAddressControllerTest {
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
-
-        verify(logEvent).generateFailure(any(), any());
-        verify(logEvent, never()).generateSuccess(any());
     }
 
     @Test
@@ -180,9 +155,6 @@ class LegalAddressControllerTest {
                 .exchange()
                 .expectStatus()
                 .isNoContent();
-
-        verify(logEvent).generateSuccess(any());
-        verify(logEvent, never()).generateFailure(any(), any());
     }
 
     @Test
@@ -210,9 +182,6 @@ class LegalAddressControllerTest {
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
-
-        verify(logEvent).generateFailure(any(), any());
-        verify(logEvent, never()).generateSuccess(any());
     }
 
     @Test

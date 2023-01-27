@@ -74,6 +74,9 @@ Outputs:
   UserAttributesActionsQueueAlarmARN:
     Value: !GetAtt UserAttributesActionsQueue.Outputs.SqsDLQAlarmArn
     Description: pn-user-attributes-actions input queue alarm ARN
+  UserAttributesActionsQueueAgeAlarmARN:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.SqsAgeAlarmArn
+    Description: pn-user-attributes-actions input queue alarm ARN
 
   # Table parameters
   UserAttributesTableName:

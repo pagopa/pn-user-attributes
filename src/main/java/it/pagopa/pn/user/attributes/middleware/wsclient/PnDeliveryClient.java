@@ -1,22 +1,18 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.ApiClient;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.api.InternalOnlyApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationStatus;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -25,7 +21,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class PnDeliveryClient extends BaseClient {
+public class PnDeliveryClient extends CommonBaseClient {
 
     private InternalOnlyApi pnDeliveryApi;
     private final PnUserattributesConfig pnUserattributesConfig;
@@ -37,7 +33,7 @@ public class PnDeliveryClient extends BaseClient {
 
     @PostConstruct
     public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
+        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
         apiClient.setBasePath(pnUserattributesConfig.getClientDeliveryBasepath());
 
         this.pnDeliveryApi = new InternalOnlyApi(apiClient);
@@ -59,10 +55,6 @@ public class PnDeliveryClient extends BaseClient {
 
         return this.pnDeliveryApi.searchNotificationsPrivate(startDate, endDate, internalId, true, null,
                         List.of(NotificationStatus.ACCEPTED, NotificationStatus.DELIVERING, NotificationStatus.DELIVERED), 100, null)
-                .retryWhen(
-                        Retry.backoff(2, Duration.ofMillis(25))
-                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                )
                 .onErrorResume(throwable -> {
                     log.error("error searchNotificationsPrivate message={}", elabExceptionMessage(throwable) , throwable);
                     return Mono.error(throwable);
@@ -80,10 +72,6 @@ public class PnDeliveryClient extends BaseClient {
         log.info("getSentNotificationPrivate iun={}", iun);
 
         return this.pnDeliveryApi.getSentNotificationPrivate(iun)
-                .retryWhen(
-                        Retry.backoff(2, Duration.ofMillis(25))
-                                .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                )
                 .onErrorResume(throwable -> {
                     log.error("error getSentNotificationPrivate message={}", elabExceptionMessage(throwable) , throwable);
                     return Mono.error(throwable);

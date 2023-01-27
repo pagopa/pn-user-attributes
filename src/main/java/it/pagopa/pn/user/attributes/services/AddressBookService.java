@@ -1,6 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.exceptions.PnExceptionsCodes;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.*;
 
@@ -40,6 +43,7 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
 public class AddressBookService {
 
     private static final int VERIFICATION_CODE_TTL_MINUTES = 10;
+    public static final String PF_PREFIX = "PF-";
     private final AddressBookDao dao;
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
@@ -359,35 +363,38 @@ public class AddressBookService {
         Optional<CourtesyDigitalAddressDto> appioAddress = source.stream().filter(x -> x.getChannelType().getValue().equals(CourtesyChannelTypeDto.APPIO.getValue())).findFirst();
         if (appioAddress.isEmpty())
         {
-            // mi ricavo il CF da datavault, poi lo uso per recuperare se è un utente valido
-            return this.pnExternalRegistryClient.checkValidUsers(recipientId)
-                    .map(user -> {
-                        // se non è attivo su IO, ritorno il dto SENZA APPIO
-                        if (user.getStatus() == UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE)
-                        {
-                            log.info("enrichWithAppIo appio is not available, not returning appio courtesy recipientId={}", recipientId);
-                            return source;
-                        }
-                        else if (user.getStatus() == UserStatusResponse.StatusEnum.ERROR)
-                        {
-                            throw new PnInternalException("IO user check status failed", ERROR_CODE_IO_ERROR);
-                        }
-                        else
-                        {
-                            log.info("enrichWithAppIo appio is available, adding appio courtesy as disabled recipientId={}", recipientId);
-                            // altrimenti, vuol dire che è presente ma disabilitato.
-                            // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
-                            // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
-                            CourtesyDigitalAddressDto add = new CourtesyDigitalAddressDto();
-                            add.setValue(AddressBookEntity.APP_IO_DISABLED);
-                            add.setRecipientId(recipientId);
-                            add.setChannelType(CourtesyChannelTypeDto.APPIO);
-                            add.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
-                            add.setSenderId(AddressBookEntity.SENDER_ID_DEFAULT);
-                            source.add(add);
-                            return source;
-                        }
-                    });
+            // se l'utente è di tipo PF allora è prevista la possibilità di avere l'app IO, altrimenti non c'è sicuramente
+            if (isPFInternalId(recipientId)) {
+                // mi ricavo il CF da datavault, poi lo uso per recuperare se è un utente valido
+                return this.pnExternalRegistryClient.checkValidUsers(recipientId)
+                        .map(user -> {
+                            // se non è attivo su IO, ritorno il dto SENZA APPIO
+                            if (user.getStatus() == UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE) {
+                                log.info("enrichWithAppIo appio is not available, not returning appio courtesy recipientId={}", recipientId);
+                                return source;
+                            } else if (user.getStatus() == UserStatusResponse.StatusEnum.ERROR) {
+                                throw new PnInternalException("IO user check status failed", ERROR_CODE_IO_ERROR);
+                            } else {
+                                log.info("enrichWithAppIo appio is available, adding appio courtesy as disabled recipientId={}", recipientId);
+                                // altrimenti, vuol dire che è presente ma disabilitato.
+                                // si noti infatti che NON posso fidarmi del mio flag di disabilitato,
+                                // perchè quel flag "DISABLED" da noi in PN può rappresentare sia il "APPIO non ATTIVO", sia "APPIO attivo ma PN disablitato"
+                                CourtesyDigitalAddressDto add = new CourtesyDigitalAddressDto();
+                                add.setValue(AddressBookEntity.APP_IO_DISABLED);
+                                add.setRecipientId(recipientId);
+                                add.setChannelType(CourtesyChannelTypeDto.APPIO);
+                                add.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+                                add.setSenderId(AddressBookEntity.SENDER_ID_DEFAULT);
+                                source.add(add);
+                                return source;
+                            }
+                        });
+            }
+            else
+            {
+                log.info("enrichWithAppIo appio courtesy is not available for PG recipientId={}", recipientId);
+                return Mono.just(source);
+            }
         }
         else
         {
@@ -478,6 +485,7 @@ public class AddressBookService {
         }
         else {
             return addressVerificationDto
+                    .map(r -> validateAddress(legalChannelType, courtesyChannelType, r))
                     .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()), channelType)
                             , (r, alreadyverifiedoutcome) -> new Object() {
                                 public final String verificationCode = r.getVerificationCode();
@@ -504,6 +512,28 @@ public class AddressBookService {
                     });
         }
     }
+
+    private AddressVerificationDto validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+        String emailfield = "value";
+        if ((legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC))
+                || (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL)))
+        {
+            String emailaddress = addressVerificationDto.getValue();
+
+            final Pattern emailRegex = Pattern.compile("^[\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+(?:[.-][\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+){0,10}@\\w+(?:[.-]\\w+){0,10}\\.\\w{2,10}$", Pattern.CASE_INSENSITIVE);
+            if (!emailRegex.matcher(emailaddress).matches())
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+        }
+        else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
+        {
+            final Pattern phoneRegex = Pattern.compile("^(00|\\+)\\d{2}3\\d{8,9}$", Pattern.CASE_INSENSITIVE);
+            if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches())
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+        }
+        return addressVerificationDto;
+    }
+
+
 
     /**
      * Elimina un indirizzo
@@ -586,7 +616,7 @@ public class AddressBookService {
                 .flatMap(r -> {
                     if (!r.getVerificationCode().equals(verificationCode))
                         return Mono.error(new PnInvalidVerificationCodeException());
-                    if (r.getCreated().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
+                    if (r.getLastModified().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
                         return Mono.error(new PnInvalidVerificationCodeException());
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
@@ -772,5 +802,11 @@ public class AddressBookService {
 
                     return res;
                 });
+    }
+
+
+    private boolean isPFInternalId(String internalId)
+    {
+        return internalId != null && internalId.startsWith(PF_PREFIX);
     }
 }
