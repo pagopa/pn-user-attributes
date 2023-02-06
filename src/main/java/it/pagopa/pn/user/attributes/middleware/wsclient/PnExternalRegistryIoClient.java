@@ -1,7 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
@@ -11,6 +10,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregi
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.SendIoMessageApi;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
+import it.pagopa.pn.user.attributes.services.AuditLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -30,10 +30,12 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
     private SendIoMessageApi ioMessageApi;
     private final PnUserattributesConfig pnUserattributesConfig;
     private final PnDataVaultClient pnDataVaultClient;
+    private final AuditLogService auditLogService;
 
-    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient) {
+    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient, AuditLogService auditLogService) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.pnDataVaultClient = pnDataVaultClient;
+        this.auditLogService = auditLogService;
     }
 
     @PostConstruct
@@ -119,12 +121,9 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
     public Mono<SendMessageResponse> sendIOMessage(SendMessageRequest sendMessageRequest) {
         log.info("sendIOMessage sendMessageRequest iun={}", sendMessageRequest.getIun());
 
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder.before(PnAuditLogEventType.AUD_AD_SEND_IO, "sendIOMessage")
-                .iun(sendMessageRequest.getIun())
-                .build();
+        PnAuditLogEvent logEvent = auditLogService.buildAuditLogEventWithIUN(sendMessageRequest.getIun(),
+                sendMessageRequest.getRecipientIndex(), PnAuditLogEventType.AUD_DA_SEND_IO, "sendIOMessage after io activated");
 
-        logEvent.log();
         return this.ioMessageApi.sendIOMessage(sendMessageRequest)
                 .onErrorResume(throwable -> {
                     logEvent.generateFailure(throwable.getMessage()).log();

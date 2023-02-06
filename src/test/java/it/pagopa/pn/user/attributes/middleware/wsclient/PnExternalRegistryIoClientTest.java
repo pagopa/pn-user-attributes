@@ -2,10 +2,13 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
+import it.pagopa.pn.user.attributes.services.AuditLogService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +51,9 @@ class PnExternalRegistryIoClientTest {
 
     @MockBean
     SqsActionProducer sqsActionProducer;
+
+    @MockBean
+    AuditLogService auditLogService;
 
 
     private static ClientAndServer mockServer;
@@ -296,6 +302,10 @@ class PnExternalRegistryIoClientTest {
         list.add(baseRecipientDtoDto);
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
+        PnAuditLogEvent auditLogEvent = Mockito.mock(PnAuditLogEvent.class);
+        Mockito.when( auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString())).thenReturn(auditLogEvent);
+        Mockito.when(auditLogEvent.generateSuccess(Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
+
 
         //When
         SendMessageResponse res = client.sendIOMessage( req ).block();
@@ -303,6 +313,10 @@ class PnExternalRegistryIoClientTest {
         //Then
         Assertions.assertNotNull( res );
         Assertions.assertEquals(SendMessageResponse.ResultEnum.SENT_COURTESY , res.getResult());
+
+        Mockito.verify( auditLogEvent).generateSuccess(Mockito.anyString(), Mockito.any());
+        Mockito.verify( auditLogEvent).log();
+        Mockito.verify( auditLogEvent, Mockito.never()).generateFailure(Mockito.any());
     }
 
 
