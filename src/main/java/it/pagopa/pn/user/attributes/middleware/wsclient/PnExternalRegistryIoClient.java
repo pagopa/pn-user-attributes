@@ -121,12 +121,12 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
     public Mono<SendMessageResponse> sendIOMessage(SendMessageRequest sendMessageRequest) {
         log.info("sendIOMessage sendMessageRequest iun={}", sendMessageRequest.getIun());
 
-        PnAuditLogEvent logEvent = auditLogService.buildAuditLogEventWithIUN(sendMessageRequest.getIun(),
+        final PnAuditLogEvent logEvent = auditLogService.buildAuditLogEventWithIUN(sendMessageRequest.getIun(),
                 sendMessageRequest.getRecipientIndex(), PnAuditLogEventType.AUD_DA_SEND_IO, "sendIOMessage after io activated");
 
         return this.ioMessageApi.sendIOMessage(sendMessageRequest)
                 .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
+                    logEvent.generateFailure("error sending message to ext-registry for IO exc={}", throwable).log();
                     return Mono.error(throwable);
                 })
                 .map(res -> {
