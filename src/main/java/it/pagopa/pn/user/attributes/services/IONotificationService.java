@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.api.dto.events.MomProducer;
+import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
@@ -22,8 +22,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_MISSING_RECIPIENTID;
 
@@ -145,9 +146,15 @@ public class IONotificationService   {
     @NotNull
     private SendMessageRequest getSendMessageRequest(SentNotification notification, String internalId) {
 
-        Optional<NotificationRecipient> recipient = notification.getRecipients().stream().filter(rec -> rec.getInternalId().equals(internalId)).findFirst();
-        if (recipient.isEmpty())
+        // recupero l'indice del recipient, mi servirà poi
+        OptionalInt indexRecipient = IntStream.range(0, notification.getRecipients().size())
+                .filter(i -> internalId.equals(notification.getRecipients().get(i).getInternalId()))
+                .findFirst();
+
+        if (indexRecipient.isEmpty())
             throw new PnInternalException("recipient is empty", ERROR_CODE_MISSING_RECIPIENTID);
+
+        NotificationRecipient recipient = notification.getRecipients().get(indexRecipient.getAsInt());
 
         SendMessageRequest sendMessageRequest = new SendMessageRequest();
         sendMessageRequest.setAmount(notification.getAmount());
@@ -155,7 +162,12 @@ public class IONotificationService   {
             sendMessageRequest.setDueDate(DateFormatUtils.parseDate(notification.getPaymentExpirationDate()).toOffsetDateTime());
         sendMessageRequest.setRequestAcceptedDate(notification.getSentAt());
 
-        sendMessageRequest.setRecipientTaxID(recipient.get().getTaxId());
+        sendMessageRequest.setRecipientTaxID(recipient.getTaxId());
+        sendMessageRequest.setRecipientInternalID(internalId);
+        sendMessageRequest.setRecipientIndex(indexRecipient.getAsInt());
+
+        // voglio inviare il CC
+        sendMessageRequest.setCarbonCopyToDeliveryPush(true);
 
         sendMessageRequest.setSenderDenomination(notification.getSenderDenomination());
         sendMessageRequest.setIun(notification.getIun());
@@ -163,9 +175,9 @@ public class IONotificationService   {
         String subject = notification.getSenderDenomination() +"-"+ notification.getSubject();
         sendMessageRequest.setSubject(subject);
 
-        if(recipient.get().getPayment() != null){
-            sendMessageRequest.setNoticeNumber(recipient.get().getPayment().getNoticeCode());
-            sendMessageRequest.setCreditorTaxId(recipient.get().getPayment().getCreditorTaxId());
+        if(recipient.getPayment() != null){
+            sendMessageRequest.setNoticeNumber(recipient.getPayment().getNoticeCode());
+            sendMessageRequest.setCreditorTaxId(recipient.getPayment().getCreditorTaxId());
         }else {
             log.warn("Recipient haven't payment information - iun={}", notification.getIun());
         }
