@@ -38,6 +38,9 @@ class PgUtilsTest {
         StepVerifier.create(PgUtils.validaAccesso(CxTypeAuthFleetDto.PG, "admin", List.of("")))
                 .expectError(PnForbiddenException.class)
                 .verify();
+        StepVerifier.create(PgUtils.validaAccesso(CxTypeAuthFleetDto.PG, null, null))
+                .expectError(PnForbiddenException.class)
+                .verify();
     }
 
 }

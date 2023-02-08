@@ -103,7 +103,7 @@ public class AddressBookService {
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, Mono<AddressVerificationDto> addressVerificationDto,
                                                           CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r ->saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
+                .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
     }
 
     /**
