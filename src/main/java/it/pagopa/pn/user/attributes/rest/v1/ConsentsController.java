@@ -49,19 +49,19 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version,  final ServerWebExchange exchange) {
-        log.info("getConsentByType - xPagopaPnUid={} - xPagopaPnCxType={} - consentType={} - version={}", recipientId, xPagopaPnCxType, consentType, version);
+    public Mono<ResponseEntity<ConsentDto>> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version,  final ServerWebExchange exchange) {
+        log.info("getConsentByType - xPagopaPnUid={} - xPagopaPnCxType={} - consentType={} - version={}", xPagopaPnUid, xPagopaPnCxType, consentType, version);
 
-        return this.consentsService.getConsentByType(recipientId, xPagopaPnCxType, consentType, version)
+        return this.consentsService.getConsentByType(xPagopaPnUid, xPagopaPnCxType, consentType, version)
                 .map(ResponseEntity::ok);
 
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType,  final ServerWebExchange exchange) {
-        log.info("getConsents - recipientId={} - xPagopaPnCxType={}", recipientId, xPagopaPnCxType);
+    public Mono<ResponseEntity<Flux<ConsentDto>>> getConsents(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType,  final ServerWebExchange exchange) {
+        log.info("getConsents - xPagopaPnUid={} - xPagopaPnCxType={}", xPagopaPnUid, xPagopaPnCxType);
 
-        return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(recipientId, xPagopaPnCxType)));
+        return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(xPagopaPnUid, xPagopaPnCxType)));
     }
 }
 
