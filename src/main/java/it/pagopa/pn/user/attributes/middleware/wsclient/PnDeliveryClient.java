@@ -54,7 +54,7 @@ public class PnDeliveryClient extends CommonBaseClient {
         log.info("searchNotificationPrivate internalId={} startDate={} endDate={}", internalId, startDate, endDate);
 
         return this.pnDeliveryApi.searchNotificationsPrivate(startDate, endDate, internalId, true, null,
-                        List.of(NotificationStatus.ACCEPTED, NotificationStatus.DELIVERING, NotificationStatus.DELIVERED), 100, null)
+                        List.of(NotificationStatus.ACCEPTED, NotificationStatus.DELIVERING, NotificationStatus.DELIVERED), 50, null)
                 .onErrorResume(throwable -> {
                     log.error("error searchNotificationsPrivate message={}", elabExceptionMessage(throwable) , throwable);
                     return Mono.error(throwable);
