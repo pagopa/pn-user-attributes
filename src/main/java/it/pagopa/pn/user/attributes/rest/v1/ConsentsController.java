@@ -27,8 +27,9 @@ public class ConsentsController implements ConsentsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> consentAction(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, Mono<ConsentActionDto> consentActionDto, String version, final ServerWebExchange exchange) {
-        String logMessage = String.format("consentAction - xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", recipientId, xPagopaPnCxType, consentType, version);
+    public Mono<ResponseEntity<Void>> consentAction(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType,
+                                                    String version, Mono<ConsentActionDto> consentActionDto,  final ServerWebExchange exchange) {
+        String logMessage = String.format("consentAction - xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", xPagopaPnUid, xPagopaPnCxType, consentType, version);
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -36,8 +37,8 @@ public class ConsentsController implements ConsentsApi {
                 .build();
         logEvent.log();
         return consentActionDto.flatMap(dto -> {
-                    String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", recipientId, xPagopaPnCxType, consentType, version, dto.getAction().toString());
-                    return this.consentsService.consentAction(recipientId, xPagopaPnCxType,  consentType, dto, version)
+                    String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", xPagopaPnUid, xPagopaPnCxType, consentType, version, dto.getAction().toString());
+                    return this.consentsService.consentAction(xPagopaPnUid, xPagopaPnCxType,  consentType, dto, version)
                             .onErrorResume(throwable -> {
                                 logEvent.generateFailure(throwable.getMessage()).log();
                                 return Mono.error(throwable);

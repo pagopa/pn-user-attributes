@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class ConsentEntityConsentDtoMapperTest {
 
@@ -26,7 +27,7 @@ class ConsentEntityConsentDtoMapperTest {
         dtoExpected.setRecipientId(recipientId);
         dtoExpected.setAccepted(accepted);
         dtoExpected.setConsentType(type);
-        dtoExpected.setConsentVersion(ConsentEntity.DEFAULT_VERSION);
+        dtoExpected.setConsentVersion(ConsentEntity.NONEACCEPTED_VERSION);
 
         ConsentDto dto = mapper.toDto(ce);
 

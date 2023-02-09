@@ -5,9 +5,9 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.Con
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
-import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -17,15 +17,14 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class ConsentsService {
     private final IConsentDao consentDao;
-    private final ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper;
     private final ConsentActionDtoToConsentEntityMapper dtosToConsentEntityMapper;
+    private final PnExternalRegistryClient pnExternalRegistryClient;
 
     public ConsentsService(IConsentDao consentDao,
-                           ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper,
-                           ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper) {
+                           ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper, PnExternalRegistryClient pnExternalRegistryClient) {
         this.consentDao = consentDao;
-        this.consentEntityConsentDtoMapper = consentEntityConsentDtoMapper;
         this.dtosToConsentEntityMapper = consentActionDtoToConsentEntityMapper;
+        this.pnExternalRegistryClient = pnExternalRegistryClient;
     }
 
     /**
@@ -50,15 +49,17 @@ public class ConsentsService {
      */
     public Mono<ConsentDto> getConsentByType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
         return consentDao.getConsentByType(computeRecipientIdWithCxType(recipientId, xPagopaPnCxType), consentType.getValue(), version)
-                .map(consentEntityConsentDtoMapper::toDto)
-                .defaultIfEmpty(ConsentDto.builder()
-                        .consentType(consentType)
-                        .consentVersion(ConsentEntity.DEFAULT_VERSION)
-                        .accepted(false)
-                        .recipientId(recipientId)
-                        .build());
+                .defaultIfEmpty(new ConsentEntity(recipientId, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION))
+                .zipWhen(x -> pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue()),
+                        (entity, noticeversion) -> ConsentDto.builder()
+                                .consentVersion(noticeversion)
+                                .isFirstAccept(entity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
+                                .accepted(entity.getConsentVersion().equals(noticeversion))
+                                .build()
+                );
 
     }
+
 
     /**
      * Ritorna i consensi per l'utente
@@ -68,7 +69,12 @@ public class ConsentsService {
      */
     public Flux<ConsentDto> getConsents(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType) {
         return consentDao.getConsents(computeRecipientIdWithCxType(recipientId, xPagopaPnCxType))
-                .map(consentEntityConsentDtoMapper::toDto);
+                .flatMap(x -> pnExternalRegistryClient.findPrivacyNoticeVersion(x.getConsentType(), xPagopaPnCxType.getValue())
+                                .map(y -> ConsentDto.builder()
+                                        .consentVersion(y)
+                                        .isFirstAccept(x.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
+                                        .accepted(x.getConsentVersion().equals(y))
+                                        .build()));
     }
 
     private String computeRecipientIdWithCxType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType){
