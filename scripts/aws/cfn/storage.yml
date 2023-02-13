@@ -50,6 +50,11 @@ Resources:
         StreamViewType: NEW_IMAGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true 
+      Tags:
+        - Key: pnInfraFeature
+          Value: pnStorage
+        - Key: pnMicroservice
+          Value: !Sub '${ProjectName}-UserAttributes'
           
   UserAttributesActionsQueue:
     Type: AWS::CloudFormation::Stack
