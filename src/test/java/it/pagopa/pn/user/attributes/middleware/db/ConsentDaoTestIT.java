@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +73,7 @@ public class ConsentDaoTestIT {
     }
 
     public static ConsentEntity newConsent(boolean accepted) {
-        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", "TOS", null);
+        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", ConsentTypeDto.TOS.getValue(), null);
         c.setAccepted(accepted);
         c.setCreated(Instant.now());
         c.setLastModified(Instant.now());

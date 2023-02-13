@@ -1,8 +1,13 @@
 package it.pagopa.pn.user.attributes.middleware.db.entities;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 
 @DynamoDbBean
 @Data
@@ -16,13 +21,13 @@ public class ConsentEntity extends BaseEntity {
     private static final int SK_ITEMS_CONSENTTYPE = 0;
     private static final int SK_ITEMS_VERSION = 1;
 
-    public static final String DEFAULT_VERSION = "V001";
+    public static final String NONEACCEPTED_VERSION = "NONEACCEPTED";
 
     public static final String COL_ACCEPTED = "accepted";
 
     public ConsentEntity(String recipientId, String consentType, String version){
         this.setPk(PK_PREFIX + recipientId);
-        this.setSk(consentType + ITEMS_SEPARATOR + (StringUtils.hasText(version)?version:DEFAULT_VERSION));
+        this.setSk(consentType + ITEMS_SEPARATOR + (StringUtils.hasText(version)?version: NONEACCEPTED_VERSION));
     }
 
     @DynamoDbIgnore
