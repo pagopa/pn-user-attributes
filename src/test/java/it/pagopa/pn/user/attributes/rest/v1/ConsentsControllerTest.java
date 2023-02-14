@@ -101,7 +101,7 @@ class ConsentsControllerTest {
         consentDto.setConsentType(ConsentTypeDto.TOS);
 
         // When
-        Mockito.when(svc.getConsentByType(RECIPIENTID, CxTypeAuthFleetDto.PF, ConsentTypeDto.TOS, null))
+        Mockito.when(svc.getConsentByType(RECIPIENTID, CxTypeAuthFleetDto.PF, ConsentTypeDto.TOS))
                 .thenReturn( Mono.just(consentDto) );
 
         // Then

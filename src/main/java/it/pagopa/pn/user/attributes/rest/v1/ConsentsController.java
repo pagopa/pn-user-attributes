@@ -52,7 +52,7 @@ public class ConsentsController implements ConsentsApi {
     public Mono<ResponseEntity<ConsentDto>> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version,  final ServerWebExchange exchange) {
         log.info("getConsentByType - xPagopaPnUid={} - xPagopaPnCxType={} - consentType={} - version={}", xPagopaPnUid, xPagopaPnCxType, consentType, version);
 
-        return this.consentsService.getConsentByType(xPagopaPnUid, xPagopaPnCxType, consentType, version)
+        return this.consentsService.getConsentByType(xPagopaPnUid, xPagopaPnCxType, consentType)
                 .map(ResponseEntity::ok);
 
     }

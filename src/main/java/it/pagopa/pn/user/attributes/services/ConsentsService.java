@@ -47,15 +47,18 @@ public class ConsentsService {
      * @param consentType tipologia
      * @return il consenso
      */
-    public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
-        return consentDao.getConsentByType(computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType), consentType.getValue(), version)
-                .defaultIfEmpty(new ConsentEntity(computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType), consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION))
-                .zipWhen(x -> pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue()),
-                        (entity, noticeversion) -> ConsentDto.builder()
+    public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType) {
+        String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
+        return pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue())
+                .zipWhen(version -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), version)
+                                                .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
+                                                .defaultIfEmpty(new ConsentEntity(uidWithCxType, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION)),
+                        (noticeversion, entity) -> ConsentDto.builder()
                                 .consentVersion(noticeversion)
                                 .consentType(consentType)
+                                .recipientId(uidWithCxType)
                                 .isFirstAccept(entity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
-                                .accepted(entity.getConsentVersion().equals(noticeversion))
+                                .accepted(entity.isAccepted() && entity.getConsentVersion().equals(noticeversion))
                                 .build()
                 );
 
@@ -69,10 +72,12 @@ public class ConsentsService {
      * @return lista consensi
      */
     public Flux<ConsentDto> getConsents(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
-        return consentDao.getConsents(computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType))
+        String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
+        return consentDao.getConsents(uidWithCxType)
                 .flatMap(x -> pnExternalRegistryClient.findPrivacyNoticeVersion(x.getConsentType(), xPagopaPnCxType.getValue())
                                 .map(y -> ConsentDto.builder()
                                         .consentVersion(y)
+                                        .recipientId(uidWithCxType)
                                         .consentType(ConsentTypeDto.fromValue(x.getConsentType()))
                                         .isFirstAccept(x.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
                                         .accepted(x.getConsentVersion().equals(y))
