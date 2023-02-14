@@ -140,7 +140,7 @@ Parameters:
   HealthCheckTimeout:
     Description: health check timeout seconds
     Type: Number
-    Default: 15
+    Default: 5
   
   HealthyThresholdCount:
     Description: |
