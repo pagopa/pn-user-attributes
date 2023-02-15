@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -41,24 +42,32 @@ public class ConsentsService {
     }
 
     /**
-     * Ritorna il consenso per tipologia
+     * Ritorna il consenso per tipologia.
+     * Il nuovo algoritmo prevede che:
+     * - recupero sempre da ext-registry l'ultima versione disponibile
+     *   - se version è NULL, cerco in DB se ho il consenso con la versione recuperata da ext-registry
+     *   - se version NON è null, cerco in DB se ho il consenso con la versione richiesta.
+     * - Poi, nel caso in cui non trovo proprio la versione, faccio una query per recuperare tutte le versioni per sapere se ce ne sono.
+     * - Se la query per tutte le versioni non ne torna, genero un record fittizio, che sta a indicare che non ne ho accettata nessuna
      *
      * @param xPagopaPnUid id utente
      * @param consentType tipologia
      * @return il consenso
      */
-    public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType) {
+    public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
         String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
         return pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue())
-                .zipWhen(version -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), version)
+                .zipWhen(lastConsentVersion -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), StringUtils.hasText(version)?version:lastConsentVersion)
                                                 .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
                                                 .defaultIfEmpty(new ConsentEntity(uidWithCxType, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION)),
-                        (noticeversion, entity) -> ConsentDto.builder()
-                                .consentVersion(noticeversion)
+                        (lastConsentVersion, entity) -> ConsentDto.builder()
+                                .consentVersion(StringUtils.hasText(version)?version:lastConsentVersion) // è sempre quella richiesta se passata, oppure l'ultima
                                 .consentType(consentType)
                                 .recipientId(uidWithCxType)
-                                .isFirstAccept(entity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
-                                .accepted(entity.isAccepted() && entity.getConsentVersion().equals(noticeversion))
+                                .isFirstAccept(entity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))   // se l'entity letta è NONEACCEPTED, vuol dire che non ne ho trovate!
+                                // qui è un pò più tricky: metto in AND con il fatto che sia accettata il fatto che ho trovato l'entity che cercavo.
+                                // da notare che se non ho trovato entity (o se ne ho trovata una DIVERSA dalla versione che mi interessava o di DEFAULT), fallirà la seconda condizione
+                                .accepted(entity.isAccepted() && entity.getConsentVersion().equals(StringUtils.hasText(version)?version:lastConsentVersion))
                                 .build()
                 );
 
