@@ -294,6 +294,26 @@ class AddressBookServiceTest {
 
 
     @Test
+    void saveCourtesyAddressBookSMS_fail() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.SMS;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+383331234567");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("12345");
+
+        // WHEN
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
+        assertThrows(PnInvalidInputException.class, () -> {
+            mono.block(d);
+        });
+    }
+
+    @Test
     void saveCourtesyAddressBookSMS_invalid() {
         //GIVEN
 
