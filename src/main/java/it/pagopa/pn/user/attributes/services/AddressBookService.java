@@ -526,7 +526,7 @@ public class AddressBookService {
         }
         else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
         {
-            final Pattern phoneRegex = Pattern.compile("^(00|\\+)\\d{2}3\\d{8,9}$", Pattern.CASE_INSENSITIVE);
+            final Pattern phoneRegex = Pattern.compile("^(00|\\+)393\\d{8,9}$", Pattern.CASE_INSENSITIVE);
             if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches())
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
         }

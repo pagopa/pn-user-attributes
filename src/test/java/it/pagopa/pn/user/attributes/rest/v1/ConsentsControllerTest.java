@@ -23,6 +23,7 @@ class ConsentsControllerTest {
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
     private static final String CX_TYPE = "PF";
+    private static final String VERSION = "VERS1";
 
     @Autowired
     WebTestClient webTestClient;
@@ -33,8 +34,9 @@ class ConsentsControllerTest {
     @Test
     void consentAction() {
         // Given
-        String url = "/user-consents/v1/consents/{consentType}"
-                .replace("{consentType}", CONSENTTYPE);
+        String url = "/user-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", CONSENTTYPE)
+                .replace("{version}", VERSION);
 
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
@@ -61,8 +63,9 @@ class ConsentsControllerTest {
     @Test
     void consentAction_FAIL() {
         // Given
-        String url = "/user-consents/v1/consents/{consentType}"
-                .replace("{consentType}", CONSENTTYPE);
+        String url = "/user-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", CONSENTTYPE)
+                .replace("{version}", VERSION);
 
         ConsentActionDto consentAction = new ConsentActionDto();
         consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);

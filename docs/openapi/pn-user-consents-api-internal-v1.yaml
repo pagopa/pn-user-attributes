@@ -50,11 +50,12 @@ paths:
       - $ref: 'remote-refs.yaml#/components/parameters/uidAuthFleet'            # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'            # NO EXTERNAL
       - $ref: '#/components/parameters/consentType'
-      - $ref: '#/components/parameters/queryVersion'
     get:
       summary: Get single consent by type 
       description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
       operationId: getConsentByType
+      parameters:
+        - $ref: '#/components/parameters/queryVersion'
       tags:
         - consents
 #      security:                                                                # ONLY EXTERNAL
@@ -77,6 +78,8 @@ paths:
       summary: Accept a single consent type 
       description: Accept single consent type for the recipient
       operationId: consentAction
+      parameters:
+        - $ref: '#/components/parameters/queryVersionRequired'
       tags:
         - consents
 #      security:                                                                # ONLY EXTERNAL
@@ -110,8 +113,15 @@ components:
     queryVersion:
       name: version
       in: query
-      description: La versione del consenso. se non presente il default è V001
+      description: La versione del consenso. se non presente il default è nessuna versione accettata.
       required: false
+      schema:
+        $ref: '#/components/schemas/ConsentVersion'
+    queryVersionRequired:
+      name: version
+      in: query
+      description: La versione del consenso, obbligatoria in fase di accettazione.
+      required: true
       schema:
         $ref: '#/components/schemas/ConsentVersion'
   
@@ -123,8 +133,7 @@ components:
   schemas:
     ConsentVersion:
       type: string
-      description: version of consent, default to V001
-      pattern: '^[V]\d{3}$'
+      description: version of consent
 
     ConsentType:
       type: string
@@ -142,7 +151,7 @@ components:
           enum:
             - ACCEPT
             - DECLINE
-    
+
     Consent:
       type: object
       required:
@@ -159,6 +168,8 @@ components:
           type: boolean
         consentVersion:
           $ref: '#/components/schemas/ConsentVersion'
+        isFirstAccept:
+          type: boolean
 
 #  securitySchemes:                                      # ONLY EXTERNAL
 #    bearerAuth:                                         # ONLY EXTERNAL
