@@ -301,7 +301,7 @@ class AddressBookServiceTest {
         String senderId = null;
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.SMS;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("383331234567");
+        addressVerificationDto.setValue("+383331234567");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
