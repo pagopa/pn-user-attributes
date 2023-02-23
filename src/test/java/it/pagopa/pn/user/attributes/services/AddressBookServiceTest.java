@@ -72,9 +72,7 @@ class AddressBookServiceTest {
     @Test
     void saveLegalAddressBook() {
         //GIVEN
-
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
-        String senderId = null;
         LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setValue("prova@prova.it");
@@ -87,7 +85,8 @@ class AddressBookServiceTest {
         Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto)).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, Mono.just(addressVerificationDto), CxTypeAuthFleetDto.PF, null, null)
+                .block(d);
 
         //THEN
         assertNotNull( result );
@@ -97,9 +96,7 @@ class AddressBookServiceTest {
     @Test
     void saveLegalAddressBookWithVerificationCode() {
         //GIVEN
-
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
-        String senderId = null;
         LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setValue("prova@prova.it");
@@ -115,7 +112,8 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, Mono.just(addressVerificationDto)).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, Mono.just(addressVerificationDto))
+                .block(d);
 
         //THEN
         assertNotNull( result );
@@ -270,9 +268,7 @@ class AddressBookServiceTest {
     @Test
     void saveCourtesyAddressBookSMS() {
         //GIVEN
-
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
-        String senderId = null;
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.SMS;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setValue("+393331234567");
@@ -285,7 +281,8 @@ class AddressBookServiceTest {
         Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto)).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, Mono.just(addressVerificationDto), CxTypeAuthFleetDto.PF, null, null)
+                .block(d);
 
         //THEN
         assertNotNull( result );
@@ -328,9 +325,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
-        assertThrows(PnInvalidInputException.class, () -> {
-            mono.block(d);
-        });
+        assertThrows(PnInvalidInputException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -351,9 +346,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
-        assertThrows(PnInvalidInputException.class, () -> {
-            mono.block(d);
-        });
+        assertThrows(PnInvalidInputException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -376,9 +369,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.just(addressVerificationDto));
-        assertThrows(PnInvalidInputException.class, () -> {
-            mono.block(d);
-        });
+        assertThrows(PnInvalidInputException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -396,9 +387,7 @@ class AddressBookServiceTest {
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelTypeDto, Mono.just(addressVerificationDto));
-        assertThrows(PnInvalidInputException.class, () -> {
-            mono.block(d);
-        });
+        assertThrows(PnInvalidInputException.class, () -> mono.block(d));
 
         //THEN
     }
@@ -444,7 +433,6 @@ class AddressBookServiceTest {
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
         assertThrows(RuntimeException.class, () -> mono.block(d));
 
-
         //THEN
     }
 
@@ -467,7 +455,6 @@ class AddressBookServiceTest {
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, Mono.empty());
         assertThrows(PnInternalException.class, () -> mono.block(d));
-
 
         //THEN
     }
@@ -564,7 +551,8 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        Object result = addressBookService.deleteLegalAddressBook(recipientId, null, legalChannelType).block(d);
+        Object result = addressBookService.deleteLegalAddressBook(recipientId, null, legalChannelType, CxTypeAuthFleetDto.PF, null, null)
+                .block(d);
 
         //THEN
         assertNotNull( result );
@@ -581,7 +569,8 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        Object result = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType).block(d);
+        Object result = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType, CxTypeAuthFleetDto.PF, null, null)
+                .block(d);
 
         //THEN
         assertNotNull( result );
@@ -615,7 +604,6 @@ class AddressBookServiceTest {
         Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
-
         // WHEN
         Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
 
@@ -623,8 +611,6 @@ class AddressBookServiceTest {
         assertThrows(RuntimeException.class, () -> mono.block(d));
 
     }
-
-
 
     @Test
     void deleteCourtesyAddressBookAPPIO_FAIL2() {
@@ -634,7 +620,6 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(new AddressBookEntity()));
         Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-
 
         // WHEN
         Mono<Object> mono = addressBookService.deleteCourtesyAddressBook(recipientId, null, courtesyChannelType);
@@ -868,7 +853,9 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
+                .collectList()
+                .block(d);
 
         //Then
         assertNotNull(result);
@@ -916,7 +903,8 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+                .collectList().block(d);
 
         //Then
         assertNotNull(result);
@@ -964,7 +952,8 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList();
+        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+                .collectList();
 
         //Then
         assertThrows(PnInternalException.class, () -> addressBookServiceMono.block(d));
@@ -1098,7 +1087,7 @@ class AddressBookServiceTest {
 
 
         //When
-        UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDb.get(0).getRecipientId()).block(d);
+        UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDb.get(0).getRecipientId(), null, null, null).block(d);
 
         //Then
         assertNotNull(result);

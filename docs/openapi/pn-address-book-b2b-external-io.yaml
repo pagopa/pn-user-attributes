@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: |
     OpenApi definition for PN User Attributes - Address Book for IO backend
-  version: v1
+  version: '1.0.0'
   title: PN User Attributes - Address Book for IO backend
   termsOfService: 'http://swagger.io/terms/'
   contact:
