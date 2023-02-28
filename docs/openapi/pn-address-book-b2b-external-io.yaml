@@ -30,7 +30,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
       responses:
         '200':
           description: successful operation
@@ -57,7 +57,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'
       requestBody:
         required: true
         content:
@@ -75,13 +75,6 @@ paths:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
 components:
-  parameters:
-    cxTypeAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
-    cxIdAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
-    cxTaxIdAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'
   schemas:
     IoCourtesyDigitalAddressActivation:
       description: Io courtesy activation

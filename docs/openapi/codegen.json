@@ -1,0 +1,25 @@
+{
+    "openapi": [
+        {
+            "intendedUsage": "IO",
+            "openapiFiles": [
+                "pn-address-book-b2b-internal-io.yaml"
+            ],
+            "servicePath": "address-book-io"
+        },
+        {
+            "intendedUsage": "WEB",
+            "openapiFiles": [
+                "pn-address-book-api-internal.yaml"
+            ],
+            "servicePath": "address-book"
+        },
+        {
+            "intendedUsage": "B2B",
+            "openapiFiles": [
+                "pn-user-consents-api-internal.yaml"
+            ],
+            "servicePath": "user-consents"
+        }
+    ]
+}
