@@ -15,7 +15,7 @@
             "servicePath": "address-book"
         },
         {
-            "intendedUsage": "B2B",
+            "intendedUsage": "WEB",
             "openapiFiles": [
                 "pn-user-consents-api-internal.yaml"
             ],

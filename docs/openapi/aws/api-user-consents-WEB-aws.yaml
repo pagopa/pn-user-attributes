@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: '2023-03-01T09:56:06.516Z'
+  version: '2023-03-01T10:44:40.667Z'
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -21,8 +21,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_ApiKeyAuthorizerV2: []
-        - api_key: []
+        - pn-auth-fleet_jwtAuthorizer: []
       responses:
         '200':
           description: successful operation
@@ -48,7 +47,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
-          integration.request.header.x-pagopa-pn-src-ch: '''B2B'''
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
         passthroughBehavior: when_no_match
@@ -82,8 +81,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_ApiKeyAuthorizerV2: []
-        - api_key: []
+        - pn-auth-fleet_jwtAuthorizer: []
       responses:
         '200':
           description: successful operation
@@ -107,7 +105,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
-          integration.request.header.x-pagopa-pn-src-ch: '''B2B'''
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.path.consentType: method.request.path.consentType
@@ -124,8 +122,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_ApiKeyAuthorizerV2: []
-        - api_key: []
+        - pn-auth-fleet_jwtAuthorizer: []
       requestBody:
         required: true
         content:
@@ -151,7 +148,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
-          integration.request.header.x-pagopa-pn-src-ch: '''B2B'''
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.path.consentType: method.request.path.consentType
@@ -317,21 +314,16 @@ components:
     UnauthorizedError:
       description: Access token is missing or invalid
   securitySchemes:
-    api_key:
+    pn-auth-fleet_jwtAuthorizer:
       type: apiKey
-      name: x-api-key
-      in: header
-    pn-auth-fleet_ApiKeyAuthorizerV2:
-      type: apiKey
-      name: x-api-key
+      name: Authorization
       in: header
       x-amazon-apigateway-authtype: custom
       x-amazon-apigateway-authorizer:
         authorizerUri: >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-ApiKeyAuthorizerV2Lambda/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-jwtAuthorizerLambda/invocations
         authorizerResultTtlInSeconds: 300
-        identitySource: method.request.header.x-api-key
-        type: request
+        type: token
 tags:
   - name: consents
     description: PN User Consents
