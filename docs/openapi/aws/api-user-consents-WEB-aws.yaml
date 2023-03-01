@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: '2023-03-01T10:44:40.667Z'
+  version: OixP5iKAERP5E+BnnnmQSPeInRxJkOVj+m8ScaI8u4o=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -21,7 +21,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_jwtAuthorizer: []
+        - pn-auth-fleet_jwtAuthorizer_openapi: []
       responses:
         '200':
           description: successful operation
@@ -81,7 +81,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_jwtAuthorizer: []
+        - pn-auth-fleet_jwtAuthorizer_openapi: []
       responses:
         '200':
           description: successful operation
@@ -122,7 +122,7 @@ paths:
       tags:
         - consents
       security:
-        - pn-auth-fleet_jwtAuthorizer: []
+        - pn-auth-fleet_jwtAuthorizer_openapi: []
       requestBody:
         required: true
         content:
@@ -314,7 +314,7 @@ components:
     UnauthorizedError:
       description: Access token is missing or invalid
   securitySchemes:
-    pn-auth-fleet_jwtAuthorizer:
+    pn-auth-fleet_jwtAuthorizer_openapi:
       type: apiKey
       name: Authorization
       in: header

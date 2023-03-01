@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: '2023-03-01T14:40:19.609Z'
+  version: 9A2ZzMV0bf1SgE2TPx+OH8fupZO4yZKSHNKTJViwALU=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -40,8 +40,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
       security:
-        - pn-auth-fleet_IoAuthorizer: []
-        - api_key: []
+        - pn-auth-fleet_IoAuthorizer_openapi: []
+        - api_key_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy
@@ -83,8 +83,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
       security:
-        - pn-auth-fleet_IoAuthorizer: []
-        - api_key: []
+        - pn-auth-fleet_IoAuthorizer_openapi: []
+        - api_key_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy
@@ -213,11 +213,11 @@ components:
         - errors
   responses: {}
   securitySchemes:
-    api_key:
+    api_key_openapi:
       type: apiKey
       name: x-api-key
       in: header
-    pn-auth-fleet_IoAuthorizer:
+    pn-auth-fleet_IoAuthorizer_openapi:
       type: apiKey
       name: Unused
       in: header
