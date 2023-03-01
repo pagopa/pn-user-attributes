@@ -426,3 +426,6 @@ Resources:
           - ','
           - - !Ref UserAttributesActionsQueueARN
             - !Ref ExternalChannels2UserAttributesQueueARN
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/ecs/${ProjectName}-user-attributes'
