@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: '2023-03-01T09:16:16.019Z'
+  version: '2023-03-01T09:56:05.831Z'
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -223,7 +223,8 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -265,7 +266,8 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -279,7 +281,8 @@ paths:
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -336,7 +339,8 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -378,7 +382,8 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -394,7 +399,8 @@ paths:
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId}/{channelType: method.request.path.senderId}/{channelType
+          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
