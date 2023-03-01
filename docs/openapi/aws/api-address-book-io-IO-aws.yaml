@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: '2023-02-28T16:54:43.614Z'
+  version: '2023-03-01T09:16:15.282Z'
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -20,11 +20,6 @@ paths:
         - courtesy
       parameters:
         - $ref: '#/components/parameters/cxIdAuthFleet'
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: successful operation
@@ -54,7 +49,6 @@ paths:
         httpMethod: ANY
         requestParameters:
           integration.request.header.x-pagopa-pn-cx-id: context.authorizer.cx_id
-          integration.request.path.proxy: method.request.path.proxy
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
@@ -73,11 +67,6 @@ paths:
         - courtesy
       parameters:
         - $ref: '#/components/parameters/cxIdAuthFleet'
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
       requestBody:
         required: true
         content:
@@ -103,7 +92,6 @@ paths:
         httpMethod: ANY
         requestParameters:
           integration.request.header.x-pagopa-pn-cx-id: context.authorizer.cx_id
-          integration.request.path.proxy: method.request.path.proxy
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
@@ -121,6 +109,7 @@ paths:
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
+        requestParameters: {}
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
