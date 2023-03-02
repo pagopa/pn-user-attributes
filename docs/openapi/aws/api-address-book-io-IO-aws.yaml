@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: IkHwXPm7/efakYAPMMYpPSAGmEOafnSovvx5OxYVF0w=
+  version: BZR/adB4sD84F4/G+O98QU/D7k/ew7Szi/O301DQjAc=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -228,3 +228,11 @@ x-amazon-apigateway-gateway-responses:
   DEFAULT_4XX:
     responseParameters:
       gatewayresponse.header.Access-Control-Allow-Origin: '''*'''
+x-amazon-apigateway-request-validators:
+  basic:
+    validateRequestBody: true
+    validateRequestParameters: true
+  params-only:
+    validateRequestBody: false
+    validateRequestParameters: true
+x-amazon-apigateway-request-validator: basic
