@@ -19,7 +19,7 @@ tags:
     description: Receiver Digital Domicile
   - name: courtesy
     description: Receiver Digital Addresses
-    
+
 paths:
   /address-book/v1/digital-address:
     get:
@@ -44,7 +44,7 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
-  
+
   /address-book/v1/digital-address/legal:
     get:
       summary: get digital addresses with legal value
@@ -68,7 +68,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-  
+
   /address-book/v1/digital-address/courtesy:
     get:
       summary: get digital addresses without legal value
@@ -239,16 +239,23 @@ components:
       required: true
       schema:
         type: string
-    
+    cxRoleAuthFleet:
+      name: x-pagopa-pn-cx-role
+      in: header
+      description: Ruolo (estratto da token di Self Care)
+      required: false
+      schema:
+        type: string
+
   schemas:
     AddressVerification:
       type: object
       required:
-       - value
+        - value
       properties:
         value:
           type: string
-        verificationCode: 
+        verificationCode:
           $ref: '#/components/schemas/VerificationCode'
 
     BaseDigitalAddress:
@@ -270,7 +277,7 @@ components:
           example: 'cmbo'
         channelType:
           type: string
-        value: 
+        value:
           type: string
           example: 'nome.utente@server.it'
         code:
@@ -282,7 +289,7 @@ components:
       enum:
         - PEC
         - APPIO
-    
+
     LegalDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -298,7 +305,7 @@ components:
 
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
-    
+
     CourtesyChannelType:
       type: string
       description: Communication Channel types __without__ legal value
@@ -321,7 +328,7 @@ components:
                 - COURTESY
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
-  
+
     UserAddresses:
       type: object
       properties:
@@ -333,7 +340,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CourtesyDigitalAddress'
-    
+
     VerificationCode:
       type: string
       description: Verification Code
