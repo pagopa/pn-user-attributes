@@ -83,7 +83,7 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto) {
         return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto);
     }
 
@@ -100,7 +100,7 @@ public class AddressBookService {
      * @param pnCxRole user's role
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, Mono<AddressVerificationDto> addressVerificationDto,
+    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
                                                           CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
                 .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
@@ -115,7 +115,7 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
         return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto);
     }
 
@@ -132,7 +132,7 @@ public class AddressBookService {
      * @param pnCxGroups user's groups
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto,
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto,
                                                              CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
                 .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto));
@@ -472,7 +472,7 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, Mono<AddressVerificationDto> addressVerificationDto) {
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
 
@@ -484,28 +484,24 @@ public class AddressBookService {
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
         }
         else {
-            return addressVerificationDto
-                    .map(r -> validateAddress(legalChannelType, courtesyChannelType, r))
-                    .zipWhen(r -> dao.validateHashedAddress(recipientId, hashAddress(r.getValue()), channelType)
-                            , (r, alreadyverifiedoutcome) -> new Object() {
-                                public final String verificationCode = r.getVerificationCode();
-                                public final String realaddress = r.getValue();
-                                public final AddressBookDao.CHECK_RESULT alreadyverifiedOutcome = alreadyverifiedoutcome;
-                            })
+
+            validateAddress(legalChannelType, courtesyChannelType, addressVerificationDto);
+
+            return  dao.validateHashedAddress(recipientId, hashAddress(addressVerificationDto.getValue()), channelType)
                     .flatMap(res -> {
-                        if (res.alreadyverifiedOutcome == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED) {
+                        if (res == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
-                            return this.sendToDataVaultAndSaveInDynamodb(recipientId, res.realaddress, legal, senderId, channelType);
+                            return this.sendToDataVaultAndSaveInDynamodb(recipientId, addressVerificationDto.getValue(), legal, senderId, channelType);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
-                            if (!StringUtils.hasText(res.verificationCode)) {
+                            if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
-                                return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, res.realaddress, legalChannelType, courtesyChannelType);
+                                return this.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, addressVerificationDto.getValue(), legalChannelType, courtesyChannelType);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
-                                return this.validateVerificationCodeAndSendToDataVault(recipientId, res.verificationCode, res.realaddress, legal, senderId, channelType);
+                                return this.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto.getVerificationCode(), addressVerificationDto.getValue(), legal, senderId, channelType);
                             }
 
                         }

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.util.List;
 import java.util.Optional;
@@ -90,15 +91,20 @@ public class CourtesyAddressController implements CourtesyApi {
         return addressVerificationDto
                 .map(addressVerificationDto1 -> {
                     // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
+                    Optional<PnAuditLogEvent> auditLogEvent;
                     if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())
                             || channelType == CourtesyChannelTypeDto.APPIO) {
-                        return Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
+                        auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
                     }
-                    return  Optional.<PnAuditLogEvent>empty();
+                    else {
+                        auditLogEvent = Optional.empty();
+                    }
+
+                    return Tuples.of(addressVerificationDto1, auditLogEvent);
                 })
-                .flatMap(optionalLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, addressVerificationDto, pnCxType, pnCxGroups, pnCxRole)
+                .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                         .onErrorResume(throwable -> {
-                            optionalLogEvent.ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
                             return Mono.error(throwable);
                         })
                         .map(m -> {
@@ -106,7 +112,7 @@ public class CourtesyAddressController implements CourtesyApi {
                             if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
                                 return ResponseEntity.status(HttpStatus.OK).body(null);
                             } else {
-                                optionalLogEvent.ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
+                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
                                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                             }
                         }));

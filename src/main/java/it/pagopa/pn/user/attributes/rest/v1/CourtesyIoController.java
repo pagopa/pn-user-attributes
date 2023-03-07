@@ -53,7 +53,7 @@ public class CourtesyIoController implements CourtesyApi {
                                 .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
                                 .build();
                         logEvent.log();
-                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, Mono.just(new AddressVerificationDto()))
+                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
                                 .onErrorResume(throwable -> {
                                     logEvent.generateFailure(throwable.getMessage()).log();
                                     return Mono.error(throwable);
