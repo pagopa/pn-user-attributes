@@ -6,7 +6,6 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.Leg
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -17,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @WebFluxTest(controllers = {LegalAddressController.class})
 class LegalAddressControllerTest {
@@ -137,7 +136,7 @@ class LegalAddressControllerTest {
                 .replace("{channelType}", CHANNELTYPE);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
-        addressVerification.setVerificationCode("verification");
+        addressVerification.setVerificationCode("12345");
         addressVerification.setValue("value");
 
         // When
@@ -165,7 +164,7 @@ class LegalAddressControllerTest {
                 .replace("{channelType}", CHANNELTYPE);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
-        addressVerification.setVerificationCode("verification");
+        addressVerification.setVerificationCode("12345");
         addressVerification.setValue("value");
 
         // When
@@ -192,7 +191,6 @@ class LegalAddressControllerTest {
                 .replace("{channelType}", CHANNELTYPE);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
-        addressVerification.setVerificationCode("verification");
         addressVerification.setValue("value");
 
         // When

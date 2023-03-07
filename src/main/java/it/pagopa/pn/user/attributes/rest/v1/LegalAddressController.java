@@ -4,16 +4,22 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.LegalApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @Slf4j
@@ -77,6 +83,34 @@ public class LegalAddressController implements LegalApi {
                                                                 List<String> pnCxGroups,
                                                                 String pnCxRole,
                                                                 ServerWebExchange exchange) {
+
+        return addressVerificationDto
+                .map(addressVerificationDto1 -> {
+                    // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
+                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
+                        return Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
+                    }
+                    return Optional.<PnAuditLogEvent>empty();
+                })
+                .flatMap(optionalLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto, pnCxType, pnCxGroups, pnCxRole)
+                                    .onErrorResume(throwable -> {
+                                        optionalLogEvent.ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+                                        return Mono.error(throwable);
+                                    })
+                                    .map(m -> {
+                                        log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
+                                        if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
+                                            return ResponseEntity.ok().build();
+                                        } else {
+                                            optionalLogEvent.ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
+                                            return ResponseEntity.noContent().build();
+                                        }
+                                    }));
+    }
+
+
+    @NotNull
+    private PnAuditLogEvent getLogEvent(String recipientId, CxTypeAuthFleetDto pnCxType, String senderId, LegalChannelTypeDto channelType, List<String> pnCxGroups, String pnCxRole) {
         String logMessage = String.format("postRecipientLegalAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
@@ -85,21 +119,7 @@ public class LegalAddressController implements LegalApi {
                 .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
                 .build();
         logEvent.log();
-
-        return addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, addressVerificationDto, pnCxType, pnCxGroups, pnCxRole)
-                .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
-                    return Mono.error(throwable);
-                })
-                .map(m -> {
-                    log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                    if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
-                        return ResponseEntity.ok().build();
-                    } else {
-                        logEvent.generateSuccess(logMessage).log();
-                        return ResponseEntity.noContent().build();
-                    }
-                });
+        return logEvent;
     }
 
 }
