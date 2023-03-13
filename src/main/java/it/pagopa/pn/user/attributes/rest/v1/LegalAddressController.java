@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.LegalApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
@@ -52,7 +53,11 @@ public class LegalAddressController implements LegalApi {
 
         return addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
+                    if (throwable instanceof PnAddressNotFoundException) {
+                        logEvent.generateWarning(throwable.getMessage()).log();
+                    } else {
+                        logEvent.generateFailure(throwable.getMessage()).log();
+                    }
                     return Mono.error(throwable);
                 }).map(m -> {
                     logEvent.generateSuccess(logMessage).log();
