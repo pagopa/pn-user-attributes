@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
@@ -53,7 +54,11 @@ public class CourtesyAddressController implements CourtesyApi {
 
         return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
+                    if (throwable instanceof PnAddressNotFoundException) {
+                        logEvent.generateWarning(throwable.getMessage()).log();
+                    } else {
+                        logEvent.generateFailure(throwable.getMessage()).log();
+                    }
                     return Mono.error(throwable);
                 })
                 .map(m -> {
@@ -106,7 +111,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                         .onErrorResume(throwable -> {
                             if (throwable instanceof PnInvalidVerificationCodeException)
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess("FAILURE {}",throwable.getMessage()).log());
+                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
                             else
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
                             return Mono.error(throwable);
