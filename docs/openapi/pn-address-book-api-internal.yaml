@@ -302,9 +302,12 @@ components:
       name: recipientId
       description: recipient Id
       required: true
-      example: '123e4567-e89b-12d3-a456-426614174000'
+      example: 'PG-123e4567-e89b-12d3-a456-426614174000'
       schema:
         type: string
+        maxLength: 39
+        #ASCII printable chars
+        pattern: ^[ -~ ]*$
     senderId:
       in: path
       name: senderId
@@ -313,6 +316,9 @@ components:
       required: true
       schema:
         type: string
+        maxLength: 50
+        #ASCII printable chars
+        pattern: ^[ -~ ]*$
     cxRoleAuthFleet:
       name: x-pagopa-pn-cx-role
       in: header
@@ -320,6 +326,9 @@ components:
       required: false
       schema:
         type: string
+        maxLength: 64
+        #ASCII printable chars
+        pattern: ^[ -~ ]*$
 
   schemas:
     AddressVerification:
@@ -329,6 +338,9 @@ components:
       properties:
         value:
           type: string
+          maxLength: 50
+          #Tel. number or email address
+          pattern: ^(((00|\+)393\d{8,9})|([\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+(?:[.-][\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+){0,10}@\w+(?:[.-]\w+){0,10}\.\w{2,10}))$
         verificationCode:
           $ref: '#/components/schemas/VerificationCode'
 

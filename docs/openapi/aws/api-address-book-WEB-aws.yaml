@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: MZiNcNASHf7ccXRPXkNKUsTnQwDVYnG9T4s/gVK1P8g=
+  version: Kxdns9fUaEt5LxnqcWBB/Yc+fHygI0fEaJyHAUUP2Rw=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -412,9 +412,11 @@ components:
       name: recipientId
       description: recipient Id
       required: true
-      example: 123e4567-e89b-12d3-a456-426614174000
+      example: PG-123e4567-e89b-12d3-a456-426614174000
       schema:
         type: string
+        maxLength: 39
+        pattern: ^[ -~ ]*$
     senderId:
       in: path
       name: senderId
@@ -423,6 +425,8 @@ components:
       required: true
       schema:
         type: string
+        maxLength: 50
+        pattern: ^[ -~ ]*$
     cxRoleAuthFleet:
       name: x-pagopa-pn-cx-role
       in: header
@@ -430,6 +434,8 @@ components:
       required: false
       schema:
         type: string
+        maxLength: 64
+        pattern: ^[ -~ ]*$
   schemas:
     AddressVerification:
       type: object
@@ -438,6 +444,9 @@ components:
       properties:
         value:
           type: string
+          maxLength: 50
+          pattern: >-
+            ^(((00|\+)393\d{8,9})|([\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+(?:[.-][\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+){0,10}@\w+(?:[.-]\w+){0,10}\.\w{2,10}))$
         verificationCode:
           $ref: '#/components/schemas/VerificationCode'
     BaseDigitalAddress:
