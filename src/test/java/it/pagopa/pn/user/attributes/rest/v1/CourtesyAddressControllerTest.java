@@ -44,7 +44,7 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("test@email.com");
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
@@ -72,7 +72,7 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("+393333300666");
 
         // When
         when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
@@ -99,7 +99,7 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("00393333300666");
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
