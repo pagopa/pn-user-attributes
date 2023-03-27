@@ -336,6 +336,29 @@
               <modelNameSuffix />
             </configuration>
           </execution>
+          <execution>
+            <id>generate-client-selfcare-internal</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <configuration>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/8a1568b037aaf1ed74f39fd60a6e568fdba0a20e/docs/openapi/pn-selfcare-internal-v1.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.microservice.msclient.generated.selfcare.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.microservice.msclient.generated.selfcare.v1.api</apiPackage>
+              <modelNameSuffix />
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>

@@ -8,6 +8,7 @@ import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.UserStatusResponse;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -15,6 +16,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -51,6 +53,7 @@ public class AddressBookService {
     private final AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto;
     private final AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
     private final IONotificationService ioNotificationService;
+    private final PnSelfcareClient pnSelfcareClient;
 
     SecureRandom rnd = new SecureRandom();
 
@@ -63,7 +66,7 @@ public class AddressBookService {
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
                               PnExternalChannelClient pnExternalChannelClient, PnExternalRegistryIoClient pnExternalRegistryClient, AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
-                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto, IONotificationService ioNotificationService) {
+                              AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto, IONotificationService ioNotificationService, PnSelfcareClient pnSelfcareClient) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.pnExternalChannelClient = pnExternalChannelClient;
@@ -71,6 +74,7 @@ public class AddressBookService {
         this.addressBookEntityToDto = addressBookEntityToDto;
         this.legalDigitalAddressToDto = legalDigitalAddressToDto;
         this.ioNotificationService = ioNotificationService;
+        this.pnSelfcareClient = pnSelfcareClient;
     }
 
 
@@ -313,8 +317,16 @@ public class AddressBookService {
      */
     public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, null).collectList()
-                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
-                (list, addresses) -> {
+                .zipWhen(list -> {
+                    // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
+                    List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
+                    return pnSelfcareClient.getManyPaByIds(paIds).collectList();
+                })
+                .zipWhen(tuple -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                (tuple, addresses) -> {
+                    List<AddressBookEntity> list = tuple.getT1();
+                    List<PaSummary> paSummaries = tuple.getT2();
+
                     UserAddressesDto dto = new UserAddressesDto();
                     dto.setCourtesy(new ArrayList<>());
                     dto.setLegal(new ArrayList<>());
@@ -330,11 +342,19 @@ public class AddressBookService {
                         if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
                             LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                             add.setValue(realaddress);
+                            PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
+                            if (paSummary != null) {
+                                add.setSenderName(paSummary.getName());
+                            }
                             dto.addLegalItem(add);
                         }
                         else {
                             CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
                             add.setValue(realaddress);
+                            PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
+                            if (paSummary != null) {
+                                add.setSenderName(paSummary.getName());
+                            }
                             dto.addCourtesyItem(add);
                         }
                     });

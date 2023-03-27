@@ -466,6 +466,10 @@ components:
           type: string
           description: senderId or 'default'
           example: cmbo
+        senderName:
+          type: string
+          description: name of the sender
+          example: 'abc'
         channelType:
           type: string
         value:
