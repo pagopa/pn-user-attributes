@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -318,15 +319,19 @@ public class AddressBookService {
      */
     public Mono<UserAddressesDto> getAddressesByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, null).collectList()
-                .zipWhen(list -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
-                (list, addresses) -> {
+                .zipWhen(list -> {
+                    // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
+                    List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
+                    return pnSelfcareClient.getManyPaByIds(paIds).collectList();
+                })
+                .zipWhen(tuple -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
+                (tuple, addresses) -> {
+                    List<AddressBookEntity> list = tuple.getT1();
+                    List<PaSummary> paSummaries = tuple.getT2();
+
                     UserAddressesDto dto = new UserAddressesDto();
                     dto.setCourtesy(new ArrayList<>());
                     dto.setLegal(new ArrayList<>());
-
-                    // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
-                    List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
-                    List<PaSummary> paSummaries = pnSelfcareClient.getManyPaByIds(paIds).block(Duration.ofMillis(3000));
 
                     list.forEach(ent -> {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault

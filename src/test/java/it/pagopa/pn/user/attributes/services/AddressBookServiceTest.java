@@ -1099,7 +1099,7 @@ class AddressBookServiceTest {
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto2);
-        when(pnSelfcareClient.getManyPaByIds(Mockito.any())).thenReturn(Mono.just(paSummaries));
+        when(pnSelfcareClient.getManyPaByIds(Mockito.any())).thenReturn(Flux.fromIterable(paSummaries));
 
 
         //When

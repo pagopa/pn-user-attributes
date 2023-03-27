@@ -7,6 +7,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
@@ -40,9 +41,9 @@ public class PnSelfcareClient extends CommonBaseClient {
      *
      * @return Flux<PaSummary>
      */
-    public Mono<List<PaSummary>> getManyPaByIds(List<String> ids)
+    public Flux<PaSummary> getManyPaByIds(List<String> ids)
     {
         log.info("getManyPaByIds ids={}", ids);
-        return this.infoPaApi.getManyPa(ids).collectList();
+        return this.infoPaApi.getManyPa(ids);
     }
 }

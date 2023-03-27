@@ -87,7 +87,7 @@ public class PnSelfcareClientTest {
                         .withStatusCode( 200 ));
 
         //When
-        List<PaSummary> res = client.getManyPaByIds(paIds).block();
+        List<PaSummary> res = client.getManyPaByIds(paIds).collectList().block();
 
         //Then
         Assertions.assertEquals( paSummaries, res );
