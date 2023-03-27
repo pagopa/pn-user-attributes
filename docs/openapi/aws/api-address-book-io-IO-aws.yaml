@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: /8OGtTeGWJR//D+lXKGUckaU81liQ/We4wEzrlU4N/Q=
+  version: Yl9Mk7GscddyulV1YRV8gMAd/7+z6cMlWN7f77K1n2I=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -123,6 +123,8 @@ components:
       required: true
       schema:
         type: string
+        pattern: ^[ -~]*$
+        maxLength: 64
   schemas:
     IoCourtesyDigitalAddressActivation:
       description: Io courtesy activation

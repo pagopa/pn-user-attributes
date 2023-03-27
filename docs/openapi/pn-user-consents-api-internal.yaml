@@ -134,6 +134,8 @@ components:
     ConsentVersion:
       type: string
       description: version of consent
+      maxLength: 10
+      pattern: ^[a-zA-Z0-9_.-]*$
 
     ConsentType:
       type: string

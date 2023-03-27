@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: RrEsvmiseox/kX6jPhFyGzz+pBgpS2m+YbZ6+9ciVUo=
+  version: cjfExyJD/m7w5KxZfqhOeq2A11+mHE8b+LNMbGyfffM=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -198,6 +198,8 @@ components:
     ConsentVersion:
       type: string
       description: version of consent
+      maxLength: 10
+      pattern: ^[a-zA-Z0-9_.-]*$
     ConsentType:
       type: string
       description: type of consent
