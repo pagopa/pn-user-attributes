@@ -266,7 +266,7 @@ components:
           type: string
           maxLength: 50
           #Tel. number or email address
-          pattern: ^(((00|\+)393\d{8,9})|([\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+(?:[.-][\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+){0,10}@\w+(?:[.-]\w+){0,10}\.\w{2,10}))$
+          pattern: ^(((00|\+)393\d{8,9})|([\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+(?:[.-][\p{L}0-9!#\$%*\/?\|\^\{\}`~&'+\-=_]+){0,10}@\w+(?:[.-]\w+){0,10}\.\w{2,10})|(ENABLED)|(DISABLED))$
         verificationCode:
           $ref: '#/components/schemas/VerificationCode'
 
