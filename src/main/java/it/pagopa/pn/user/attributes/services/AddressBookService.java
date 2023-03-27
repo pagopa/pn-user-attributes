@@ -28,6 +28,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -325,7 +326,7 @@ public class AddressBookService {
 
                     // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
                     List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
-                    List<PaSummary> paSummaries = pnSelfcareClient.getManyPaByIds(paIds);
+                    List<PaSummary> paSummaries = pnSelfcareClient.getManyPaByIds(paIds).block(Duration.ofMillis(3000));
 
                     list.forEach(ent -> {
                         // Nel caso di APPIO, non esiste un address da risolvere in data-vault

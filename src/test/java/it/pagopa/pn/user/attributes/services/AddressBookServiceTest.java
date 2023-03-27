@@ -11,6 +11,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientTypeDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.UserStatusResponse;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -18,6 +19,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +51,9 @@ class AddressBookServiceTest {
 
     @Mock
     PnDataVaultClient pnDatavaultClient;
+
+    @Mock
+    PnSelfcareClient pnSelfcareClient;
 
     @Mock
     AddressBookDao addressBookDao;
@@ -1050,7 +1055,7 @@ class AddressBookServiceTest {
     void getAddressesByRecipient() {
         //Given
         List<AddressBookEntity> listFromDb = new ArrayList<>();
-        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
+        listFromDb.add(AddressBookDaoTestIT.newAddress(true, "abc"));
         listFromDb.add(AddressBookDaoTestIT.newAddress(false));
 
         RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
@@ -1083,11 +1088,18 @@ class AddressBookServiceTest {
         user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
         user.setTaxId(baseRecipientDtoDto.getTaxId());
 
+        final List<PaSummary> paSummaries = new ArrayList<>();
+        PaSummary paSummary = new PaSummary();
+        paSummary.setId(resdto1.getSenderId());
+        paSummary.setName("Fake pa");
+        paSummaries.add(paSummary);
+
         when(addressBookDao.getAllAddressesByRecipient (Mockito.any(), Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto2);
+        when(pnSelfcareClient.getManyPaByIds(Mockito.any())).thenReturn(Mono.just(paSummaries));
 
 
         //When
@@ -1096,7 +1108,9 @@ class AddressBookServiceTest {
         //Then
         assertNotNull(result);
         assertEquals(1, result.getLegal().size());
+        assertEquals("Fake pa", result.getLegal().get(0).getSenderName());
         assertEquals(1, result.getCourtesy().size());
+        assertEquals(null, result.getCourtesy().get(0).getSenderName());
     }
 
 }
