@@ -71,7 +71,7 @@ Resources:
         AlarmSNSTopicName: !Ref AlarmSNSTopicName 
         DelaySeconds: 1
 
-  PnUserAttributesLogsLogGroup:
+  PnUserAttributesLogGroup:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain 
@@ -110,4 +110,4 @@ Outputs:
 
   # Log group exports
   EcsLogGroup:
-    Value: !GetAtt PnUserAttributesLogsLogGroup.Outputs.LogGroupName
+    Value: !GetAtt PnUserAttributesLogGroup.Outputs.LogGroupName
