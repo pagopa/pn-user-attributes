@@ -320,6 +320,9 @@ public class AddressBookService {
                 .zipWhen(list -> {
                     // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
                     List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
+                    if (paIds.size() == 0) {
+                        return Mono.just(new ArrayList<PaSummary>());
+                    }
                     return pnSelfcareClient.getManyPaByIds(paIds).collectList();
                 })
                 .zipWhen(tuple -> dataVaultClient.getRecipientAddressesByInternalId(recipientId),
@@ -342,18 +345,22 @@ public class AddressBookService {
                         if (ent.getAddressType().equals(LegalDigitalAddressDto.AddressTypeEnum.LEGAL.getValue())) {
                             LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
                             add.setValue(realaddress);
-                            PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
-                            if (paSummary != null) {
-                                add.setSenderName(paSummary.getName());
+                            if (paSummaries != null) {
+                                PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
+                                if (paSummary != null) {
+                                    add.setSenderName(paSummary.getName());
+                                }
                             }
                             dto.addLegalItem(add);
                         }
                         else {
                             CourtesyDigitalAddressDto add = addressBookEntityToDto.toDto(ent);
                             add.setValue(realaddress);
-                            PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
-                            if (paSummary != null) {
-                                add.setSenderName(paSummary.getName());
+                            if (paSummaries != null) {
+                                PaSummary paSummary = paSummaries.stream().filter(pa -> pa.getId().equals(add.getSenderId())).findAny().orElse(null);
+                                if (paSummary != null) {
+                                    add.setSenderName(paSummary.getName());
+                                }
                             }
                             dto.addCourtesyItem(add);
                         }
