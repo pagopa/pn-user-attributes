@@ -142,6 +142,11 @@ Parameters:
     Default: ''
     Description: 'Base key of the microservice in the s3 bucket'
 
+  # Log group parameters
+  EcsLogGroup:
+    Type: String
+    Description: 'Ecs log group name'
+
   # Heath Check parameters
   HealthCheckInterval:
     Description: Seconds between two health check
@@ -229,7 +234,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
+        MicroServiceUniqueName: !Sub '${ProjectName}-user-attributes'
         CpuValue: !Ref CpuValue
         MemoryAmount: !Ref MemoryAmount
         HealthCheckTimeout: !Ref HealthCheckTimeout
@@ -267,9 +272,9 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
         AlbSecurityGroup: !Ref AlbSecurityGroup
         TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
+        EcsLogGroup: !Ref EcsLogGroup
 
   UserAttributesMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -305,13 +310,13 @@ Resources:
             Resource:
               - !Ref UserAttributesActionsQueueARN
 
-  # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
+  # Expose PN-user-attributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
+        MicroServiceUniqueName: !Sub '${ProjectName}-user-attributes'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -328,7 +333,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-UserAttributes-web'
+        WAFName: !Sub '${ProjectName}-user-attributes-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: 3000
@@ -340,7 +345,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBook'
+        MicroServiceUniqueName: !Sub '${ProjectName}-address-book'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -357,7 +362,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-AddressBook-web'
+        WAFName: !Sub '${ProjectName}-address-book-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: 3000
@@ -368,7 +373,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBookIO'
+        MicroServiceUniqueName: !Sub '${ProjectName}-address-book-io'
         IntendedUsage: IO
         DnsName: !Ref IoApiDnsName
         ProjectName: !Ref ProjectName
@@ -385,7 +390,7 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-AddressBook-io'
+        WAFName: !Sub '${ProjectName}-address-book-io'
         IntendedUsage: IO
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.APIGatewayARN
   
@@ -428,4 +433,4 @@ Resources:
             - !Ref ExternalChannels2UserAttributesQueueARN
         LogGroupsNames: !Join
           - ','
-          - - !Sub '/ecs/${ProjectName}-user-attributes'
+          - - !Sub '/aws/ecs/${ProjectName}-user-attributes'
