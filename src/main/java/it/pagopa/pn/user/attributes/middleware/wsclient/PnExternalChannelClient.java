@@ -104,11 +104,11 @@ public class PnExternalChannelClient extends CommonBaseClient {
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                     digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
                     digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
-                    digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
+                    digitalNotificationRequestDto.setMessageText(getPECVerificationCodeBody(verificationCode));
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                     digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
-                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessagePECSubject());
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderPec()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderPec());
 
@@ -189,7 +189,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
                         digitalNotificationRequestDto.setCorrelationId(requestId);
                         digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                         digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
-                        digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode, recipientDtoDto.getDenomination()));
+                        digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode));
                         digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                         digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
@@ -221,11 +221,17 @@ public class PnExternalChannelClient extends CommonBaseClient {
     }
 
 
+    private String getPECVerificationCodeBody(String verificationCode)
+    {
+        String message = pnUserattributesConfig.getVerificationCodeMessagePEC();
+        message = String.format(message, verificationCode);
+        return  message;
+    }
 
-    private String getMailVerificationCodeBody(String verificationCode, String nameSurname)
+    private String getMailVerificationCodeBody(String verificationCode)
     {
         String message = pnUserattributesConfig.getVerificationCodeMessageEMAIL();
-        message = String.format(message, nameSurname, verificationCode);
+        message = String.format(message, verificationCode);
         return  message;
     }
 

@@ -1,1 +1,1 @@
-Piattaforma Notifiche: conferma questo numero di cellulare inserendo il codice %s
+Conferma questo numero di cellulare come recapito digitale a cui ricevere gli avvisi di cortesia inserendo su SEND il codice %s.
