@@ -1,7 +1,7 @@
-Ciao %s,
+Ciao,
 
-per confermare l’associazione del tuo indirizzo email su Piattaforma Notifiche, inserisci il codice %s
+per confermare questo indirizzo e-mail come recapito digitale a cui ricevere gli avvisi di cortesia, inserisci su SEND il codice %s.
 
 A presto,
 
-Il team di Piattaforma Notifiche
+Il team di SEND - Servizio Notifiche Digitali
