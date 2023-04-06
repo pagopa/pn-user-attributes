@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 public class ActionHandler {
     private final IONotificationService ioNotificationService;
 
+
     public ActionHandler(IONotificationService ioNotificationService) {
         this.ioNotificationService = ioNotificationService;
     }

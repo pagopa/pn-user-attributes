@@ -44,11 +44,20 @@ Resources:
           AttributeType: "S"
         - AttributeName: "sk"
           AttributeType: "S"
+        - AttributeName: "requestId"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "pk"
           KeyType: "HASH"
         - AttributeName: "sk"
           KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: "requestId-gsi"
+          KeySchema:
+            - AttributeName: "requestId"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
       TimeToLiveSpecification:
         AttributeName: "ttl"

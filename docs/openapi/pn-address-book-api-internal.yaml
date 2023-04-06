@@ -265,7 +265,12 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '422':
-          description: Verification code failure
+          description: >
+            This error is caused by one of this events:
+            * Verification code failure: error.detail equals to PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
+            * PEC send failure: error.detail equals to PN_USERATTRIBUTES_INVALIDPECADDRESS
+            * Verification code max attempt reached: error.detail equals to PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
+            * Verification code expired/notfound: error.detail equals to PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:

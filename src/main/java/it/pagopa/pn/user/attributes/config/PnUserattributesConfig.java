@@ -18,6 +18,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE;
 
@@ -51,6 +52,9 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECSubject;
 
     private int ioactivationSendolderthandays;
+
+
+    private List<String> externalchannelDigitalCodesSuccess;
 
     private Topics topics;
 

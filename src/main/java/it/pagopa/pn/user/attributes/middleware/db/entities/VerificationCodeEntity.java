@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 
 
 /**
@@ -26,6 +28,9 @@ public class VerificationCodeEntity extends BaseEntity {
     public VerificationCodeEntity(String recipientId, String address, String channelType){
         this.setSk(address + ITEMS_SEPARATOR + (channelType==null?"":channelType));
         this.setPk(PK_PREFIX + recipientId);
+        this.pecValid = false;
+        this.codeValid = false;
+        this.failedAttempts = 0;
     }
 
     @DynamoDbIgnore
@@ -43,6 +48,14 @@ public class VerificationCodeEntity extends BaseEntity {
 
 
     @Getter(onMethod=@__({@DynamoDbAttribute("verificationCode")}))  private String verificationCode;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("failedAttempts")}))  private int failedAttempts;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("codeValid")}))  private boolean codeValid;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("pecValid")}))  private boolean pecValid;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("requestId")}))  private String requestId;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
 }

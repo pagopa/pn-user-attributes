@@ -296,6 +296,7 @@ Resources:
               - dynamodb:UpdateItem
             Resource:
               - !Ref UserAttributesTableArn
+              - !Sub "${UserAttributesTableArn}/*"
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility

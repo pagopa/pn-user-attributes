@@ -2,7 +2,9 @@ package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.commons.exceptions.PnExceptionsCodes;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidPecException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
@@ -320,7 +322,7 @@ public class AddressBookService {
                 .zipWhen(list -> {
                     // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
                     List<String> paIds = list.stream().map(add -> add.getSenderId()).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
-                    if (paIds.size() == 0) {
+                    if (paIds.isEmpty()) {
                         return Mono.just(new ArrayList<PaSummary>());
                     }
                     return pnSelfcareClient.getManyPaByIds(paIds).collectList();
@@ -637,15 +639,25 @@ public class AddressBookService {
         VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
         return dao.getVerificationCode(verificationCodeEntity)
                 .flatMap(r -> {
+                    if (!r.isPecValid())
+                        return Mono.error(new PnInvalidPecException());
                     if (!r.getVerificationCode().equals(verificationCode))
-                        return Mono.error(new PnInvalidVerificationCodeException());
+                        return manageAttempts(verificationCode)
+                                .then(Mono.error(new PnInvalidVerificationCodeException()));
                     if (r.getLastModified().isBefore(Instant.now().minus(VERIFICATION_CODE_TTL_MINUTES, ChronoUnit.MINUTES)))
-                        return Mono.error(new PnInvalidVerificationCodeException());
+                        return Mono.error(new PnExpiredVerificationCodeException());
 
                     log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
                     return sendToDataVaultAndSaveInDynamodb(recipientId, realaddress, legal, senderId, channelType);
                 })
-                .switchIfEmpty(Mono.error(new PnInvalidVerificationCodeException()));
+                .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
+    }
+
+    private Mono<Void> manageAttempts(VerificationCodeEntity verificationCodeEntity) {
+        verificationCodeEntity.setFailedAttempts(verificationCodeEntity.getFailedAttempts()+1);
+        if (verificationCodeEntity.getFailedAttempts() >= confi)
+        return
+                Mono.error(new PnInvalidVerificationCodeException());
     }
 
     /**

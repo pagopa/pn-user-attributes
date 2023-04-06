@@ -26,13 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_DELETE_ADDRESS_FAILED;
 
 @Repository
 @Slf4j
 public class AddressBookDao extends BaseDao {
+
+    private static final String GSI_INDEX_REQUESTID = "requestId-gsi";
 
     DynamoDbAsyncTable<AddressBookEntity> addressBookTable;
     DynamoDbAsyncTable<VerificationCodeEntity> verificationCodeTable;
@@ -173,6 +174,40 @@ public class AddressBookDao extends BaseDao {
         log.debug("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
+    }
+
+    public Mono<Void> updateVerificationCodeIfExists(VerificationCodeEntity entity) {
+        log.debug("updateVerificationCodeIfExists recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
+
+        String expression = String.format(
+                "%s = :pk AND %s = :sk",
+                BaseEntity.COL_PK,
+                BaseEntity.COL_SK
+        );
+
+        PutItemEnhancedRequest<VerificationCodeEntity> putItemEnhancedRequest = PutItemEnhancedRequest.<VerificationCodeEntity>builder(VerificationCodeEntity.class)
+                .item(entity)
+                .conditionExpression(Expression.builder()
+                        .expression(expression)
+                        .expressionValues(Map.of("pk", AttributeValue.builder().s(entity.getPk()).build(), "sk", AttributeValue.builder().s(entity.getSk()).build()))
+                        .build())
+                .build();
+
+
+        return Mono.fromFuture(() -> verificationCodeTable.putItem(putItemEnhancedRequest));
+    }
+
+    public Mono<VerificationCodeEntity> getVerificationCodeByRequestId(String requestId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(getKeyBuild(requestId));
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .build();
+
+        return Flux.from(verificationCodeTable.index(GSI_INDEX_REQUESTID).query(queryEnhancedRequest))
+                .map(Page::items)
+                .take(1).next()
+                .map(x -> x.get(0));
     }
 
     public Mono<AddressBookEntity> getAddressBook(AddressBookEntity entity)

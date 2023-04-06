@@ -15,10 +15,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING;
-import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_INVALID_EVENT_TYPE;
 
 import java.util.UUID;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING;
 
 @Configuration
 @Slf4j
@@ -53,12 +53,12 @@ public class PnEventInboundService {
                 return "pnUserAttributesIoActivatedActionConsumer";
             else if(ActionType.SEND_MESSAGE_ACTION.name().equals(eventType))
                 return "pnUserAttributesSendMessageActionConsumer";
+            else
+                return "pnExternalChannelEventConsumer";
         }else {
             log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
             throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING);
         }
-
-        throw new PnInternalException("eventType is not valid, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_INVALID_EVENT_TYPE);
     }
 
     
