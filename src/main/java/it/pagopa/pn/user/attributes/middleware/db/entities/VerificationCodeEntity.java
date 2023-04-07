@@ -57,5 +57,7 @@ public class VerificationCodeEntity extends BaseEntity {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("requestId")}))  private String requestId;
 
+    @Getter(onMethod=@__({@DynamoDbAttribute("senderId")}))  private String senderId;
+
     @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
 }
