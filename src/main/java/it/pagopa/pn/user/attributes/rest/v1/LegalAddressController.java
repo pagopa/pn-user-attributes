@@ -4,7 +4,9 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.LegalApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -103,7 +105,7 @@ public class LegalAddressController implements LegalApi {
                 })
                 .flatMap(tupleVerCodeLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                                     .onErrorResume(throwable -> {
-                                        if (throwable instanceof PnInvalidVerificationCodeException)
+                                        if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
                                         else
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
@@ -131,7 +133,7 @@ public class LegalAddressController implements LegalApi {
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_CODE, logMessage)
                 .build();
         logEvent.log();
         return logEvent;

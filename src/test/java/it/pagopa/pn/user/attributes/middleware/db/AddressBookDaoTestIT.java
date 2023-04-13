@@ -427,7 +427,7 @@ class AddressBookDaoTestIT {
         @Test
         void saveVerificationCode () {
             //Given
-            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS", "senderid");
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS", "senderid", "COURTESY", "addressreal");
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
@@ -461,7 +461,7 @@ class AddressBookDaoTestIT {
         void getVerificationCode () {
 
             //Given
-            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS", "senderid");
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS", "senderid", "COURTESY", "addressreal");
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());

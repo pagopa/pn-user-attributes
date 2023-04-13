@@ -63,6 +63,21 @@ public class PnExternalChannelClient extends CommonBaseClient {
     }
 
 
+    public Mono<String> sendPecConfirm(String recipientId, String address)
+    {
+        String requestId = UUID.randomUUID().toString();
+        if ( ! pnUserattributesConfig.isDevelopment() ) {
+            return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
+                    pnUserattributesConfig.getVerificationCodeMessagePECConfirm(), pnUserattributesConfig.getVerificationCodeMessagePECSubject());
+        }
+        else {
+            log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
+            log.warn("recipientId={} address={}",
+                    recipientId, address);
+            return Mono.just(requestId);
+        }
+    }
+
     public Mono<String> sendVerificationCode(String recipientId, String address, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
         String requestId = UUID.randomUUID().toString();
@@ -92,6 +107,26 @@ public class PnExternalChannelClient extends CommonBaseClient {
                 .build();
         logEvent.log();
 
+
+        return sendLegalMessage(recipientId, requestId, address, legalChannelType, getPECVerificationCodeBody(verificationCode), pnUserattributesConfig.getVerificationCodeMessagePECSubject())
+                .onErrorResume(x -> {
+                    String message = elabExceptionMessage(x);
+                    String failureMessage = String.format("sendLegalVerificationCode PEC response error %s", message);
+                    logEvent.generateFailure(failureMessage).log();
+                    log.error("sendLegalVerificationCode PEC response error {}", message, x);
+                    return Mono.error(x);
+                })
+                .then(Mono.fromSupplier(
+                        () -> {
+                            logEvent.generateSuccess(logMessage).log();
+                            return requestId;
+                        }
+                ));
+    }
+
+
+    private Mono<String> sendLegalMessage(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String body, String subject)
+    {
         if (legalChannelType != LegalChannelTypeDto.PEC)
             throw new PnInvalidInputException(ERROR_CODE_INVALID_LEGAL_CHANNEL, "legalChannelType");
 
@@ -104,11 +139,11 @@ public class PnExternalChannelClient extends CommonBaseClient {
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                     digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
                     digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
-                    digitalNotificationRequestDto.setMessageText(getPECVerificationCodeBody(verificationCode));
+                    digitalNotificationRequestDto.setMessageText(body);
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                     digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
-                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessagePECSubject());
+                    digitalNotificationRequestDto.setSubjectText(subject);
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderPec()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderPec());
 
@@ -118,20 +153,8 @@ public class PnExternalChannelClient extends CommonBaseClient {
                 .next()
                 .flatMap(digitalNotificationRequestDto -> digitalLegalMessagesApi
                         .sendDigitalLegalMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                        )
-                        .onErrorResume(x -> {
-                            String message = elabExceptionMessage(x);
-                            String failureMessage = String.format("sendCourtesyVerificationCode SMS response error %s", message);
-                            logEvent.generateFailure(failureMessage).log();
-                            log.error("sendCourtesyVerificationCode SMS response error {}", message, x);
-                            return Mono.error(x);
-                        })
-                .then(Mono.fromSupplier(
-                        () -> {
-                            logEvent.generateSuccess(logMessage).log();
-                            return requestId;
-                        }
-                ));
+                )
+                .then(Mono.just(requestId));
     }
 
     private Mono<String> sendCourtesyVerificationCode(String recipientId, String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)

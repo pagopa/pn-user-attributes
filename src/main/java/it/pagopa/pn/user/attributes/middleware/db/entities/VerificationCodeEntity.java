@@ -24,16 +24,22 @@ public class VerificationCodeEntity extends BaseEntity {
     private static final int SK_ITEMS_HASHED_ADDRESS = 0;
     private static final int SK_ITEMS_CHANNEL_TYPE = 1;
 
-
-    public VerificationCodeEntity(String recipientId, String address, String channelType, String senderId){
-        this.setSk(address + ITEMS_SEPARATOR + (channelType==null?"":channelType));
+    public VerificationCodeEntity(String recipientId, String hashedaddress, String channelType){
+        this.setSk(hashedaddress + ITEMS_SEPARATOR + (channelType==null?"":channelType));
         this.setPk(PK_PREFIX + recipientId);
+    }
+
+    public VerificationCodeEntity(String recipientId, String hashedaddress, String channelType, String senderId, String addressType, String realaddress){
+        this(recipientId, hashedaddress, channelType);
+
         this.pecValid = false;
         this.codeValid = false;
         this.failedAttempts = 0;
         if (senderId == null)
             senderId = AddressBookEntity.SENDER_ID_DEFAULT;
         this.senderId = senderId;
+        this.addressType = addressType;
+        this.address = realaddress;
     }
 
     @DynamoDbIgnore
@@ -62,7 +68,9 @@ public class VerificationCodeEntity extends BaseEntity {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("senderId")}))  private String senderId;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("pecAddress")}))  private String pecAddress;
+    @Getter(onMethod=@__({@DynamoDbAttribute("addressType")}))  private String addressType;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("address")}))  private String address;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
 }

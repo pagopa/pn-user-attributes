@@ -5,6 +5,7 @@ import it.pagopa.pn.user.attributes.mapper.*;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
@@ -382,19 +383,22 @@ public class AddressBookService {
         else {
 
             verificationCodeUtils.validateAddress(legalChannelType, courtesyChannelType, addressVerificationDto);
+            String hashedAddress = verificationCodeUtils.hashAddress(addressVerificationDto.getValue());
 
-            return  dao.validateHashedAddress(recipientId, verificationCodeUtils.hashAddress(addressVerificationDto.getValue()), channelType)
+            return  dao.validateHashedAddress(recipientId, hashedAddress, channelType)
                     .flatMap(res -> {
                         if (res == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
-                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(recipientId, addressVerificationDto.getValue(), legal, senderId, channelType);
+                            // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
+                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedAddress, channelType, senderId, legal, addressVerificationDto.getValue());
+                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, addressVerificationDto.getValue());
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
-                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, addressVerificationDto.getValue(), legalChannelType, courtesyChannelType, senderId, addressVerificationDto.getValue());
+                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, addressVerificationDto.getValue(), legalChannelType, courtesyChannelType, senderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType);

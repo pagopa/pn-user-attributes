@@ -180,7 +180,7 @@ public class AddressBookDao extends BaseDao {
     public Flux<VerificationCodeEntity> getAllVerificationCodesByRecipient(String recipientId, @Nullable String legalType) {
         log.debug("getAllVerificationCodesByRecipient recipientId={} legaltype={}", recipientId, legalType);
 
-        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, null, null, null);
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, null, null);
 
         QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
                 .builder()

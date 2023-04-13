@@ -4,7 +4,9 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -95,8 +97,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 .map(addressVerificationDto1 -> {
                     // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
                     Optional<PnAuditLogEvent> auditLogEvent;
-                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())
-                            || channelType == CourtesyChannelTypeDto.APPIO) {
+                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
                         auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
                     }
                     else {
@@ -107,7 +108,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 })
                 .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                         .onErrorResume(throwable -> {
-                            if (throwable instanceof PnInvalidVerificationCodeException)
+                            if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
                             else
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
@@ -134,7 +135,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_INSUP : PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_CODE, logMessage)
                 .build();
         logEvent.log();
         return logEvent;

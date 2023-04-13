@@ -1,11 +1,9 @@
 package it.pagopa.pn.user.attributes.services.utils;
 
 import it.pagopa.pn.commons.exceptions.PnExceptionsCodes;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -20,6 +18,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -58,7 +57,7 @@ public class VerificationCodeUtils {
         return retrieveVerificationCode(recipientId, verificationCode, hashedaddress, channelType)
                 .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
                 .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal))
-                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, verificationCode.getValue() != null?verificationCode.getValue():r.getPecAddress(), legal))
+                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, verificationCode.getValue()))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
     }
 
@@ -76,7 +75,7 @@ public class VerificationCodeUtils {
             return dao.getVerificationCodeByRequestId(verificationCode.getRequestId())
                     .filter(verificationCodeEntity -> verificationCodeEntity.getRecipientId().equals(recipientId));
         } else {
-            VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType, null);
+            VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
             return dao.getVerificationCode(verificationCodeEntity);
         }
     }
@@ -86,11 +85,10 @@ public class VerificationCodeUtils {
      * Invia al datavault e se tutto OK salva in dynamodb l'indirizzo offuscato
      *
      * @param verificationCodeEntity verificationCodeEntity
-     * @param realaddress indirizzo da salvare
-     * @param legal tipologia legal
+     * @param realaddress indirizzo da salvare (opzionale nel caso della PEC)
      * @return risultato dell'operazione
      */
-    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, String realaddress, String legal)
+    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, String realaddress)
     {
         verificationCodeEntity.setCodeValid(true);
         if (legalChannelType == LegalChannelTypeDto.PEC && !verificationCodeEntity.isPecValid()) {
@@ -98,31 +96,56 @@ public class VerificationCodeUtils {
             return this.dao.updateVerificationCodeIfExists(verificationCodeEntity)
                     .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.PEC_VALIDATION_REQUIRED));
         } else {
-            log.info("saving address in datavault internalId:{} hashedaddress:{} channel:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType());
-            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity.getRecipientId(), realaddress, legal, verificationCodeEntity.getSenderId(), verificationCodeEntity.getChannelType());
+            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, realaddress);
         }
     }
 
     /**
      * Invia al datavault e se tutto OK salva in dynamodb l'indirizzo offuscato
      *
-     * @param recipientId idutente
      * @param realaddress indirizzo da salvare
-     * @param legal tipologia
-     * @param senderId eventuale preferenza mittente
-     * @param channelType tipologia canale
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(String recipientId, String realaddress, String legal, String senderId, String channelType)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, String realaddress)
     {
-        String hashedaddress = hashAddress(realaddress);
-        AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
-        addressBookEntity.setAddresshash(hashedaddress);
+        // se real address non è passato, provo a recuperlo dal pec address
+        if (!StringUtils.hasText(realaddress))
+            realaddress = verificationCodeEntity.getAddress();
+
+        // se ancora non c'è, è un errore.
+        if (!StringUtils.hasText(realaddress))
+            return Mono.error(new PnInternalException("Addresso to save not found", PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND));
+
+        AddressBookEntity addressBookEntity = new AddressBookEntity(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddressType(), verificationCodeEntity.getSenderId(), verificationCodeEntity.getChannelType());
+        addressBookEntity.setAddresshash(verificationCodeEntity.getHashedAddress());
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
-        log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", recipientId, hashedaddress, channelType, legal);
-        return this.dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress)
+        log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
+        return this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, realaddress)
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
+    }
+
+    /**
+     * Imposta come pecValida
+     *
+     * @return risultato dell'operazione
+     */
+    public Mono<Void> markVerificationCodeAsPecValid(VerificationCodeEntity verificationCodeEntity)
+    {
+
+        log.info("Saving pec valid flag for requestId={}", verificationCodeEntity.getRequestId());
+        verificationCodeEntity.setPecValid(true);
+
+        return dao.updateVerificationCodeIfExists(verificationCodeEntity)
+                .onErrorResume(throwable -> {
+                    if (throwable instanceof ConditionalCheckFailedException ex)
+                    {
+                        // l'errore non dovrebbe aver senso, ho fatto il check 3 istruzioni più su. Cmq lo assorbo
+                        log.error("Saving pec valid flag failed because item not found, probably by race condition, skipped save", ex);
+                        return Mono.empty();
+                    }
+                    return Mono.error(throwable);
+                });
     }
 
     /**
@@ -135,15 +158,14 @@ public class VerificationCodeUtils {
      * @return risultato dell'operazione
      */
     public Mono<AddressBookService.SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress,
-                                                                                                                  LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId, String address) {
+                                                                                                                  LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId) {
         String hashedaddress = hashAddress(realaddress);
+        String addressType = getLegalType(legalChannelType);
         String vercode = getNewVerificationCode();
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
         log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
-        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId);
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
         verificationCode.setVerificationCode(vercode);
-        if (legalChannelType == LegalChannelTypeDto.PEC)
-            verificationCode.setPecAddress(address);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationCodeTTL()).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)

@@ -49,19 +49,11 @@ public class CourtesyIoController implements CourtesyApi {
                     PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
                     if (dto.getActivationStatus())
                     {
-                        PnAuditLogEvent logEvent = auditLogBuilder
-                                .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
-                                .build();
-                        logEvent.log();
                         return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
-                                .onErrorResume(throwable -> {
-                                    logEvent.generateFailure(throwable.getMessage()).log();
-                                    return Mono.error(throwable);
-                                })
+
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
-                                    logEvent.generateSuccess(logMessage).log();
-                                    return ResponseEntity.noContent().build();
+                                     return ResponseEntity.noContent().build();
                                 });
                     }
                     else
