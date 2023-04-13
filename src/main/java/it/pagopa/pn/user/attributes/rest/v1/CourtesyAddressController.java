@@ -45,23 +45,29 @@ public class CourtesyAddressController implements CourtesyApi {
         String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_DEL : PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
-                .build();
-        logEvent.log();
+        Optional<PnAuditLogEvent> optionalPnAuditLogEvent;
+        if (channelType != CourtesyChannelTypeDto.APPIO) {
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                    .build();
+            logEvent.log();
+            optionalPnAuditLogEvent = Optional.of(logEvent);
+        } else {
+             optionalPnAuditLogEvent = Optional.empty();
+        }
 
         return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
                     if (throwable instanceof PnAddressNotFoundException) {
-                        logEvent.generateWarning(throwable.getMessage()).log();
+                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateWarning(throwable.getMessage()).log());
                     } else {
-                        logEvent.generateFailure(throwable.getMessage()).log();
+                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateFailure(throwable.getMessage()).log());
                     }
                     return Mono.error(throwable);
                 })
                 .map(m -> {
-                    logEvent.generateSuccess(logMessage).log();
+                    optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateSuccess(logMessage).log());
                     return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                 });
     }

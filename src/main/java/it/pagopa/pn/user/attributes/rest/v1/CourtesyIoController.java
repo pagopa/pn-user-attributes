@@ -1,8 +1,5 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.api.CourtesyApi;
@@ -46,7 +43,6 @@ public class CourtesyIoController implements CourtesyApi {
         return ioCourtesyDigitalAddressActivationDto
                 .flatMap(dto -> {
 
-                    PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
                     if (dto.getActivationStatus())
                     {
                         return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
@@ -58,18 +54,9 @@ public class CourtesyIoController implements CourtesyApi {
                     }
                     else
                     {
-                        PnAuditLogEvent logEvent = auditLogBuilder
-                                .before(PnAuditLogEventType.AUD_AB_DA_IO_DEL, logMessage)
-                                .build();
-                        logEvent.log();
                         return this.addressBookService.deleteCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO)
-                                .onErrorResume(throwable -> {
-                                    logEvent.generateFailure(throwable.getMessage()).log();
-                                    return Mono.error(throwable);
-                                })
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
-                                    logEvent.generateSuccess(logMessage).log();
                                     return ResponseEntity.noContent().build();
                                 });
                     }

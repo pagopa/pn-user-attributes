@@ -53,8 +53,12 @@ public class VerifiedAddressUtils {
                 addressBook.getRecipientId(), addressBook.getSenderId(), addressBook.getChannelType());
 
         PnAuditLogEventType auditLogEventType = PnAuditLogEventType.AUD_AB_DD_INSUP;
-        if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.APPIO.getValue()))
-            auditLogEventType = PnAuditLogEventType.AUD_AB_DA_IO_INSUP;
+        if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.APPIO.getValue())) {
+            if (addressBook.getAddresshash().equals(AddressBookEntity.APP_IO_ENABLED))
+                auditLogEventType = PnAuditLogEventType.AUD_AB_DA_IO_INSUP;
+            else
+                auditLogEventType = PnAuditLogEventType.AUD_AB_DA_IO_DEL;
+        }
         if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.SMS.getValue())
             || Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.EMAIL.getValue()))
             auditLogEventType = PnAuditLogEventType.AUD_AB_DA_INSUP;
