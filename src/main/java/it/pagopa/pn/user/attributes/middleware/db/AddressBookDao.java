@@ -59,10 +59,16 @@ public class AddressBookDao extends BaseDao {
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
     }
 
+    public Mono<Void> deleteVerificationCode(VerificationCodeEntity verificationCodeEntity) {
+        log.info("deleteVerificationCode recipientId={} hashedaddress={} channelType={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType());
+
+        return Mono.fromFuture(this.verificationCodeTable.deleteItem(verificationCodeEntity)).then();
+    }
+
     // Crea o modifica l'entity VerificationCodeEntity
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
-        log.debug("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
+        log.info("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -167,6 +173,24 @@ public class AddressBookDao extends BaseDao {
 
         return Flux.from(addressBookTable.query(qeRequest.build())
                 .items());
+    }
+
+
+
+    public Flux<VerificationCodeEntity> getAllVerificationCodesByRecipient(String recipientId, @Nullable String legalType) {
+        log.debug("getAllVerificationCodesByRecipient recipientId={} legaltype={}", recipientId, legalType);
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, null, null, null);
+
+        QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
+                .builder()
+                .scanIndexForward(true);
+
+        qeRequest.queryConditional(QueryConditional.keyEqualTo(getKeyBuild(verificationCode.getPk(), null)));
+
+        // dato che dovrebbe essere un caso molto raro, il filtro per semplicità viene fatto qui
+        return Flux.from(verificationCodeTable.query(qeRequest.build())
+                .items()).filter(x -> legalType==null || legalType.equals(x.getChannelType()));
     }
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)

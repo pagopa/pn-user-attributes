@@ -6,10 +6,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +65,7 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
+    public Mono<ResponseEntity<Flux<CourtesyAndUnverifiedDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
                                                                                                CxTypeAuthFleetDto pnCxType,
                                                                                                List<String> pnCxGroups,
                                                                                                String pnCxRole,
@@ -84,7 +81,7 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId,
+    public Mono<ResponseEntity<AddressVerificationResponseDto>> postRecipientCourtesyAddress(String recipientId,
                                                                    CxTypeAuthFleetDto pnCxType,
                                                                    String senderId,
                                                                    CourtesyChannelTypeDto channelType,
@@ -118,8 +115,10 @@ public class CourtesyAddressController implements CourtesyApi {
                         })
                         .map(m -> {
                             log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                            if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
-                                return ResponseEntity.status(HttpStatus.OK).body(null);
+                            if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                return ResponseEntity.ok(responseDto);
                             } else {
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
                                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);

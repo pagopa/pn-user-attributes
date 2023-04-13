@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalAndUnverifiedDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -83,11 +84,11 @@ class LegalAddressControllerTest {
         // Given
         String url = "/address-book/v1/digital-address/legal";
 
-        LegalDigitalAddressDto dto = new LegalDigitalAddressDto();
+        LegalAndUnverifiedDigitalAddressDto dto = new LegalAndUnverifiedDigitalAddressDto();
         dto.setRecipientId(RECIPIENTID);
         dto.setSenderId(SENDERID);
         dto.setChannelType(LegalChannelTypeDto.APPIO);
-        Flux<LegalDigitalAddressDto> retValue = Flux.just(dto);
+        Flux<LegalAndUnverifiedDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
         when(svc.getLegalAddressByRecipient(anyString()))

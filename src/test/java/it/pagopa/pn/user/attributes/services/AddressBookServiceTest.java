@@ -655,11 +655,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
 
@@ -710,11 +710,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
 
@@ -767,11 +767,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
 
@@ -838,11 +838,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
@@ -862,7 +862,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
+        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
                 .collectList()
                 .block(d);
 
@@ -888,11 +888,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
@@ -912,7 +912,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
                 .collectList().block(d);
 
         //Then
@@ -937,11 +937,11 @@ class AddressBookServiceTest {
 
         final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
@@ -961,7 +961,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
 
         //When
-        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+        Mono<List<CourtesyAndUnverifiedDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
                 .collectList();
 
         //Then
@@ -985,10 +985,10 @@ class AddressBookServiceTest {
 
         final LegalDigitalAddressDto resdto1 = new LegalDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
         resdto1.setChannelType(LegalChannelTypeDto.PEC);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(LegalChannelTypeDto.APPIO);
 
@@ -1029,11 +1029,11 @@ class AddressBookServiceTest {
 
         final LegalDigitalAddressDto resdto1 = new LegalDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(LegalChannelTypeDto.PEC);
         resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
         resdto1.setSenderId(listFromDb.get(1).getSenderId());
         resdto1.setChannelType(LegalChannelTypeDto.APPIO);
 
@@ -1042,7 +1042,7 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         //When
-        List<LegalDigitalAddressDto> result = addressBookService.getLegalAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
+        List<LegalAndUnverifiedDigitalAddressDto> result = addressBookService.getLegalAddressByRecipient(listFromDb.get(0).getRecipientId()).collectList().block(d);
 
         //Then
         assertNotNull(result);
@@ -1068,13 +1068,13 @@ class AddressBookServiceTest {
 
         final LegalDigitalAddressDto resdto1 = new LegalDigitalAddressDto();
         resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        resdto1.setAddressType(LegalDigitalAddressDto.AddressTypeEnum.LEGAL);
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
         resdto1.setSenderId(listFromDb.get(0).getSenderId());
         resdto1.setChannelType(LegalChannelTypeDto.PEC);
 
         final CourtesyDigitalAddressDto resdto2 = new CourtesyDigitalAddressDto();
         resdto2.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto2.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY);
+        resdto2.setAddressType(CourtesyAddressTypeDto.COURTESY);
         resdto2.setSenderId(listFromDb.get(1).getSenderId());
         resdto2.setChannelType(CourtesyChannelTypeDto.EMAIL);
 

@@ -122,7 +122,15 @@ Parameters:
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
-  
+
+  VerificationCodeTTL:
+    Type: String
+    Description: 'Parametro durata massima per validazione'
+
+  ValidationCodeMaxAttempts:
+    Type: String
+    Description: 'Parametro numero massimo di tentativi di validazione'
+
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'

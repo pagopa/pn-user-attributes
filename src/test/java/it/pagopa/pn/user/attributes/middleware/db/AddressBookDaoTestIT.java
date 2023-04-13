@@ -2,7 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.db;
 
 import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyAddressTypeDto;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
@@ -398,7 +398,7 @@ class AddressBookDaoTestIT {
         }
 
         //WHEN
-        List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId(), CourtesyDigitalAddressDto.AddressTypeEnum.COURTESY.getValue()).collectList().block(d);
+        List<AddressBookEntity> results = addressBookDao.getAllAddressesByRecipient(toInsert.get(0).getRecipientId(), CourtesyAddressTypeDto.COURTESY.getValue()).collectList().block(d);
 
         //THEN
         try {
@@ -427,7 +427,7 @@ class AddressBookDaoTestIT {
         @Test
         void saveVerificationCode () {
             //Given
-            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS");
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS", "senderid");
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
@@ -461,7 +461,7 @@ class AddressBookDaoTestIT {
         void getVerificationCode () {
 
             //Given
-            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS");
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS", "senderid");
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
