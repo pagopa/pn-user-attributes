@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: HEnq73uGVTeWE9FqblAamC/mqasLLzlxGf/TN+HPlTs=
+  version: FuAISqyPHFXDKIyKKlTLRVyspiWwIB0AKxhzFu1WdJs=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -446,7 +446,7 @@ components:
           type: string
           maxLength: 50
           pattern: >-
-            ^(((00|\+)393\d{8,9})|([a-zA-Z0-9]+(?:[.\-_][a-zA-Z0-9]+){0,10}@[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+){0,10}(?:\.[a-zA-Z0-9]{2,10}))|(ENABLED)|(DISABLED))$
+            ^(((00|\+)393\d{8,9})|([a-zA-Z0-9]+(?:[.\-_][a-zA-Z0-9]+){0,10}@[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+){0,10}(?:\.[a-zA-Z0-9]{2,10}))|(ENABLED)|(DISABLED)|(APPIO))$
         verificationCode:
           $ref: '#/components/schemas/VerificationCode'
     BaseDigitalAddress:
