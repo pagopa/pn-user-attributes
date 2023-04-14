@@ -169,13 +169,13 @@ public class VerificationCodeUtils {
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationCodeTTL()).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return dao.saveVerificationCode(verificationCode)
-                .zipWhen(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
+                .flatMap(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .flatMap(requestId -> {
                                     // aggiorno il requestId
                                     verificationCode.setRequestId(requestId);
                                     return dao.updateVerificationCodeIfExists(verificationCode);
                                 })
-                        ,(r, v) -> AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+                ).thenReturn(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }
 
     private Mono<VerificationCodeEntity> manageAttempts(VerificationCodeEntity verificationCodeEntity, String verificationCode) {
