@@ -201,7 +201,7 @@ public class AddressBookService {
      * @param recipientId id utente
      * @return lista indirizzi
      */
-    public Flux<CourtesyAndUnverifiedDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
+    private Flux<CourtesyAndUnverifiedDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, CourtesyAddressTypeDto.COURTESY.getValue())
                 .collectList()
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
@@ -262,7 +262,7 @@ public class AddressBookService {
      * @param recipientId id utente
      * @return lista indirizzi
      */
-    public Flux<LegalAndUnverifiedDigitalAddressDto> getLegalAddressByRecipient(String recipientId) {
+    private Flux<LegalAndUnverifiedDigitalAddressDto> getLegalAddressByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, LegalAddressTypeDto.LEGAL.getValue())
                 .collectList()
                 .flatMap(list -> deanonimizeLegal(recipientId, list))
@@ -381,19 +381,16 @@ public class AddressBookService {
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
         }
         else {
-
-            verificationCodeUtils.validateAddress(legalChannelType, courtesyChannelType, addressVerificationDto);
-            String hashedAddress = verificationCodeUtils.hashAddress(addressVerificationDto.getValue());
-
-            return  dao.validateHashedAddress(recipientId, hashedAddress, channelType)
+            return  verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
-                        if (res == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED) {
+                        if (Boolean.TRUE.equals(res)) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
-                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedAddress, channelType, senderId, legal, addressVerificationDto.getValue());
-                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, addressVerificationDto.getValue());
+                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, verificationCodeUtils.hashAddress(addressVerificationDto.getValue()),
+                                    channelType, senderId, legal, addressVerificationDto.getValue());
+                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -408,7 +405,6 @@ public class AddressBookService {
                     });
         }
     }
-
 
 
     /**

@@ -2,10 +2,12 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,6 +46,11 @@ class PnDataVaultClientTest {
     @MockBean
     SqsActionProducer sqsActionProducer;
 
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
    /*@MockBean
     private PnUserattributesConfig pnUserattributesConfig;
 */

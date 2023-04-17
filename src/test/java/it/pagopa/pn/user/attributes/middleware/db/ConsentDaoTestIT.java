@@ -3,12 +3,15 @@ package it.pagopa.pn.user.attributes.middleware.db;
 import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
@@ -33,6 +36,12 @@ public class ConsentDaoTestIT {
 
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
+
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
 
     TestDao<ConsentEntity> testDao;
 

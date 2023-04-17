@@ -3,18 +3,19 @@ package it.pagopa.pn.user.attributes.middleware.db;
 import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyAddressTypeDto;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Duration;
@@ -23,9 +24,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
 @Import(LocalStackTestConfig.class)
+@SpringBootTest
 public
 class AddressBookDaoTestIT {
     private final Duration d = Duration.ofMillis(3000);
@@ -38,6 +38,12 @@ class AddressBookDaoTestIT {
 
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
+
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
 
     TestDao<AddressBookEntity> testDao;
     TestDao<VerificationCodeEntity> testCodeDao;
@@ -180,6 +186,41 @@ class AddressBookDaoTestIT {
 
         }
 
+    }
+
+
+    @Test
+    void deleteVerificationCode() {
+
+        //Given
+        String hashed = DigestUtils.sha256Hex("test@test.it");
+        AddressBookEntity addressBookToDelete = newAddress(true);
+        addressBookToDelete.setAddresshash(hashed);
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(addressBookToDelete.getRecipientId(), hashed, addressBookToDelete.getChannelType());
+        try {
+            testCodeDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+        } catch (Exception e) {
+            System.out.println("error removing");
+        }
+
+        //When
+        addressBookDao.deleteVerificationCode(verificationCode).block(d);
+
+        //Then
+        try {
+            VerificationCodeEntity elementFromDb = testCodeDao.get(verificationCode.getPk(), verificationCode.getSk());
+            Assertions.assertNull(elementFromDb);
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testCodeDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+
+        }
     }
 
         @Test

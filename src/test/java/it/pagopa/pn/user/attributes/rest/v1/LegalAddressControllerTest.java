@@ -91,7 +91,7 @@ class LegalAddressControllerTest {
         Flux<LegalAndUnverifiedDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
-        when(svc.getLegalAddressByRecipient(anyString()))
+        when(svc.getLegalAddressByRecipient(anyString(), any(), any(),any()))
                 .thenReturn(retValue);
 
         // Then

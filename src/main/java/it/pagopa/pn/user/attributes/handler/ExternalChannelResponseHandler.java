@@ -62,7 +62,7 @@ public class ExternalChannelResponseHandler {
 
                     if (verificationCodeEntity.isCodeValid()) {
                         // se il codice di verifica è valido posso procedere con il salvare l'indirizzo PEC
-                        return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, verificationCodeEntity.getAddress())
+                        return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity)
                                 .flatMap(x -> externalChannelClient.sendPecConfirm(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .then();

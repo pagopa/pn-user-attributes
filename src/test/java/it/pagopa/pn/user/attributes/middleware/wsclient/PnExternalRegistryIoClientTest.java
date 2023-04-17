@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import it.pagopa.pn.user.attributes.services.AuditLogService;
 import org.junit.jupiter.api.AfterEach;
@@ -56,6 +58,11 @@ class PnExternalRegistryIoClientTest {
     @MockBean
     AuditLogService auditLogService;
 
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
 
     private static ClientAndServer mockServer;
 

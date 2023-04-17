@@ -49,15 +49,14 @@ public class VerificationCodeUtils {
      */
     public Mono<AddressBookService.SAVE_ADDRESS_RESULT> validateVerificationCodeAndSendToDataVault(String recipientId, AddressVerificationDto verificationCode,
                                                                                                    LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
-        String hashedaddress = hashAddress(verificationCode.getValue());
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
 
-        log.info("validating code uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal);
-        return retrieveVerificationCode(recipientId, verificationCode, hashedaddress, channelType)
+        log.info("validating code recipientId:{} requestId:{} channel:{} addrtype:{}", recipientId, verificationCode.getRequestId(), channelType, legal);
+        return retrieveVerificationCode(recipientId, verificationCode, channelType)
                 .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
-                .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, hashedaddress, channelType, legal))
-                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, verificationCode.getValue()))
+                .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r.getHashedAddress(), channelType, legal))
+                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
     }
 
@@ -66,15 +65,15 @@ public class VerificationCodeUtils {
      *
      * @param recipientId recipientId
      * @param verificationCode oggetto con info della verifica
-     * @param hashedaddress indirizzo hashato
      * @param channelType canale
      * @return l'entity se presente
      */
-    private Mono<VerificationCodeEntity> retrieveVerificationCode(String recipientId, AddressVerificationDto verificationCode, String hashedaddress, String channelType) {
+    private Mono<VerificationCodeEntity> retrieveVerificationCode(String recipientId, AddressVerificationDto verificationCode, String channelType) {
         if (verificationCode.getRequestId() != null) {
             return dao.getVerificationCodeByRequestId(verificationCode.getRequestId())
                     .filter(verificationCodeEntity -> verificationCodeEntity.getRecipientId().equals(recipientId));
         } else {
+            String hashedaddress = hashAddress(verificationCode.getValue());
             VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(recipientId, hashedaddress, channelType);
             return dao.getVerificationCode(verificationCodeEntity);
         }
@@ -85,10 +84,10 @@ public class VerificationCodeUtils {
      * Invia al datavault e se tutto OK salva in dynamodb l'indirizzo offuscato
      *
      * @param verificationCodeEntity verificationCodeEntity
-     * @param realaddress indirizzo da salvare (opzionale nel caso della PEC)
+     *
      * @return risultato dell'operazione
      */
-    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, String realaddress)
+    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType)
     {
         verificationCodeEntity.setCodeValid(true);
         if (legalChannelType == LegalChannelTypeDto.PEC && !verificationCodeEntity.isPecValid()) {
@@ -96,21 +95,19 @@ public class VerificationCodeUtils {
             return this.dao.updateVerificationCodeIfExists(verificationCodeEntity)
                     .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.PEC_VALIDATION_REQUIRED));
         } else {
-            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, realaddress);
+            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity);
         }
     }
 
     /**
      * Invia al datavault e se tutto OK salva in dynamodb l'indirizzo offuscato
      *
-     * @param realaddress indirizzo da salvare
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, String realaddress)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity)
     {
         // se real address non è passato, provo a recuperlo dal pec address
-        if (!StringUtils.hasText(realaddress))
-            realaddress = verificationCodeEntity.getAddress();
+        String realaddress = verificationCodeEntity.getAddress();
 
         // se ancora non c'è, è un errore.
         if (!StringUtils.hasText(realaddress))
@@ -204,12 +201,28 @@ public class VerificationCodeUtils {
 
 
 
+    public Mono<Boolean> validateHashedAddress(String recipientId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto){
+        String channelType = getChannelType(legalChannelType, courtesyChannelType);
+        validateAddress(legalChannelType, courtesyChannelType, addressVerificationDto);
+        String hashedAddress;
+        if (StringUtils.hasText(addressVerificationDto.getValue())) {
+            hashedAddress = hashAddress(addressVerificationDto.getValue());
+            return dao.validateHashedAddress(recipientId, hashedAddress, channelType)
+                    .map(res -> res == AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED);
+        }
+        else
+            return Mono.just(false);
+    }
 
-    public void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        // se è specificato il requestId, non mi interessa il value
+
+    private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+        // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
-            return;
+            if (StringUtils.hasText(addressVerificationDto.getVerificationCode()))
+                return;
+            else
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, "verificationCode");
         }
 
         // aggiungo il controllo dato che ora value è nullabile
