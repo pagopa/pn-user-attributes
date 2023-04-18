@@ -1,6 +1,6 @@
 echo "### CREATE QUEUES ###"
 
-queues="local-user-attributes-actions"
+queues="local-user-attributes-actions local-ext-channels-to-user-attributes-outputs"
 
 for qn in  $( echo $queues | tr " " "\n" ) ; do
 
