@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 
 /**
@@ -18,6 +19,9 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class VerificationCodeEntity extends BaseEntity {
+
+    public static final String GSI_INDEX_REQUESTID = "requestId-gsi";
+
     private static final String PK_PREFIX = "VC#";
     private static final String ITEMS_SEPARATOR = "#";
     private static final int PK_ITEMS_RECIPIENTID = 1;
@@ -64,7 +68,7 @@ public class VerificationCodeEntity extends BaseEntity {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("pecValid")}))  private boolean pecValid;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("requestId")}))  private String requestId;
+    @Getter(onMethod=@__({@DynamoDbSecondaryPartitionKey(indexNames = { GSI_INDEX_REQUESTID}), @DynamoDbAttribute("requestId")}))  private String requestId;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("senderId")}))  private String senderId;
 

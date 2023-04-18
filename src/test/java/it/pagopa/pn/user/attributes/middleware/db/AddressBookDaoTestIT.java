@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -220,6 +222,308 @@ class AddressBookDaoTestIT {
                 System.out.println("Nothing to remove");
             }
 
+        }
+    }
+
+    @Test
+    void getAllVerificationCodesByRecipient(){
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+        VerificationCodeEntity verificationCode1 =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","EMAIL", "default", "COURTESY", "mail@mail.it");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+            addressBookDao.saveVerificationCode(verificationCode1).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<VerificationCodeEntity> results = addressBookDao.getAllVerificationCodesByRecipient(verificationCode.getRecipientId(), null).collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(2, results.size());
+            Assertions.assertTrue(results.contains(verificationCode));
+            Assertions.assertTrue(results.contains(verificationCode1));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+                testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void getAllVerificationCodesByRecipient_legal(){
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+        VerificationCodeEntity verificationCode1 =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","PEC", "default", "LEGAL", "mail@mail.it");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+            addressBookDao.saveVerificationCode(verificationCode1).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<VerificationCodeEntity> results = addressBookDao.getAllVerificationCodesByRecipient(verificationCode.getRecipientId(), "LEGAL").collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(1, results.size());
+            Assertions.assertTrue(results.contains(verificationCode1));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+                testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void getAllVerificationCodesByRecipient_courtesy(){
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+        VerificationCodeEntity verificationCode1 =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","PEC", "default", "LEGAL", "mail@mail.it");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+            addressBookDao.saveVerificationCode(verificationCode1).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        List<VerificationCodeEntity> results = addressBookDao.getAllVerificationCodesByRecipient(verificationCode.getRecipientId(), "COURTESY").collectList().block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(1, results.size());
+            Assertions.assertTrue(results.contains(verificationCode));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+                testDao.delete(verificationCode1.getPk(), verificationCode1.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    @Test
+    void updateVerificationCodeIfExists() {
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        Mono<Void> mono = addressBookDao.updateVerificationCodeIfExists(verificationCode);
+        Assertions.assertDoesNotThrow(() -> mono.block(d));
+
+        //THEN
+        try {
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void updateVerificationCodeIfExists_notexists() {
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+        VerificationCodeEntity verificationCode1 =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174001","hashed123","SMS", "default", "COURTESY", "4356789");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        Mono<Void> mono = addressBookDao.updateVerificationCodeIfExists(verificationCode1);
+        Assertions.assertThrows(ConditionalCheckFailedException.class, () -> mono.block(d));
+
+        //THEN
+        try {
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void updateVerificationCodeIfExists_notexists2() {
+        //Given
+        VerificationCodeEntity verificationCode =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed123","SMS", "default", "COURTESY", "4356789");
+        VerificationCodeEntity verificationCode1 =new VerificationCodeEntity("VA-123e4567-e89b-12d3-a456-426614174000","hashed456","EMAIL", "default", "COURTESY", "4356789");
+
+        try {
+            testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            addressBookDao.saveVerificationCode(verificationCode).block(d);
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        Mono<Void> mono = addressBookDao.updateVerificationCodeIfExists(verificationCode1);
+        Assertions.assertThrows(ConditionalCheckFailedException.class, () -> mono.block(d));
+
+        //THEN
+        try {
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(verificationCode.getPk(), verificationCode.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    @Test
+    void getVerificationCodeByRequestId() {
+
+        //Given
+        VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345678", "SMS", "senderid", "COURTESY", "addressreal");
+        verificationCodeToInsert.setRequestId("request-id-1");
+
+        VerificationCodeEntity verificationCodeToInsert1= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "address345679", "SMS", "senderid", "COURTESY", "addressreal");
+        verificationCodeToInsert1.setRequestId("request-id-2");
+
+        try {
+            testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+            addressBookDao.saveVerificationCode(verificationCodeToInsert).block(d);
+            testDao.delete(verificationCodeToInsert1.getPk(), verificationCodeToInsert1.getSk());
+            addressBookDao.saveVerificationCode(verificationCodeToInsert1).block(d);
+        } catch (Exception e) {
+            System.out.println("error removing");
+        }
+        //When
+        VerificationCodeEntity verificationCode = addressBookDao.getVerificationCodeByRequestId(verificationCodeToInsert.getRequestId()).block(d);
+        //Then
+        try {
+            Assertions.assertNotNull(verificationCode);
+            Assertions.assertEquals( verificationCodeToInsert, verificationCode);
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+
+
+        //When
+        VerificationCodeEntity verificationCode2 = addressBookDao.getVerificationCodeByRequestId(verificationCodeToInsert.getRequestId()+"wrong").block(d);
+        //Then
+        try {
+            Assertions.assertNull(verificationCode2);
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+
+    @Test
+    void getAddresseBook () {
+
+        //Given
+        VerifiedAddressEntity verifiedAddress =new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000","Legal","SMS");
+        List<AddressBookEntity> toInsert = new ArrayList<>();
+        toInsert.add(newAddress(true));
+        toInsert.add(newAddress(false));
+
+
+
+        try {
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+        //WHEN
+        AddressBookEntity results = addressBookDao.getAddressBook(toInsert.get(0)).block(d);
+
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(toInsert.get(0), results);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                toInsert.forEach(x -> {
+                    try {
+                        testDao.delete(x.getPk(), x.getSk());
+                    } catch (Exception e) {
+                        System.out.println("error removing");
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
         }
     }
 

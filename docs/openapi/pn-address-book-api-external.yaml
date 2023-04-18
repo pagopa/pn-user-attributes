@@ -209,7 +209,6 @@ paths:
           description: >
             This error is caused by one of this events:
             * Verification code failure: error.detail equals to PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
-            * PEC send failure: error.detail equals to PN_USERATTRIBUTES_INVALIDPECADDRESS
             * Verification code max attempt reached: error.detail equals to PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
             * Verification code expired/notfound: error.detail equals to PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
@@ -329,8 +328,6 @@ components:
           example: 'abc'
         channelType:
           type: string
-        code:
-          $ref: '#/components/schemas/VerificationCode'
 
     LegalChannelType:
       type: string

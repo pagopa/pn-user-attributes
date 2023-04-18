@@ -28,12 +28,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_DELETE_ADDRESS_FAILED;
+import static it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity.GSI_INDEX_REQUESTID;
 
 @Repository
 @Slf4j
 public class AddressBookDao extends BaseDao {
 
-    private static final String GSI_INDEX_REQUESTID = "requestId-gsi";
 
     DynamoDbAsyncTable<AddressBookEntity> addressBookTable;
     DynamoDbAsyncTable<VerificationCodeEntity> verificationCodeTable;
@@ -177,8 +177,8 @@ public class AddressBookDao extends BaseDao {
 
 
 
-    public Flux<VerificationCodeEntity> getAllVerificationCodesByRecipient(String recipientId, @Nullable String legalType) {
-        log.debug("getAllVerificationCodesByRecipient recipientId={} legaltype={}", recipientId, legalType);
+    public Flux<VerificationCodeEntity> getAllVerificationCodesByRecipient(String recipientId, @Nullable String addressType) {
+        log.debug("getAllVerificationCodesByRecipient recipientId={} addressType={}", recipientId, addressType);
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, null, null);
 
@@ -190,7 +190,7 @@ public class AddressBookDao extends BaseDao {
 
         // dato che dovrebbe essere un caso molto raro, il filtro per semplicità viene fatto qui
         return Flux.from(verificationCodeTable.query(qeRequest.build())
-                .items()).filter(x -> legalType==null || legalType.equals(x.getChannelType()));
+                .items()).filter(x -> addressType==null || addressType.equals(x.getAddressType()));
     }
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
@@ -203,17 +203,12 @@ public class AddressBookDao extends BaseDao {
     public Mono<Void> updateVerificationCodeIfExists(VerificationCodeEntity entity) {
         log.debug("updateVerificationCodeIfExists recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
-        String expression = String.format(
-                "%s = :pk AND %s = :sk",
-                BaseEntity.COL_PK,
-                BaseEntity.COL_SK
-        );
-
-        PutItemEnhancedRequest<VerificationCodeEntity> putItemEnhancedRequest = PutItemEnhancedRequest.<VerificationCodeEntity>builder(VerificationCodeEntity.class)
+        PutItemEnhancedRequest<VerificationCodeEntity> putItemEnhancedRequest = PutItemEnhancedRequest.builder(VerificationCodeEntity.class)
                 .item(entity)
                 .conditionExpression(Expression.builder()
-                        .expression(expression)
-                        .expressionValues(Map.of("pk", AttributeValue.builder().s(entity.getPk()).build(), "sk", AttributeValue.builder().s(entity.getSk()).build()))
+                        .expression("(#pk = :pk) AND (#sk = :sk)")
+                        .expressionNames(Map.of("#pk",BaseEntity.COL_PK, "#sk", BaseEntity.COL_SK))
+                        .expressionValues(Map.of(":pk", AttributeValue.builder().s(entity.getPk()).build(), ":sk", AttributeValue.builder().s(entity.getSk()).build()))
                         .build())
                 .build();
 
@@ -231,7 +226,7 @@ public class AddressBookDao extends BaseDao {
         return Flux.from(verificationCodeTable.index(GSI_INDEX_REQUESTID).query(queryEnhancedRequest))
                 .map(Page::items)
                 .take(1).next()
-                .map(x -> x.get(0));
+                .flatMapMany(Flux::fromIterable).next();
     }
 
     public Mono<AddressBookEntity> getAddressBook(AddressBookEntity entity)

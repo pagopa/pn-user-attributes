@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: vPWL+1NoiEp4vT5yE/2zy6s9b6laptJyeHEgVojGFjU=
+  version: UrggqyA/A40nbn0T2PxYgCrndVBEvsVdY93duRKg6pc=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -340,9 +340,8 @@ paths:
           description: >
             This error is caused by one of this events: * Verification code
             failure: error.detail equals to
-            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * PEC send failure:
-            error.detail equals to PN_USERATTRIBUTES_INVALIDPECADDRESS *
-            Verification code max attempt reached: error.detail equals to
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
+            attempt reached: error.detail equals to
             PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
             expired/notfound: error.detail equals to
             PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
@@ -513,8 +512,6 @@ components:
           example: abc
         channelType:
           type: string
-        code:
-          $ref: '#/components/schemas/VerificationCode'
     LegalChannelType:
       type: string
       description: Communication Channel types __with__ legal value

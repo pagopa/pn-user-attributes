@@ -1098,6 +1098,91 @@ class AddressBookServiceTest {
         }
     }
 
+
+    @Test
+    void getCourtesyAddressByRecipient_withVerificationCodesOnly() {
+        //Given
+        String recipientId = "";
+        List<AddressBookEntity> listFromDb = new ArrayList<>();
+        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
+        listFromDb.add(AddressBookDaoTestIT.newAddress(false));
+
+        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
+        AddressDtoDto dto = new AddressDtoDto();
+        dto.setValue("email@pec.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
+        dto = new AddressDtoDto();
+        dto.setValue("email@email.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
+
+        final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
+        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
+        recipientId = listFromDb.get(0).getRecipientId();
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
+        resdto1.setSenderId(listFromDb.get(0).getSenderId());
+        resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
+        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
+        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
+        resdto1.setSenderId(listFromDb.get(1).getSenderId());
+        resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
+
+        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setDenomination("utente test");
+        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
+        baseRecipientDtoDto.setInternalId("123456");
+
+        final UserStatusResponse user = new UserStatusResponse();
+        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
+        user.setTaxId(baseRecipientDtoDto.getTaxId());
+
+
+        final List<VerificationCodeEntity> listVcs = new ArrayList<>();
+
+        VerificationCodeEntity verificationCode1 = new VerificationCodeEntity(recipientId, "hashed1", CourtesyChannelTypeDto.EMAIL.getValue(), "senderId1", CourtesyAddressTypeDto.COURTESY.getValue(), "mail@mail.it");
+        verificationCode1.setLastModified(Instant.now().minusSeconds(1));
+        verificationCode1.setVerificationCode("12345");
+        verificationCode1.setCodeValid(false);
+        verificationCode1.setRequestId(UUID.randomUUID().toString());
+
+        VerificationCodeEntity verificationCode2 = new VerificationCodeEntity(recipientId, "hashed2", CourtesyChannelTypeDto.SMS.getValue(), null, CourtesyAddressTypeDto.COURTESY.getValue(), "33333333333333");
+        verificationCode2.setLastModified(Instant.now().minusSeconds(1));
+        verificationCode2.setVerificationCode("54321");
+        verificationCode2.setCodeValid(false);
+        verificationCode2.setRequestId(UUID.randomUUID().toString());
+
+        listVcs.add(verificationCode1);
+        listVcs.add(verificationCode2);
+
+
+        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.empty());
+        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
+        when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
+        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.fromIterable(listVcs));
+
+        //When
+        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
+                .collectList()
+                .block(d);
+
+        //Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        for (CourtesyAndUnverifiedDigitalAddressDto c :
+                result) {
+            for (VerificationCodeEntity vc :
+                    listVcs) {
+                if (c.getSenderId() != null && c.getSenderId().equals(listVcs.get(0).getSenderId()))
+                {
+                    assertEquals(listVcs.get(0).isCodeValid(), c.getCodeValid());
+                    assertNull(c.getValue());
+                    assertNotNull(c.getRequestId());
+                    assertEquals(listVcs.get(0).getRequestId(), c.getRequestId());
+                }
+            }
+        }
+    }
+
     @Test
     void getCourtesyAddressByRecipientWithAppIo() {
         //Given
@@ -1348,6 +1433,83 @@ class AddressBookServiceTest {
         //Then
         assertNotNull(result);
         assertEquals(4, result.size());
+        for (LegalAndUnverifiedDigitalAddressDto c :
+                result) {
+            for (VerificationCodeEntity vc :
+                    listVcs) {
+                if (c.getSenderId() != null && c.getSenderId().equals(listVcs.get(0).getSenderId()))
+                {
+                    assertEquals(listVcs.get(0).isCodeValid(), c.getCodeValid());
+                    assertEquals(listVcs.get(0).isPecValid(), c.getPecValid());
+                    assertNull(c.getValue());
+                    assertNotNull(c.getRequestId());
+                    assertEquals(listVcs.get(0).getRequestId(), c.getRequestId());
+                }
+            }
+        }
+
+    }
+
+
+    @Test
+    void getLegalAddressByRecipient_WithVcsOnly() {
+        //Given
+        List<AddressBookEntity> listFromDb = new ArrayList<>();
+        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
+        listFromDb.add(AddressBookDaoTestIT.newAddress(false));
+        String recipientId = "";
+
+        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
+        AddressDtoDto dto = new AddressDtoDto();
+        dto.setValue("email@pec.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
+        dto = new AddressDtoDto();
+        dto.setValue("email@email.it");
+        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
+
+        final LegalDigitalAddressDto resdto1 = new LegalDigitalAddressDto();
+        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
+        recipientId = listFromDb.get(0).getRecipientId();
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
+        resdto1.setSenderId(listFromDb.get(0).getSenderId());
+        resdto1.setChannelType(LegalChannelTypeDto.PEC);
+        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
+        resdto1.setAddressType(LegalAddressTypeDto.LEGAL);
+        resdto1.setSenderId(listFromDb.get(1).getSenderId());
+        resdto1.setChannelType(LegalChannelTypeDto.APPIO);
+
+
+
+        final List<VerificationCodeEntity> listVcs = new ArrayList<>();
+
+        VerificationCodeEntity verificationCode1 = new VerificationCodeEntity(recipientId, "hashed1", LegalChannelTypeDto.PEC.getValue(), "senderId1", LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
+        verificationCode1.setLastModified(Instant.now().minusSeconds(1));
+        verificationCode1.setVerificationCode("12345");
+        verificationCode1.setCodeValid(true);
+        verificationCode1.setPecValid(false);
+        verificationCode1.setRequestId(UUID.randomUUID().toString());
+
+        VerificationCodeEntity verificationCode2 = new VerificationCodeEntity(recipientId, "hashed2", LegalChannelTypeDto.PEC.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec1@pec.it");
+        verificationCode2.setLastModified(Instant.now().minusSeconds(1));
+        verificationCode2.setVerificationCode("54321");
+        verificationCode2.setCodeValid(false);
+        verificationCode2.setPecValid(true);
+        verificationCode2.setRequestId(UUID.randomUUID().toString());
+
+        listVcs.add(verificationCode1);
+        listVcs.add(verificationCode2);
+
+        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.empty());
+        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
+        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.fromIterable(listVcs));
+
+
+        //When
+        List<LegalAndUnverifiedDigitalAddressDto> result = addressBookService.getLegalAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null).collectList().block(d);
+
+        //Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
         for (LegalAndUnverifiedDigitalAddressDto c :
                 result) {
             for (VerificationCodeEntity vc :
