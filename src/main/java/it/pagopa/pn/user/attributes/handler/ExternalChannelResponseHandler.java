@@ -11,10 +11,12 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @AllArgsConstructor
+@Component
 public class ExternalChannelResponseHandler {
 
     private final PnUserattributesConfig pnUserattributesConfig;
@@ -27,7 +29,7 @@ public class ExternalChannelResponseHandler {
         if (singleStatusUpdateDto.getDigitalLegal() != null)
         {
             LegalMessageSentDetailsDto legalMessageSentDetailsDto = singleStatusUpdateDto.getDigitalLegal();
-            if (pnUserattributesConfig.getExternalchannelDigitalCodesSuccess().contains(legalMessageSentDetailsDto.getEventCode()))
+            if (pnUserattributesConfig.getExternalChannelDigitalCodesSuccess().contains(legalMessageSentDetailsDto.getEventCode()))
             {
                 // è una conferma di invio PEC.
                 // cerco il verification code da aggiornare e setto il flag di PEC inviata.

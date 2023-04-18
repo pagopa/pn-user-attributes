@@ -54,8 +54,9 @@ public class VerificationCodeUtils {
 
         log.info("validating code recipientId:{} requestId:{} channel:{} addrtype:{}", recipientId, verificationCode.getRequestId(), channelType, legal);
         return retrieveVerificationCode(recipientId, verificationCode, channelType)
+                .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()))
                 .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
-                .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r.getHashedAddress(), channelType, legal))
+                .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r==null?"NULL":r.getHashedAddress(), channelType, legal))
                 .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
     }

@@ -4,6 +4,7 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalAddressTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.CourtesyMessageProgressEventDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.SingleStatusUpdateDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
@@ -84,7 +85,7 @@ class ExternalChannelResponseHandlerTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getExternalchannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -117,7 +118,7 @@ class ExternalChannelResponseHandlerTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getExternalchannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
@@ -149,7 +150,7 @@ class ExternalChannelResponseHandlerTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getExternalchannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.error(new NullPointerException()));
 
         // WHEN
@@ -183,7 +184,7 @@ class ExternalChannelResponseHandlerTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getExternalchannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.error(ConditionalCheckFailedException.builder().build()));
 
         // WHEN
@@ -215,7 +216,7 @@ class ExternalChannelResponseHandlerTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getExternalchannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
@@ -227,5 +228,66 @@ class ExternalChannelResponseHandlerTest {
 
         //THEN
         Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+    }
+
+
+
+    @Test
+    void consumeExternalChannelResponse_progress() {
+        //GIVEN
+        String requestId = UUID.randomUUID().toString();
+        SingleStatusUpdateDto singleStatusUpdateDto = new SingleStatusUpdateDto();
+        singleStatusUpdateDto.setDigitalLegal(new LegalMessageSentDetailsDto());
+        singleStatusUpdateDto.getDigitalLegal().setRequestId(requestId);
+        singleStatusUpdateDto.getDigitalLegal().setEventCode("C004");
+
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
+        verificationCode.setVerificationCode("12345");
+        verificationCode.setCodeValid(true);
+        verificationCode.setLastModified(Instant.now().minusSeconds(1));
+
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+
+        // WHEN
+        Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
+        Assertions.assertDoesNotThrow(() -> mono.block(d));
+
+        //THEN
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+    }
+
+
+    @Test
+    void consumeExternalChannelResponse_notlegal() {
+        //GIVEN
+        String requestId = UUID.randomUUID().toString();
+        SingleStatusUpdateDto singleStatusUpdateDto = new SingleStatusUpdateDto();
+        singleStatusUpdateDto.setDigitalCourtesy(new CourtesyMessageProgressEventDto());
+        singleStatusUpdateDto.getDigitalCourtesy().setRequestId(requestId);
+
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
+        verificationCode.setVerificationCode("12345");
+        verificationCode.setCodeValid(true);
+        verificationCode.setLastModified(Instant.now().minusSeconds(1));
+
+
+        // WHEN
+        Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
+        Assertions.assertDoesNotThrow(() -> mono.block(d));
+
+        //THEN
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
     }
 }

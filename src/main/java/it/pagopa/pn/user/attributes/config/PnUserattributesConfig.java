@@ -58,7 +58,7 @@ public class PnUserattributesConfig {
     private int validationCodeMaxAttempts;
     private Duration verificationCodeTTL;
 
-    private List<String> externalchannelDigitalCodesSuccess;
+    private List<String> externalChannelDigitalCodesSuccess;
 
     private Topics topics;
 
