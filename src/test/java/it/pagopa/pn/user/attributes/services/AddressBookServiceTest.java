@@ -114,6 +114,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null)
@@ -143,7 +144,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto)
@@ -171,7 +172,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
@@ -204,7 +205,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -244,7 +245,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto)
@@ -273,7 +274,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -302,7 +303,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
 
@@ -355,6 +356,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
@@ -364,6 +366,71 @@ class AddressBookServiceTest {
         assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
     }
 
+    @Test
+    void saveCourtesyAddressBookEmail_removeprevious() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "asasd", CourtesyChannelTypeDto.EMAIL.getValue(), "default", CourtesyAddressTypeDto.COURTESY.getValue(), "prova@prova.it");
+        verificationCode.setVerificationCode("12345");
+
+        VerificationCodeEntity verificationCodeOLD = new VerificationCodeEntity(recipientId, "asasd", CourtesyChannelTypeDto.EMAIL.getValue(), senderId, CourtesyAddressTypeDto.COURTESY.getValue(), "prova1@prova.it");
+        verificationCodeOLD.setVerificationCode("12346");
+        List<VerificationCodeEntity> listPrevious = new ArrayList<>();
+        listPrevious.add(verificationCodeOLD);
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.fromIterable(listPrevious));
+        Mockito.when(addressBookDao.deleteVerificationCode(verificationCodeOLD)).thenReturn(Mono.empty());
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+
+        //THEN
+        assertNotNull( result );
+        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+        verify(addressBookDao).deleteVerificationCode(verificationCodeOLD);
+    }
+
+
+    @Test
+    void saveCourtesyAddressBookEmail_removeprevious_skipped() {
+        //GIVEN
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        String senderId = null;
+        CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "asasd", CourtesyChannelTypeDto.EMAIL.getValue(), "default", CourtesyAddressTypeDto.COURTESY.getValue(), "prova@prova.it");
+        verificationCode.setVerificationCode("12345");
+
+        VerificationCodeEntity verificationCodeOLD = new VerificationCodeEntity(recipientId, "asasd", CourtesyChannelTypeDto.SMS.getValue(), senderId, CourtesyAddressTypeDto.COURTESY.getValue(), "333333333");
+        verificationCodeOLD.setVerificationCode("12346");
+        List<VerificationCodeEntity> listPrevious = new ArrayList<>();
+        listPrevious.add(verificationCodeOLD);
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.fromIterable(listPrevious));
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+
+        //THEN
+        assertNotNull( result );
+        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+        verify(addressBookDao, never()).deleteVerificationCode(verificationCodeOLD);
+    }
 
     @Test
     void saveCourtesyAddressBookSMS() {
@@ -379,6 +446,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null)
@@ -586,7 +654,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
@@ -613,7 +681,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
@@ -644,7 +712,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
@@ -1000,10 +1068,9 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
 
         //When
-        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
                 .collectList()
                 .block(d);
 
@@ -1013,175 +1080,7 @@ class AddressBookServiceTest {
     }
 
 
-    @Test
-    void getCourtesyAddressByRecipient_withVerificationCodes() {
-        //Given
-        String recipientId = "";
-        List<AddressBookEntity> listFromDb = new ArrayList<>();
-        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
-        listFromDb.add(AddressBookDaoTestIT.newAddress(false));
 
-        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
-        AddressDtoDto dto = new AddressDtoDto();
-        dto.setValue("email@pec.it");
-        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
-        dto = new AddressDtoDto();
-        dto.setValue("email@email.it");
-        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
-
-        final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
-        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        recipientId = listFromDb.get(0).getRecipientId();
-        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
-        resdto1.setSenderId(listFromDb.get(0).getSenderId());
-        resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
-        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
-        resdto1.setSenderId(listFromDb.get(1).getSenderId());
-        resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
-
-        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
-        baseRecipientDtoDto.setDenomination("utente test");
-        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
-        baseRecipientDtoDto.setInternalId("123456");
-
-        final UserStatusResponse user = new UserStatusResponse();
-        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
-        user.setTaxId(baseRecipientDtoDto.getTaxId());
-
-
-        final List<VerificationCodeEntity> listVcs = new ArrayList<>();
-
-        VerificationCodeEntity verificationCode1 = new VerificationCodeEntity(recipientId, "hashed1", CourtesyChannelTypeDto.EMAIL.getValue(), "senderId1", CourtesyAddressTypeDto.COURTESY.getValue(), "mail@mail.it");
-        verificationCode1.setLastModified(Instant.now().minusSeconds(1));
-        verificationCode1.setVerificationCode("12345");
-        verificationCode1.setCodeValid(false);
-        verificationCode1.setRequestId(UUID.randomUUID().toString());
-
-        VerificationCodeEntity verificationCode2 = new VerificationCodeEntity(recipientId, "hashed2", CourtesyChannelTypeDto.SMS.getValue(), null, CourtesyAddressTypeDto.COURTESY.getValue(), "33333333333333");
-        verificationCode2.setLastModified(Instant.now().minusSeconds(1));
-        verificationCode2.setVerificationCode("54321");
-        verificationCode2.setCodeValid(false);
-        verificationCode2.setRequestId(UUID.randomUUID().toString());
-
-        listVcs.add(verificationCode1);
-        listVcs.add(verificationCode2);
-
-
-        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.fromIterable(listFromDb));
-        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
-        when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
-        when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.fromIterable(listVcs));
-
-        //When
-        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
-                .collectList()
-                .block(d);
-
-        //Then
-        assertNotNull(result);
-        assertEquals(4, result.size());
-        for (CourtesyAndUnverifiedDigitalAddressDto c :
-                result) {
-            for (VerificationCodeEntity vc :
-                    listVcs) {
-                if (c.getSenderId() != null && c.getSenderId().equals(listVcs.get(0).getSenderId()))
-                {
-                    assertEquals(listVcs.get(0).isCodeValid(), c.getCodeValid());
-                    assertNull(c.getValue());
-                    assertNotNull(c.getRequestId());
-                    assertEquals(listVcs.get(0).getRequestId(), c.getRequestId());
-                }
-            }
-        }
-    }
-
-
-    @Test
-    void getCourtesyAddressByRecipient_withVerificationCodesOnly() {
-        //Given
-        String recipientId = "";
-        List<AddressBookEntity> listFromDb = new ArrayList<>();
-        listFromDb.add(AddressBookDaoTestIT.newAddress(true));
-        listFromDb.add(AddressBookDaoTestIT.newAddress(false));
-
-        RecipientAddressesDtoDto recipientAddressesDtoDto = new RecipientAddressesDtoDto();
-        AddressDtoDto dto = new AddressDtoDto();
-        dto.setValue("email@pec.it");
-        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(0).getAddressId(), dto);
-        dto = new AddressDtoDto();
-        dto.setValue("email@email.it");
-        recipientAddressesDtoDto.putAddressesItem(listFromDb.get(1).getAddressId(), dto);
-
-        final CourtesyDigitalAddressDto resdto1 = new CourtesyDigitalAddressDto();
-        resdto1.setRecipientId(listFromDb.get(0).getRecipientId());
-        recipientId = listFromDb.get(0).getRecipientId();
-        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
-        resdto1.setSenderId(listFromDb.get(0).getSenderId());
-        resdto1.setChannelType(CourtesyChannelTypeDto.EMAIL);
-        resdto1.setRecipientId(listFromDb.get(1).getRecipientId());
-        resdto1.setAddressType(CourtesyAddressTypeDto.COURTESY);
-        resdto1.setSenderId(listFromDb.get(1).getSenderId());
-        resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
-
-        final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
-        baseRecipientDtoDto.setDenomination("utente test");
-        baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
-        baseRecipientDtoDto.setInternalId("123456");
-
-        final UserStatusResponse user = new UserStatusResponse();
-        user.setStatus(UserStatusResponse.StatusEnum.APPIO_NOT_ACTIVE);
-        user.setTaxId(baseRecipientDtoDto.getTaxId());
-
-
-        final List<VerificationCodeEntity> listVcs = new ArrayList<>();
-
-        VerificationCodeEntity verificationCode1 = new VerificationCodeEntity(recipientId, "hashed1", CourtesyChannelTypeDto.EMAIL.getValue(), "senderId1", CourtesyAddressTypeDto.COURTESY.getValue(), "mail@mail.it");
-        verificationCode1.setLastModified(Instant.now().minusSeconds(1));
-        verificationCode1.setVerificationCode("12345");
-        verificationCode1.setCodeValid(false);
-        verificationCode1.setRequestId(UUID.randomUUID().toString());
-
-        VerificationCodeEntity verificationCode2 = new VerificationCodeEntity(recipientId, "hashed2", CourtesyChannelTypeDto.SMS.getValue(), null, CourtesyAddressTypeDto.COURTESY.getValue(), "33333333333333");
-        verificationCode2.setLastModified(Instant.now().minusSeconds(1));
-        verificationCode2.setVerificationCode("54321");
-        verificationCode2.setCodeValid(false);
-        verificationCode2.setRequestId(UUID.randomUUID().toString());
-
-        listVcs.add(verificationCode1);
-        listVcs.add(verificationCode2);
-
-
-        when(addressBookDao.getAllAddressesByRecipient(Mockito.any(),Mockito.any())).thenReturn(Flux.empty());
-        when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
-        when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
-        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.fromIterable(listVcs));
-
-        //When
-        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null)
-                .collectList()
-                .block(d);
-
-        //Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        for (CourtesyAndUnverifiedDigitalAddressDto c :
-                result) {
-            for (VerificationCodeEntity vc :
-                    listVcs) {
-                if (c.getSenderId() != null && c.getSenderId().equals(listVcs.get(0).getSenderId()))
-                {
-                    assertEquals(listVcs.get(0).isCodeValid(), c.getCodeValid());
-                    assertNull(c.getValue());
-                    assertNotNull(c.getRequestId());
-                    assertEquals(listVcs.get(0).getRequestId(), c.getRequestId());
-                }
-            }
-        }
-    }
 
     @Test
     void getCourtesyAddressByRecipientWithAppIo() {
@@ -1222,10 +1121,9 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
 
         //When
-        List<CourtesyAndUnverifiedDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+        List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
                 .collectList().block(d);
 
         //Then
@@ -1272,10 +1170,9 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
 
         //When
-        Mono<List<CourtesyAndUnverifiedDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
+        Mono<List<CourtesyDigitalAddressDto>> addressBookServiceMono = addressBookService.getCourtesyAddressByRecipient(listFromDb.get(0).getRecipientId(), null, null, null)
                 .collectList();
 
         //Then

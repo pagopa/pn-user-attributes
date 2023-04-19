@@ -2,7 +2,6 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyAndUnverifiedDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -193,8 +192,8 @@ class CourtesyAddressControllerTest {
     void getCourtesyAddressByRecipient() {
         // Given
         String url = "/address-book/v1/digital-address/courtesy";
-        CourtesyAndUnverifiedDigitalAddressDto dto = new CourtesyAndUnverifiedDigitalAddressDto();
-        Flux<CourtesyAndUnverifiedDigitalAddressDto> retValue = Flux.just(dto);
+        CourtesyDigitalAddressDto dto = new CourtesyDigitalAddressDto();
+        Flux<CourtesyDigitalAddressDto> retValue = Flux.just(dto);
         dto.setRecipientId(RECIPIENTID);
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);

@@ -195,7 +195,7 @@ public class AddressBookDao extends BaseDao {
 
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
+        log.info("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
     }

@@ -56,7 +56,8 @@ public class PnUserattributesConfig {
     private int ioactivationSendolderthandays;
 
     private int validationCodeMaxAttempts;
-    private Duration verificationCodeTTL;
+    private Duration verificationCodeLegalTTL;
+    private Duration verificationCodeCourtesyTTL;
 
     private List<String> externalChannelDigitalCodesSuccess;
 

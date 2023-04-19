@@ -21,9 +21,11 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Component
@@ -55,7 +57,7 @@ public class VerificationCodeUtils {
         log.info("validating code recipientId:{} requestId:{} channel:{} addrtype:{}", recipientId, verificationCode.getRequestId(), channelType, legal);
         return retrieveVerificationCode(recipientId, verificationCode, channelType)
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()))
-                .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
+                .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode(), legalChannelType))
                 .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r==null?"NULL":r.getHashedAddress(), channelType, legal))
                 .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
@@ -164,9 +166,10 @@ public class VerificationCodeUtils {
         log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
         verificationCode.setVerificationCode(vercode);
-        verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationCodeTTL()).atZone(ZoneId.systemDefault()).toEpochSecond());
+        verificationCode.setTtl(LocalDateTime.now().plus(getVerificationCodeTTL(legalChannelType)).atZone(ZoneId.systemDefault()).toEpochSecond());
 
-        return dao.saveVerificationCode(verificationCode)
+        return removePreviousVerificationCode(verificationCode)
+                .then(dao.saveVerificationCode(verificationCode))
                 .flatMap(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .flatMap(requestId -> {
                                     // aggiorno il requestId
@@ -176,8 +179,36 @@ public class VerificationCodeUtils {
                 ).thenReturn(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }
 
-    private Mono<VerificationCodeEntity> manageAttempts(VerificationCodeEntity verificationCodeEntity, String verificationCode) {
-        if (verificationCodeEntity.getLastModified().isBefore(Instant.now().minus(pnUserattributesConfig.getVerificationCodeTTL()))) {
+    /**
+     * Rimuove tutte le eventuali VC presenti precedentemente (per un certo senderId)
+     *
+     * @param verificationCodeEntity che si vuole inserire
+     * @return void
+     */
+    private Mono<Void> removePreviousVerificationCode(VerificationCodeEntity verificationCodeEntity){
+        return dao.getAllVerificationCodesByRecipient(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddressType())
+                .flatMap(oldVerificationCode -> {
+                    if (Objects.equals(oldVerificationCode.getSenderId(), verificationCodeEntity.getSenderId())
+                        && Objects.equals(oldVerificationCode.getChannelType(), verificationCodeEntity.getChannelType()))
+                    {
+                        return dao.deleteVerificationCode(oldVerificationCode);
+                    }
+                    else {
+                        return Mono.empty();
+                    }
+                }).collectList()
+                .then();
+    }
+
+    private Duration getVerificationCodeTTL(LegalChannelTypeDto legalChannelType){
+        if (legalChannelType != null)
+            return pnUserattributesConfig.getVerificationCodeLegalTTL();
+        else
+            return pnUserattributesConfig.getVerificationCodeCourtesyTTL();
+    }
+
+    private Mono<VerificationCodeEntity> manageAttempts(VerificationCodeEntity verificationCodeEntity, String verificationCode, LegalChannelTypeDto legalChannelType) {
+        if (verificationCodeEntity.getLastModified().isBefore(Instant.now().minus(getVerificationCodeTTL(legalChannelType)))) {
             // trovato scaduto, elimino
             return dao.deleteVerificationCode(verificationCodeEntity)
                     .then(Mono.error(new PnExpiredVerificationCodeException()));

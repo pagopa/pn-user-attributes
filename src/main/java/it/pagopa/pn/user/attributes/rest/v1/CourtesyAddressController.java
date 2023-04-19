@@ -73,7 +73,7 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<CourtesyAndUnverifiedDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
+    public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
                                                                                                CxTypeAuthFleetDto pnCxType,
                                                                                                List<String> pnCxGroups,
                                                                                                String pnCxRole,

@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: UrggqyA/A40nbn0T2PxYgCrndVBEvsVdY93duRKg6pc=
+  version: I49gC6j6OFGigb9ysAJY9EK7EoMXq5I6Iw675mSo9xo=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -132,7 +132,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CourtesyAndUnverifiedDigitalAddress'
+                  $ref: '#/components/schemas/CourtesyDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -588,25 +588,6 @@ components:
               example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
-    CourtesyAndUnverifiedDigitalAddress:
-      allOf:
-        - $ref: '#/components/schemas/BaseDigitalAddress'
-        - type: object
-          required:
-            - addressType
-            - channelType
-          properties:
-            addressType:
-              $ref: '#/components/schemas/CourtesyAddressType'
-            value:
-              type: string
-              example: nome.utente@server.it
-            channelType:
-              $ref: '#/components/schemas/CourtesyChannelType'
-            requestId:
-              type: string
-            codeValid:
-              type: boolean
     UserAddresses:
       type: object
       properties:
@@ -617,7 +598,7 @@ components:
         courtesy:
           type: array
           items:
-            $ref: '#/components/schemas/CourtesyAndUnverifiedDigitalAddress'
+            $ref: '#/components/schemas/CourtesyDigitalAddress'
     VerificationCode:
       type: string
       description: Verification Code

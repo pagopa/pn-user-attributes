@@ -1,7 +1,10 @@
 package it.pagopa.pn.user.attributes.services;
 
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
-import it.pagopa.pn.user.attributes.mapper.*;
+import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
+import it.pagopa.pn.user.attributes.mapper.VerificationCodeEntityToLegalAndUnverifiedDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -201,21 +204,11 @@ public class AddressBookService {
      * @param recipientId id utente
      * @return lista indirizzi
      */
-    private Flux<CourtesyAndUnverifiedDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
+    private Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId) {
         return dao.getAllAddressesByRecipient(recipientId, CourtesyAddressTypeDto.COURTESY.getValue())
                 .collectList()
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
                 .flatMap(list -> appIOUtils.enrichWithAppIo(recipientId, list))
-                .map(list -> list.stream().map(CourtesyDigitalAddressDtoToCourtesyAndUnverifiedDigitalAddressDtoMapper::toDto).toList())
-                .zipWith(dao.getAllVerificationCodesByRecipient(recipientId, CourtesyAddressTypeDto.COURTESY.getValue())
-                        .map(VerificationCodeEntityToCourtesyAndUnverifiedDigitalAddressDtoMapper::toDto)
-                        .collectList())
-                .map(tuple2 -> {
-                    List<CourtesyAndUnverifiedDigitalAddressDto> res = new ArrayList<>();
-                    res.addAll(tuple2.getT1());
-                    res.addAll(tuple2.getT2());
-                    return res;
-                })
                 .flatMapIterable(x -> x);
     }
 
@@ -229,7 +222,7 @@ public class AddressBookService {
      * @param pnCxRole user's role
      * @return lista indirizzi
      */
-    public Flux<CourtesyAndUnverifiedDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId, CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+    public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipient(String recipientId, CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
                 .flatMapMany(r -> getCourtesyAddressByRecipient(recipientId));
     }
@@ -333,7 +326,7 @@ public class AddressBookService {
 
     private Mono<UserAddressesDto> enrichWithPaNames(UserAddressesDto dtoWithAddresses) {
             // per tutti quegli indirizzi che non hanno senderId = default, ricavo i nomi degli enti
-            List<String> paIds1 = dtoWithAddresses.getCourtesy().stream().map(CourtesyAndUnverifiedDigitalAddressDto::getSenderId).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
+            List<String> paIds1 = dtoWithAddresses.getCourtesy().stream().map(CourtesyDigitalAddressDto::getSenderId).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
             List<String> paIds2 = dtoWithAddresses.getLegal().stream().map(LegalAndUnverifiedDigitalAddressDto::getSenderId).filter(ids -> !ids.equals(AddressBookEntity.SENDER_ID_DEFAULT)).toList();
             List<String> paIds = Stream.concat(paIds1.stream(),paIds2.stream())
                     .distinct()

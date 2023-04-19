@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyAndUnverifiedDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalAndUnverifiedDigitalAddressDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.UserAddressesDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -39,7 +39,7 @@ class AllAddressControllerTest {
         String url = "/address-book/v1/digital-address";
 
         UserAddressesDto userAddressesDto = new UserAddressesDto();
-        List<CourtesyAndUnverifiedDigitalAddressDto> c_list = new ArrayList<>();
+        List<CourtesyDigitalAddressDto> c_list = new ArrayList<>();
         List<LegalAndUnverifiedDigitalAddressDto> l_list = new ArrayList<>();
         userAddressesDto.setCourtesy(c_list);
         userAddressesDto.setLegal(l_list);
