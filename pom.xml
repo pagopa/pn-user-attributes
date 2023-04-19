@@ -274,7 +274,7 @@
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/112e2e90de407008b731c3ca9d486a622f2e29c6/docs/openapi/pn-io-message-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/5f6f31f804acdbec1a050d0462ae54d55dd6f974/docs/openapi/pn-io-message-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
@@ -297,7 +297,7 @@
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/4b78d667eabdcd200a04d4dac89db02c1155a40e/docs/openapi/api-private-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/5f6f31f804acdbec1a050d0462ae54d55dd6f974/docs/openapi/api-private-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
@@ -343,7 +343,7 @@
             </goals>
             <phase>process-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/8a1568b037aaf1ed74f39fd60a6e568fdba0a20e/docs/openapi/pn-selfcare-internal-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/5f6f31f804acdbec1a050d0462ae54d55dd6f974/docs/openapi/pn-selfcare-internal-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
