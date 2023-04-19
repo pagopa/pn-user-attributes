@@ -33,7 +33,7 @@ Parameters:
     Description: 'Where to send Logs'
 Resources:
 
-  # KMS AWS managed key for SSE pn-apiKey DynamoDB table
+  # KMS AWS managed key for SSE pn-user-attributes DynamoDB table
   UserAttributesTableEncryptKey:
     Type: 'AWS::KMS::Key'
     DeletionPolicy: Retain
@@ -88,7 +88,7 @@ Resources:
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
-        KMSMasterKeyId: !Ref ApiKeyTablesEncryptKeyId
+        KMSMasterKeyId: !Ref UserAttributesTableEncryptKey
         SSEEnabled: true
         SSEType: KMS
           
@@ -143,3 +143,8 @@ Outputs:
   # Log group exports
   EcsLogGroup:
     Value: !GetAtt PnUserAttributesLogGroup.Outputs.LogGroupName
+
+
+  # Key per dynamotable
+  UserAttributesTableEncryptKeyId:
+    Value: !Ref UserAttributesTableEncryptKey
