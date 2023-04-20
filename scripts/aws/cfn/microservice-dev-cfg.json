@@ -3,6 +3,9 @@
     "ExternalChannelBasePath": "Mock",
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": "7",
-    "MaxTasksNumber": "1"
+    "MaxTasksNumber": "1",
+    "ValidationCodeMaxAttempts": "3",
+    "VerificationCodeLegalTTL": "1d",
+    "VerificationCodeCourtesyTTL": "15m"
   }
 }

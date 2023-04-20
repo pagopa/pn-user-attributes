@@ -18,6 +18,8 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE;
 
@@ -49,8 +51,15 @@ public class PnUserattributesConfig {
     private String verificationCodeMessageEMAILSubject;
     private String verificationCodeMessagePEC;
     private String verificationCodeMessagePECSubject;
+    private String verificationCodeMessagePECConfirm;
 
     private int ioactivationSendolderthandays;
+
+    private int validationCodeMaxAttempts;
+    private Duration verificationCodeLegalTTL;
+    private Duration verificationCodeCourtesyTTL;
+
+    private List<String> externalChannelDigitalCodesSuccess;
 
     private Topics topics;
 
@@ -71,6 +80,7 @@ public class PnUserattributesConfig {
         this.verificationCodeMessageSMS = fetchMessage("smsbody.txt");
         this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.txt");
         this.verificationCodeMessagePEC = fetchMessage("pecbody.txt");
+        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.txt");
 
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");

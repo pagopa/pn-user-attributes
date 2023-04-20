@@ -122,7 +122,15 @@ Parameters:
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
-  
+
+  VerificationCodeTTL:
+    Type: String
+    Description: 'Parametro durata massima per validazione'
+
+  ValidationCodeMaxAttempts:
+    Type: String
+    Description: 'Parametro numero massimo di tentativi di validazione'
+
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'
@@ -130,6 +138,10 @@ Parameters:
   AlbSecurityGroup:
     Type: String
     Description: 'Application load balancer security group'
+
+  UserAttributesTableEncryptKeyId:
+    Type: String
+    Description: 'Key per dynamodb'
 
   # OpenApi Bucket params
   MicroserviceBucketName:
@@ -263,7 +275,7 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_IOACTIVATIONSENDOLDERTHANDAYS=${IoActivationSendOlderThanDays}'
-        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName},${ExternalChannels2UserAttributesQueueName}'
         ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_TOPICS_ACTIONS=${UserAttributesActionsQueueName}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
@@ -296,6 +308,7 @@ Resources:
               - dynamodb:UpdateItem
             Resource:
               - !Ref UserAttributesTableArn
+              - !Sub "${UserAttributesTableArn}/*"
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility
@@ -309,6 +322,13 @@ Resources:
               - sqs:SendMessageBatch
             Resource:
               - !Ref UserAttributesActionsQueueARN
+              - !Ref ExternalChannels2UserAttributesQueueARN
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource:
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${UserAttributesTableEncryptKeyId}
 
   # Expose PN-user-attributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:

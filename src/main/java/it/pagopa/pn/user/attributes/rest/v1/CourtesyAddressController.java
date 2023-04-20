@@ -4,12 +4,11 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.CourtesyApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -46,23 +45,29 @@ public class CourtesyAddressController implements CourtesyApi {
         String logMessage = String.format("deleteRecipientCourtesyAddress - recipientId=%s - senderId=%s - channelType=%s - cxType=%s - cxRole=%s - cxGroups=%s",
                 recipientId, senderId, channelType, pnCxType, pnCxRole, pnCxGroups);
 
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_DEL : PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
-                .build();
-        logEvent.log();
+        Optional<PnAuditLogEvent> optionalPnAuditLogEvent;
+        if (channelType != CourtesyChannelTypeDto.APPIO) {
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_DA_DEL, logMessage)
+                    .build();
+            logEvent.log();
+            optionalPnAuditLogEvent = Optional.of(logEvent);
+        } else {
+             optionalPnAuditLogEvent = Optional.empty();
+        }
 
         return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                 .onErrorResume(throwable -> {
                     if (throwable instanceof PnAddressNotFoundException) {
-                        logEvent.generateWarning(throwable.getMessage()).log();
+                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateWarning(throwable.getMessage()).log());
                     } else {
-                        logEvent.generateFailure(throwable.getMessage()).log();
+                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateFailure(throwable.getMessage()).log());
                     }
                     return Mono.error(throwable);
                 })
                 .map(m -> {
-                    logEvent.generateSuccess(logMessage).log();
+                    optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateSuccess(logMessage).log());
                     return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                 });
     }
@@ -84,7 +89,7 @@ public class CourtesyAddressController implements CourtesyApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> postRecipientCourtesyAddress(String recipientId,
+    public Mono<ResponseEntity<AddressVerificationResponseDto>> postRecipientCourtesyAddress(String recipientId,
                                                                    CxTypeAuthFleetDto pnCxType,
                                                                    String senderId,
                                                                    CourtesyChannelTypeDto channelType,
@@ -98,8 +103,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 .map(addressVerificationDto1 -> {
                     // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
                     Optional<PnAuditLogEvent> auditLogEvent;
-                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())
-                            || channelType == CourtesyChannelTypeDto.APPIO) {
+                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
                         auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
                     }
                     else {
@@ -110,7 +114,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 })
                 .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                         .onErrorResume(throwable -> {
-                            if (throwable instanceof PnInvalidVerificationCodeException)
+                            if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
                             else
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
@@ -118,8 +122,10 @@ public class CourtesyAddressController implements CourtesyApi {
                         })
                         .map(m -> {
                             log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                            if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
-                                return ResponseEntity.status(HttpStatus.OK).body(null);
+                            if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                return ResponseEntity.ok(responseDto);
                             } else {
                                 tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
                                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
@@ -135,7 +141,7 @@ public class CourtesyAddressController implements CourtesyApi {
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         logEvent = auditLogBuilder
-                .before(channelType == CourtesyChannelTypeDto.APPIO ? PnAuditLogEventType.AUD_AB_DA_IO_INSUP : PnAuditLogEventType.AUD_AB_DA_INSUP, logMessage)
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_CODE, logMessage)
                 .build();
         logEvent.log();
         return logEvent;

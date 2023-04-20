@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: FuAISqyPHFXDKIyKKlTLRVyspiWwIB0AKxhzFu1WdJs=
+  version: I49gC6j6OFGigb9ysAJY9EK7EoMXq5I6Iw675mSo9xo=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -79,7 +79,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LegalDigitalAddress'
+                  $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -193,9 +193,12 @@ paths:
               $ref: '#/components/schemas/AddressVerification'
       responses:
         '200':
-          description: >-
-            Verification by Code needed. This response is sent when the address
-            provided need to be verified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressVerificationResponse'
+          description: |
+            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
           description: successful operation
         '400':
@@ -205,7 +208,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: Verification code failure
+          description: >
+            This error is caused by one of this events: * Verification code
+            failure: error.detail equals to
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
+            attempt reached: error.detail equals to
+            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
+            expired/notfound: error.detail equals to
+            PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
@@ -311,7 +321,13 @@ paths:
               $ref: '#/components/schemas/AddressVerification'
       responses:
         '200':
-          description: Verification by Code needed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressVerificationResponse'
+          description: >
+            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
+            (se il codice di verifica o se la validazione della pec)
         '204':
           description: successful operation
         '400':
@@ -321,7 +337,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: Verification code failure
+          description: >
+            This error is caused by one of this events: * Verification code
+            failure: error.detail equals to
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
+            attempt reached: error.detail equals to
+            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
+            expired/notfound: error.detail equals to
+            PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
@@ -439,23 +462,40 @@ components:
   schemas:
     AddressVerification:
       type: object
-      required:
-        - value
+      description: richiede value oppure requestId di un indirizzo in corso di validazione
       properties:
         value:
           type: string
           maxLength: 50
           pattern: >-
             ^(((00|\+)393\d{8,9})|([a-zA-Z0-9]+(?:[.\-_][a-zA-Z0-9]+){0,10}@[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+){0,10}(?:\.[a-zA-Z0-9]{2,10}))|(ENABLED)|(DISABLED)|(APPIO))$
+        requestId:
+          type: string
+          maxLength: 64
+          pattern: ^[ -~ ]*$
         verificationCode:
           $ref: '#/components/schemas/VerificationCode'
+    AddressVerificationResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          description: >
+            Uno dei seguenti valori - CODE_VERIFICATION_REQUIRED: indica che è
+            richiesto il codice di verifica - PEC_VALIDATION_REQUIRED: indica
+            che il codice di verifica inserito è valido, ma che non è ancora
+            arrivata la conferma PEC (solo per la PEC)
+          enum:
+            - CODE_VERIFICATION_REQUIRED
+            - PEC_VALIDATION_REQUIRED
     BaseDigitalAddress:
       type: object
       required:
         - addressType
         - recipientId
         - channelType
-        - value
       properties:
         addressType:
           type: string
@@ -472,17 +512,17 @@ components:
           example: abc
         channelType:
           type: string
-        value:
-          type: string
-          example: nome.utente@server.it
-        code:
-          $ref: '#/components/schemas/VerificationCode'
     LegalChannelType:
       type: string
       description: Communication Channel types __with__ legal value
       enum:
         - PEC
         - APPIO
+    LegalAddressType:
+      type: string
+      description: Valore addresstype per legal
+      enum:
+        - LEGAL
     LegalDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -490,21 +530,16 @@ components:
           required:
             - addressType
             - channelType
+            - value
           properties:
             addressType:
+              $ref: '#/components/schemas/LegalAddressType'
+            value:
               type: string
-              enum:
-                - LEGAL
+              example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
-    CourtesyChannelType:
-      type: string
-      description: Communication Channel types __without__ legal value
-      enum:
-        - EMAIL
-        - SMS
-        - APPIO
-    CourtesyDigitalAddress:
+    LegalAndUnverifiedDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
         - type: object
@@ -513,9 +548,44 @@ components:
             - channelType
           properties:
             addressType:
+              $ref: '#/components/schemas/LegalAddressType'
+            value:
               type: string
-              enum:
-                - COURTESY
+              example: nome.utente@server.it
+            channelType:
+              $ref: '#/components/schemas/LegalChannelType'
+            requestId:
+              type: string
+            codeValid:
+              type: boolean
+            pecValid:
+              type: boolean
+    CourtesyChannelType:
+      type: string
+      description: Communication Channel types __without__ legal value
+      enum:
+        - EMAIL
+        - SMS
+        - APPIO
+    CourtesyAddressType:
+      type: string
+      description: Valore addresstype per courtesy
+      enum:
+        - COURTESY
+    CourtesyDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+            - value
+          properties:
+            addressType:
+              $ref: '#/components/schemas/CourtesyAddressType'
+            value:
+              type: string
+              example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
     UserAddresses:
@@ -524,7 +594,7 @@ components:
         legal:
           type: array
           items:
-            $ref: '#/components/schemas/LegalDigitalAddress'
+            $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
         courtesy:
           type: array
           items:

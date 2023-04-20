@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.mapper;
 
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyAddressTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
@@ -30,7 +31,7 @@ class AddressBookEntityToCourtesyDigitalAddressDtoMapperTest {
         CourtesyDigitalAddressDto dtoExpected = new CourtesyDigitalAddressDto();
         dtoExpected.setRecipientId(ce.getRecipientId());
         dtoExpected.setChannelType(CourtesyChannelTypeDto.fromValue(ce.getChannelType()));
-        dtoExpected.setAddressType(CourtesyDigitalAddressDto.AddressTypeEnum.fromValue(ce.getAddressType()));
+        dtoExpected.setAddressType(CourtesyAddressTypeDto.fromValue(ce.getAddressType()));
         dtoExpected.setSenderId(ce.getSenderId());
 
         CourtesyDigitalAddressDto dto = mapper.toDto(ce);

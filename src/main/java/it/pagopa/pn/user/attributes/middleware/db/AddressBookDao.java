@@ -26,13 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_DELETE_ADDRESS_FAILED;
+import static it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity.GSI_INDEX_REQUESTID;
 
 @Repository
 @Slf4j
 public class AddressBookDao extends BaseDao {
+
 
     DynamoDbAsyncTable<AddressBookEntity> addressBookTable;
     DynamoDbAsyncTable<VerificationCodeEntity> verificationCodeTable;
@@ -58,10 +59,16 @@ public class AddressBookDao extends BaseDao {
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
     }
 
+    public Mono<Void> deleteVerificationCode(VerificationCodeEntity verificationCodeEntity) {
+        log.info("deleteVerificationCode recipientId={} hashedaddress={} channelType={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType());
+
+        return Mono.fromFuture(this.verificationCodeTable.deleteItem(verificationCodeEntity)).then();
+    }
+
     // Crea o modifica l'entity VerificationCodeEntity
 
     public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType) {
-        log.debug("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
+        log.info("deleteAddressBook recipientId={} senderId={} legalType={} channelType={}", recipientId, senderId, legal, channelType);
         AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
 
         Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -168,11 +175,58 @@ public class AddressBookDao extends BaseDao {
                 .items());
     }
 
+
+
+    public Flux<VerificationCodeEntity> getAllVerificationCodesByRecipient(String recipientId, @Nullable String addressType) {
+        log.debug("getAllVerificationCodesByRecipient recipientId={} addressType={}", recipientId, addressType);
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, null, null);
+
+        QueryEnhancedRequest.Builder qeRequest = QueryEnhancedRequest
+                .builder()
+                .scanIndexForward(true);
+
+        qeRequest.queryConditional(QueryConditional.keyEqualTo(getKeyBuild(verificationCode.getPk(), null)));
+
+        // dato che dovrebbe essere un caso molto raro, il filtro per semplicità viene fatto qui
+        return Flux.from(verificationCodeTable.query(qeRequest.build())
+                .items()).filter(x -> addressType==null || addressType.equals(x.getAddressType()));
+    }
+
     public Mono<VerificationCodeEntity> saveVerificationCode(VerificationCodeEntity entity)
     {
-        log.debug("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
+        log.info("saveVerificationCode recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
 
         return Mono.fromFuture(() -> verificationCodeTable.updateItem(entity));
+    }
+
+    public Mono<Void> updateVerificationCodeIfExists(VerificationCodeEntity entity) {
+        log.debug("updateVerificationCodeIfExists recipientId={} channelType={}", entity.getRecipientId(), entity.getChannelType());
+
+        PutItemEnhancedRequest<VerificationCodeEntity> putItemEnhancedRequest = PutItemEnhancedRequest.builder(VerificationCodeEntity.class)
+                .item(entity)
+                .conditionExpression(Expression.builder()
+                        .expression("(#pk = :pk) AND (#sk = :sk)")
+                        .expressionNames(Map.of("#pk",BaseEntity.COL_PK, "#sk", BaseEntity.COL_SK))
+                        .expressionValues(Map.of(":pk", AttributeValue.builder().s(entity.getPk()).build(), ":sk", AttributeValue.builder().s(entity.getSk()).build()))
+                        .build())
+                .build();
+
+
+        return Mono.fromFuture(() -> verificationCodeTable.putItem(putItemEnhancedRequest));
+    }
+
+    public Mono<VerificationCodeEntity> getVerificationCodeByRequestId(String requestId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(getKeyBuild(requestId));
+
+        QueryEnhancedRequest queryEnhancedRequest = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .build();
+
+        return Flux.from(verificationCodeTable.index(GSI_INDEX_REQUESTID).query(queryEnhancedRequest))
+                .map(Page::items)
+                .take(1).next()
+                .flatMapMany(Flux::fromIterable).next();
     }
 
     public Mono<AddressBookEntity> getAddressBook(AddressBookEntity entity)

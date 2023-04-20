@@ -4,12 +4,11 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api.LegalApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalDigitalAddressDto;
+import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,7 @@ public class LegalAddressController implements LegalApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<LegalDigitalAddressDto>>> getLegalAddressByRecipient(String recipientId,
+    public Mono<ResponseEntity<Flux<LegalAndUnverifiedDigitalAddressDto>>> getLegalAddressByRecipient(String recipientId,
                                                                                          CxTypeAuthFleetDto pnCxType,
                                                                                          List<String> pnCxGroups,
                                                                                          String pnCxRole,
@@ -82,14 +81,14 @@ public class LegalAddressController implements LegalApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> postRecipientLegalAddress(String recipientId,
-                                                                CxTypeAuthFleetDto pnCxType,
-                                                                String senderId,
-                                                                LegalChannelTypeDto channelType,
-                                                                Mono<AddressVerificationDto> addressVerificationDto,
-                                                                List<String> pnCxGroups,
-                                                                String pnCxRole,
-                                                                ServerWebExchange exchange) {
+    public Mono<ResponseEntity<AddressVerificationResponseDto>> postRecipientLegalAddress(String recipientId,
+                                                                                          CxTypeAuthFleetDto pnCxType,
+                                                                                          String senderId,
+                                                                                          LegalChannelTypeDto channelType,
+                                                                                          Mono<AddressVerificationDto> addressVerificationDto,
+                                                                                          List<String> pnCxGroups,
+                                                                                          String pnCxRole,
+                                                                                          ServerWebExchange exchange) {
 
         return addressVerificationDto
                 .map(addressVerificationDto1 -> {
@@ -106,7 +105,7 @@ public class LegalAddressController implements LegalApi {
                 })
                 .flatMap(tupleVerCodeLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                                     .onErrorResume(throwable -> {
-                                        if (throwable instanceof PnInvalidVerificationCodeException)
+                                        if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
                                         else
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
@@ -114,8 +113,11 @@ public class LegalAddressController implements LegalApi {
                                     })
                                     .map(m -> {
                                         log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                                        if (m == AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED) {
-                                            return ResponseEntity.ok().build();
+
+                                        if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                            AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                            responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                            return ResponseEntity.ok(responseDto);
                                         } else {
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
                                             return ResponseEntity.noContent().build();
@@ -131,7 +133,7 @@ public class LegalAddressController implements LegalApi {
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_DD_INSUP, logMessage)
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_CODE, logMessage)
                 .build();
         logEvent.log();
         return logEvent;
