@@ -123,9 +123,13 @@ Parameters:
     Type: String
     Description: 'Parametro per il toc toc di Io'
 
-  VerificationCodeTTL:
+  VerificationCodeLegalTTL:
     Type: String
-    Description: 'Parametro durata massima per validazione'
+    Description: 'Parametro durata massima per validazione per messaggi di tipo legal'
+
+  VerificationCodeCourtesyTTL:
+    Type: String
+    Description: 'Parametro durata massima per validazione per messaggi di cortesia'
 
   ValidationCodeMaxAttempts:
     Type: String
@@ -277,6 +281,9 @@ Resources:
         ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_IOACTIVATIONSENDOLDERTHANDAYS=${IoActivationSendOlderThanDays}'
         ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName},${ExternalChannels2UserAttributesQueueName}'
         ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_TOPICS_ACTIONS=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry12: !Sub 'PN_USER_ATTRIBUTES_VALIDATIONCODEMAXATTEMPTS=${ValidationCodeMaxAttempts}'
+        ContainerEnvEntry13: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODELEGALTTL=${VerificationCodeLegalTTL}'
+        ContainerEnvEntry14: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODECOURTESYTTL=${VerificationCodeCourtesyTTL}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
