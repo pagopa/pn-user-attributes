@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: z3HlwijHYqIUstRGLyDyhXZk0pO0BUZeSz7YMkOuUVQ=
+  version: c3rZH847g+J6P+tCLC32gAa7MwpM/dIJgrhZTTsPaxE=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -312,7 +312,7 @@ components:
         authorizerUri: >-
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-jwtAuthorizerLambda/invocations
         authorizerResultTtlInSeconds: 300
-        identityValidationExpression: ^Bearer [-0-9a-zA-Z\._]+$
+        identityValidationExpression: ^Bearer\s([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_\-]+)$
         type: token
 tags:
   - name: consents
