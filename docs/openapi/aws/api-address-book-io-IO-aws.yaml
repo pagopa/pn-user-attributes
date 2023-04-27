@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: Yl9Mk7GscddyulV1YRV8gMAd/7+z6cMlWN7f77K1n2I=
+  version: GWzNxSe/873cq23wtQD7/GnF40ITDA90EaaCtFoJMgA=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -19,7 +19,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
       responses:
         '200':
           description: successful operation
@@ -66,7 +66,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxIdAuthFleet'
+        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
       requestBody:
         required: true
         content:
@@ -116,15 +116,17 @@ paths:
         type: http_proxy
 components:
   parameters:
-    cxIdAuthFleet:
-      name: x-pagopa-pn-cx-id
+    cxTaxIdAuthFleet:
+      name: x-pagopa-cx-taxid
       in: header
-      description: Customer/Receiver Identifier
+      description: Customer taxId, used in B2B AppIO.
       required: true
       schema:
         type: string
-        pattern: ^[ -~]*$
-        maxLength: 64
+        minLength: 16
+        maxLength: 16
+        pattern: >-
+          ^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1}
   schemas:
     IoCourtesyDigitalAddressActivation:
       description: Io courtesy activation
