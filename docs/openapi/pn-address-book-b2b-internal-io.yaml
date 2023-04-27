@@ -30,7 +30,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                                   # NO EXTERNAL
+        - $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                   # NO EXTERNAL
 #       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
       responses:
         '200':
@@ -58,7 +58,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                                   # NO EXTERNAL
+        - $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                   # NO EXTERNAL
 #       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
       requestBody:
         required: true
