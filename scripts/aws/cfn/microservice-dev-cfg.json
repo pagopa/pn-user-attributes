@@ -1,6 +1,5 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "Mock",
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": "7",
     "MaxTasksNumber": "1",
