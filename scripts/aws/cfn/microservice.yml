@@ -75,7 +75,7 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
-  ExternalChannelBasePath:
+  ExternalChannelBaseUrl:
     Type: String
     Description: 'Base url of external channel microservice'
 
@@ -240,7 +240,7 @@ Parameters:
     Description: maximum autoscaling number of tasks 
 
 Conditions:
-  UseExternalChannelMock: !Equals [ !Ref ExternalChannelBasePath, "Mock" ]
+  UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
 Resources:
 
@@ -274,7 +274,7 @@ Resources:
           Fn::If:
             - UseExternalChannelMock
             - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-            - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
+            - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBaseUrl}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
