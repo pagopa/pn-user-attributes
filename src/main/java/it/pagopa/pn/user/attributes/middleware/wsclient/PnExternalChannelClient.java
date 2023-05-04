@@ -68,7 +68,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
         String requestId = UUID.randomUUID().toString();
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
-                    pnUserattributesConfig.getVerificationCodeMessagePECConfirm(), pnUserattributesConfig.getVerificationCodeMessagePECSubject());
+                    pnUserattributesConfig.getVerificationCodeMessagePECConfirm(), pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject());
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
