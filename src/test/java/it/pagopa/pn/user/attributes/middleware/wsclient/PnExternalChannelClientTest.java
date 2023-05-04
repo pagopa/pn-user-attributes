@@ -75,6 +75,38 @@ class PnExternalChannelClientTest {
     }
 
     @Test
+    void sendPECConfirm() {
+        //Given
+        String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String address ="realaddress@pec.it";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        CourtesyChannelTypeDto courtesyChannelType = null;
+        String verificationCode = "12345";
+        String path = "/external-channels/v1/digital-deliveries/legal-full-message-requests/.*";
+
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId(recipientId);
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+
+
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+        // When - Then
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(path))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(204));
+
+        String res = pnExternalChannelClient.sendPecConfirm(recipientId, address).block(Duration.ofMillis(3000));
+        assertNotNull(res);
+    }
+
+    @Test
     void sendVerificationCodePEC() {
         //Given
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
