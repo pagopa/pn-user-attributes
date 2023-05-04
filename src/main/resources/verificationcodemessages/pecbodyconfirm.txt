@@ -1,7 +1,12 @@
 Ciao,
 
-l'indirizzo PEC è stato correttamente associato.
+l’indirizzo PEC che hai inserito come recapito legale su SEND è valido.
+
+A partire da questo momento, lo useremo come indirizzo principale per inviarti gli avvisi di avvenuta ricezione.
+
+
+Per maggiori informazioni, leggi le FAQ.
+
 
 A presto,
-
-Il team di SEND - Servizio Notifiche Digitali
+SEND - Servizio Notifiche Digitali

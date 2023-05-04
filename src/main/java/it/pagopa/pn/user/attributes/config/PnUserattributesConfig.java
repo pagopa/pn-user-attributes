@@ -52,6 +52,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePEC;
     private String verificationCodeMessagePECSubject;
     private String verificationCodeMessagePECConfirm;
+    private String verificationCodeMessagePECConfirmSubject;
 
     private int ioactivationSendolderthandays;
 
@@ -81,6 +82,7 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.txt");
         this.verificationCodeMessagePEC = fetchMessage("pecbody.txt");
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.txt");
+        this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
 
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");
