@@ -1,7 +1,0 @@
-Ciao,
-
-per confermare questo indirizzo e-mail come recapito digitale a cui ricevere gli avvisi di cortesia, inserisci su SEND il codice %s.
-
-A presto,
-
-Il team di SEND - Servizio Notifiche Digitali

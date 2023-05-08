@@ -76,13 +76,13 @@ public class PnUserattributesConfig {
 
     @PostConstruct
     public void init(){
-        this.verificationCodeMessageEMAILSubject = fetchMessage("emailsubject.txt");
-        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.txt");
+        this.verificationCodeMessageEMAILSubject = fetchMessage("emailsubject.html");
+        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.html");
         this.verificationCodeMessageSMS = fetchMessage("smsbody.txt");
-        this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.txt");
-        this.verificationCodeMessagePEC = fetchMessage("pecbody.txt");
-        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.txt");
-        this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
+        this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.html");
+        this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
+        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
+        this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.html");
 
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");
