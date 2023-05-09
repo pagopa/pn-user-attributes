@@ -31,6 +31,11 @@ Parameters:
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Where to send Logs'
+  
+  LogRetention:
+    Type: Number
+    Default: 14
+
 Resources:
 
   # KMS AWS managed key for SSE pn-user-attributes DynamoDB table
@@ -111,6 +116,7 @@ Resources:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
       Parameters:
         LogGroupName: !Sub '${ProjectName}-user-attributes'
+        LogGroupRetention: !Ref LogRetention
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 
 Outputs:
