@@ -1,9 +1,0 @@
-Ciao,
-
-per confermare questo indirizzo PEC come recapito legale a cui ricevere gli avvisi di avvenuta ricezione, inserisci su SEND il codice %s.
-
-Riceverai gli avvisi di avvenuta ricezione a questo indirizzo PEC solo dopo avere inserito il codice su SEND.
-
-A presto,
-
-Il team di SEND - Servizio Notifiche Digitali

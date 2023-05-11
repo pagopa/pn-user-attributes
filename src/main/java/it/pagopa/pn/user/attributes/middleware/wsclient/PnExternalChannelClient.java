@@ -16,6 +16,7 @@ import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchan
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
 import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
+import it.pagopa.pn.user.attributes.utils.TemplateGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -43,10 +44,12 @@ public class PnExternalChannelClient extends CommonBaseClient {
     private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
     private DigitalLegalMessagesApi digitalLegalMessagesApi;
     private final PnDataVaultClient dataVaultClient;
+    private final TemplateGenerator templateGenerator;
 
-    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient) {
+    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient, TemplateGenerator templateGenerator) {
         this.pnUserattributesConfig = pnUserattributesConfig;
         this.dataVaultClient = dataVaultClient;
+        this.templateGenerator = templateGenerator;
     }
 
     @PostConstruct
@@ -68,7 +71,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
         String requestId = UUID.randomUUID().toString();
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
-                    pnUserattributesConfig.getVerificationCodeMessagePECConfirm(), pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject());
+                    templateGenerator.generatePecConfirmBody(), pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject());
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
@@ -108,7 +111,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
         logEvent.log();
 
 
-        return sendLegalMessage(recipientId, requestId, address, legalChannelType, getPECVerificationCodeBody(verificationCode), pnUserattributesConfig.getVerificationCodeMessagePECSubject())
+        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode), pnUserattributesConfig.getVerificationCodeMessagePECSubject())
                 .onErrorResume(x -> {
                     String message = elabExceptionMessage(x);
                     String failureMessage = String.format("sendLegalVerificationCode PEC response error %s", message);
@@ -137,7 +140,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
                     digitalNotificationRequestDto.setRequestId(requestId);
                     digitalNotificationRequestDto.setCorrelationId(requestId);
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-                    digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.PLAIN);
+                    digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.HTML);
                     digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
                     digitalNotificationRequestDto.setMessageText(body);
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
@@ -218,12 +221,12 @@ public class PnExternalChannelClient extends CommonBaseClient {
                         digitalNotificationRequestDto.setCorrelationId(requestId);
                         digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                         digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
-                        digitalNotificationRequestDto.setMessageText(getMailVerificationCodeBody(verificationCode));
+                        digitalNotificationRequestDto.setMessageText(templateGenerator.generateEmailBody(verificationCode));
                         digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                         digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                         digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
                         digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
-                        digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.PLAIN);
+                        digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.HTML);
                         if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                             digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
 
@@ -254,20 +257,6 @@ public class PnExternalChannelClient extends CommonBaseClient {
             throw new PnInvalidInputException(ERROR_CODE_INVALID_COURTESY_CHANNEL, "courtesyChannelType");
     }
 
-
-    private String getPECVerificationCodeBody(String verificationCode)
-    {
-        String message = pnUserattributesConfig.getVerificationCodeMessagePEC();
-        message = String.format(message, verificationCode);
-        return  message;
-    }
-
-    private String getMailVerificationCodeBody(String verificationCode)
-    {
-        String message = pnUserattributesConfig.getVerificationCodeMessageEMAIL();
-        message = String.format(message, verificationCode);
-        return  message;
-    }
 
     private String getSMSVerificationCodeBody(String verificationCode)
     {

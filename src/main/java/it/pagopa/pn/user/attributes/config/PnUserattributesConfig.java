@@ -77,11 +77,11 @@ public class PnUserattributesConfig {
     @PostConstruct
     public void init(){
         this.verificationCodeMessageEMAILSubject = fetchMessage("emailsubject.txt");
-        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.txt");
+        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.html");
         this.verificationCodeMessageSMS = fetchMessage("smsbody.txt");
         this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.txt");
-        this.verificationCodeMessagePEC = fetchMessage("pecbody.txt");
-        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.txt");
+        this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
+        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
 
         if (isDevelopment()) {
