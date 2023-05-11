@@ -29,8 +29,8 @@ public class DocumentComposition {
     public enum TemplateType {
         EMAIL_VERIFICATION_TEMPLATE(TEMPLATES_DIR_NAME + "/emailbody.html"),
         PEC_VERIFICATION_TEMPLATE(TEMPLATES_DIR_NAME + "/pecbody.html"),
-        PEC_CONFIRM_TEMPLATE(TEMPLATES_DIR_NAME + "/pecsubjectconfirm.html"),
-        PEC_REJECT_TEMPLATE(TEMPLATES_DIR_NAME + "/pecsubjectreject.html");
+        PEC_CONFIRM_TEMPLATE(TEMPLATES_DIR_NAME + "/pecbodyconfirm.html"),
+        PEC_REJECT_TEMPLATE(TEMPLATES_DIR_NAME + "/pecbodyreject.html");
 
         private final String htmlTemplate;
 
