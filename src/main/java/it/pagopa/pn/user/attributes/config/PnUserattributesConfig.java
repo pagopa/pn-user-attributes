@@ -68,6 +68,7 @@ public class PnUserattributesConfig {
     public static class Topics {
 
         private String actions;
+        private String fromexternalchannel;
 
     }
 
