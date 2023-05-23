@@ -29,7 +29,7 @@
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-commons</artifactId>
-      <version>2.0.0</version>
+      <version>2.1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>it.pagopa.pn</groupId>
@@ -132,12 +132,31 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>unpack-dependencies</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>pn-commons</includeArtifactIds>
+              <outputDirectory>${project.build.directory}/dependency-resources</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
         <version>5.4.0</version>
         <executions>
           <execution>
             <id>pn-user-attributes-address-book-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -149,10 +168,10 @@
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -167,6 +186,7 @@
           </execution>
           <execution>
             <id>pn-user-attributes-user-consents-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -178,10 +198,10 @@
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
@@ -197,6 +217,7 @@
           </execution>
           <execution>
             <id>pn-user-attributes-address-book-b2b-io-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -208,10 +229,10 @@
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -229,9 +250,9 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/bd8fbffcaea84d82e1a5e6c332c83a3c789240df/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/1c1bcaef3837a15f866596a6d9af94e3978805ff/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
@@ -242,8 +263,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.datavault.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.datavault.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
@@ -252,7 +273,7 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>${project.basedir}/docs/wsclient/pn-external-channels/api-internal-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
@@ -266,8 +287,8 @@
                 <openApiNullable>false</openApiNullable>
                 <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)</additionalModelTypeAnnotations>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalchannels.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalchannels.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
@@ -276,7 +297,7 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/3ced99ecd74ae2e7bc98ed1330b5ddcf3a90873c/docs/openapi/pn-io-message-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
@@ -289,8 +310,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>
@@ -299,7 +320,7 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/3ced99ecd74ae2e7bc98ed1330b5ddcf3a90873c/docs/openapi/api-private-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
@@ -312,8 +333,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.externalregistry.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.externalregistry.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>
@@ -322,7 +343,7 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/ed61108cc61fb8bb9421d3ba12694c9a20ef2367/docs/openapi/api-private-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
@@ -335,8 +356,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.delivery.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.delivery.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>
@@ -345,7 +366,7 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/3ced99ecd74ae2e7bc98ed1330b5ddcf3a90873c/docs/openapi/pn-selfcare-internal-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
@@ -358,8 +379,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.selfcare.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.selfcare.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>

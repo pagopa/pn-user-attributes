@@ -3,10 +3,10 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.ApiClient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.api.InternalOnlyApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationStatus;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.ApiClient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.api.InternalOnlyApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationStatus;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

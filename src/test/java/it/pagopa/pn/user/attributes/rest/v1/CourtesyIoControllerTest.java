@@ -1,8 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto.IoCourtesyDigitalAddressActivationDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.io.v1.dto.IoCourtesyDigitalAddressActivationDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

@@ -3,9 +3,9 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.v1.ApiClient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.v1.api.PrivacyNoticeApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.v1.dto.PrivacyNoticeVersionResponse;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api.PrivacyNoticeApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto.PrivacyNoticeVersionResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

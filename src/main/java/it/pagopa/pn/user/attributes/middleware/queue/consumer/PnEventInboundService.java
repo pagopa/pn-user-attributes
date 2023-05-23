@@ -6,7 +6,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.commons.log.MDCWebFilter;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +46,7 @@ public class PnEventInboundService {
                 else
                     traceId = "traceId:" + UUID.randomUUID();
 
-                MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
+                MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
                 return new FunctionRoutingResult(handleMessage(message));
             }
         };

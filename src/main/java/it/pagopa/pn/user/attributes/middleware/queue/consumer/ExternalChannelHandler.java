@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.SingleStatusUpdateDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
