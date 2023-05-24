@@ -67,23 +67,24 @@ public class ExternalChannelResponseHandler {
                         return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity)
                                 .flatMap(x -> externalChannelClient.sendPecConfirm(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
-                                .then();
+                                .thenReturn("OK");
                     } else {
                         // altrimenti salvo semplicemente il flag
                         return verificationCodeUtils.markVerificationCodeAsPecValid(verificationCodeEntity)
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
-                                .then();
+                                .thenReturn("OK");
                     }
                 })
                 .switchIfEmpty(Mono.fromRunnable(
-                        () -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()).then())
+                        () -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()).thenReturn("KO"))
                 .onErrorResume(x -> {
                     String message = x.getMessage();
                     String failureMessage = String.format("checkVerificationAddressAndSave PEC error %s", message);
                     logEvent.generateFailure(failureMessage).log();
                     log.error("checkVerificationAddressAndSave PEC error {}", message, x);
                     return Mono.error(x);
-                });
+                })
+                .then();
     }
 
 
