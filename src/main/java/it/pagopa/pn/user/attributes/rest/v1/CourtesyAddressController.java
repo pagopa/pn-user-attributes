@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
@@ -12,6 +13,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -23,6 +25,8 @@ import reactor.util.function.Tuples;
 
 import java.util.List;
 import java.util.Optional;
+
+import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @RestController
 @Slf4j
@@ -100,6 +104,10 @@ public class CourtesyAddressController implements CourtesyApi {
 
 
         return addressVerificationDto
+                .map(addressVerificationDto1 -> {
+                    MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDto1.getValue()));
+                    return addressVerificationDto1;
+                })
                 .map(addressVerificationDto1 -> {
                     // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
                     Optional<PnAuditLogEvent> auditLogEvent;

@@ -1,48 +1,31 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import it.pagopa.pn.commons.pnclients.CommonBaseClient;
-import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.ApiClient;
+import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.api.AddressBookApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.api.RecipientsApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
  */
 @Component
-@Slf4j
-public class PnDataVaultClient extends CommonBaseClient {
+@lombok.CustomLog
+public class PnDataVaultClient {
     
-    private AddressBookApi addressBookApi;
-    private RecipientsApi recipientsApi;
-    private final PnUserattributesConfig pnUserattributesConfig;
+    private final AddressBookApi addressBookApi;
+    private final RecipientsApi recipientsApi;
 
-    public PnDataVaultClient(PnUserattributesConfig pnUserattributesConfig) {
-        this.pnUserattributesConfig = pnUserattributesConfig;
-    }
-
-    @PostConstruct
-    public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
-
-        this.addressBookApi = new AddressBookApi(apiClient);
-
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientDatavaultBasepath());
-
-        this.recipientsApi = new RecipientsApi(apiClient);
+    public PnDataVaultClient(AddressBookApi addressBookApi, RecipientsApi recipientsApi) {
+        this.addressBookApi = addressBookApi;
+        this.recipientsApi = recipientsApi;
     }
 
     /**
@@ -56,7 +39,8 @@ public class PnDataVaultClient extends CommonBaseClient {
      */
     public Mono<Void> updateRecipientAddressByInternalId(String internalId, String addressId, String realaddress)
     {
-        log.info("updateRecipientAddressByInternalId internalId:{} addressId:{}", internalId, addressId);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Updating recipient address");
+        log.debug("updateRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
         AddressDtoDto dto = new AddressDtoDto();
         dto.setValue(realaddress);
         return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, dto);
@@ -72,7 +56,8 @@ public class PnDataVaultClient extends CommonBaseClient {
      */
     public Mono<RecipientAddressesDtoDto> getRecipientAddressesByInternalId(String internalId)
     {
-        log.info("getRecipientAddressesByInternalId internalId:{}", internalId);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Retrieving recipient addresses");
+        log.debug("getRecipientAddressesByInternalId internalId:{}", internalId);
         return addressBookApi.getRecipientAddressesByInternalId (internalId);
             
     }
@@ -87,7 +72,8 @@ public class PnDataVaultClient extends CommonBaseClient {
      */
     public Mono<Void> deleteRecipientAddressByInternalId(String internalId, String addressId)
     {
-        log.info("deleteRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Deleting recipient address");
+        log.debug("deleteRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
         return addressBookApi.deleteRecipientAddressByInternalId  (internalId, addressId);
 
     }
@@ -101,6 +87,8 @@ public class PnDataVaultClient extends CommonBaseClient {
      */
     public Flux<BaseRecipientDtoDto> getRecipientDenominationByInternalId(List<String> internalIds)
     {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Opaque Ids Resolution");
+        log.debug("getRecipientDenominationByInternalId internalIds={} ", internalIds);
         return recipientsApi.getRecipientDenominationByInternalId(internalIds);
 
     }

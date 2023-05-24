@@ -49,8 +49,8 @@ public class VerifiedAddressUtils {
 
     @NotNull
     private PnAuditLogEvent getLogEvent(AddressBookEntity addressBook) {
-        String logMessage = String.format("save addressbook - recipientId=%s - senderId=%s - channelType=%s",
-                addressBook.getRecipientId(), addressBook.getSenderId(), addressBook.getChannelType());
+        String logMessage = String.format("save addressbook - recipientId=%s - senderId=%s - channelType=%s - hashedAddress=%s",
+                addressBook.getRecipientId(), addressBook.getSenderId(), addressBook.getChannelType(), addressBook.getAddresshash());
 
         PnAuditLogEventType auditLogEventType = PnAuditLogEventType.AUD_AB_DD_INSUP;
         if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.APPIO.getValue())) {

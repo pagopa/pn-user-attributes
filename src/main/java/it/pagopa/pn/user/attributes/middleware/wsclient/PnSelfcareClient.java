@@ -1,35 +1,24 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
+import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
-import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.InfoPaApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 /**
  * Classe wrapper di self-care, con gestione del backoff
  */
 @Component
-@Slf4j
+@lombok.CustomLog
 public class PnSelfcareClient extends CommonBaseClient {
-    private InfoPaApi infoPaApi;
-    private final PnUserattributesConfig pnUserattributesConfig;
+    private final InfoPaApi infoPaApi;
 
-    public PnSelfcareClient(PnUserattributesConfig pnUserattributesConfig ) {
-        this.pnUserattributesConfig = pnUserattributesConfig;
-    }
-
-    @PostConstruct
-    public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
-        this.infoPaApi = new InfoPaApi(apiClient);
+    public PnSelfcareClient(InfoPaApi infoPaApi) {
+        this.infoPaApi = infoPaApi;
     }
 
     /**
@@ -41,7 +30,8 @@ public class PnSelfcareClient extends CommonBaseClient {
      */
     public Flux<PaSummary> getManyPaByIds(List<String> ids)
     {
-        log.info("getManyPaByIds ids={}", ids);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Retrieving PAs summary infos");
+        log.debug("getManyPaByIds ids={}", ids);
         return this.infoPaApi.getManyPa(ids);
     }
 }

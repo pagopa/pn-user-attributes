@@ -39,14 +39,18 @@ public class PnEventInboundService {
             @Override
             public FunctionRoutingResult routingResult(Message<?> message) {
                 MessageHeaders messageHeaders = message.getHeaders();
+
                 String traceId;
+                String messageId = null;
 
                 if (messageHeaders.containsKey("aws_messageId"))
-                    traceId = messageHeaders.get("aws_messageId", String.class);
-                else
-                    traceId = "traceId:" + UUID.randomUUID();
+                    messageId = messageHeaders.get("aws_messageId", String.class);
 
+                traceId = Objects.requireNonNullElseGet(messageId, () -> "traceId:" + UUID.randomUUID());
+
+                MDCUtils.clearMDCKeys();
                 MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
+                MDC.put(MDCUtils.MDC_PN_CTX_MESSAGE_ID, messageId);
                 return new FunctionRoutingResult(handleMessage(message));
             }
         };

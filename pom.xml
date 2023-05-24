@@ -34,7 +34,7 @@
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-model</artifactId>
-      <version>2.0.0</version>
+      <version>2.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -173,6 +173,7 @@
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
+                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
@@ -205,6 +206,7 @@
                 <dateLibrary>java11</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
+                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
                 <documentationProvider>source</documentationProvider>
@@ -235,6 +237,7 @@
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
+                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
                 <documentationProvider>source</documentationProvider>
@@ -256,6 +259,7 @@
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
@@ -280,6 +284,7 @@
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
@@ -304,6 +309,7 @@
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
@@ -327,6 +333,7 @@
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
@@ -350,6 +357,7 @@
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
@@ -373,6 +381,7 @@
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>

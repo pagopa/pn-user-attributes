@@ -4,6 +4,7 @@ import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.Action;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
@@ -14,6 +15,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -135,7 +137,10 @@ public class IONotificationService   {
 
 
     public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotification sentNotification) {
-        log.info("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
+        MDC.put(MDCUtils.MDC_PN_IUN_KEY, sentNotification.getIun());
+        MDC.put(MDCUtils.MDC_CX_ID_KEY, internalId);
+
+        log.debug("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
         SendMessageRequest sendMessageRequest = this.getSendMessageRequest(sentNotification, internalId);
         return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest)
                 .flatMap(res -> {

@@ -13,8 +13,6 @@ import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -27,6 +25,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
 import java.util.regex.Pattern;
+
+import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @Component
 @Slf4j
@@ -296,15 +296,6 @@ public class VerificationCodeUtils {
         return code;
     }
 
-    /**
-     * Wrap dello sha per rendere più facile capire dove viene usato
-     * @param realaddress indirizzo da hashare
-     * @return hash dell'indirizzo
-     */
-    public String hashAddress(@NonNull String realaddress)
-    {
-        return DigestUtils.sha256Hex(realaddress);
-    }
 
 
     /**
