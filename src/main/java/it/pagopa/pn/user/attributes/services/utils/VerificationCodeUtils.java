@@ -12,7 +12,6 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -29,7 +28,7 @@ import java.util.regex.Pattern;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @Component
-@Slf4j
+@lombok.CustomLog
 @RequiredArgsConstructor
 public class VerificationCodeUtils {
 
@@ -248,19 +247,28 @@ public class VerificationCodeUtils {
 
 
     private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+        String process = "validating verification code request";
+        log.logChecking(process);
+
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
-            if (StringUtils.hasText(addressVerificationDto.getVerificationCode()))
+            if (StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
+                log.logCheckingOutcome(process, true);
                 return;
-            else
+            }
+            else {
+                log.logCheckingOutcome(process, false, "missing verification code");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, "verificationCode");
+            }
         }
 
         // aggiungo il controllo dato che ora value è nullabile
         String emailfield = "value";
-        if (!StringUtils.hasText(addressVerificationDto.getValue()))
+        if (!StringUtils.hasText(addressVerificationDto.getValue())) {
+            log.logCheckingOutcome(process, false, "missing address");
             throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, emailfield);
+        }
 
         if ((legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC))
                 || (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL)))
@@ -268,15 +276,21 @@ public class VerificationCodeUtils {
             String emailaddress = addressVerificationDto.getValue();
 
             final Pattern emailRegex = Pattern.compile("^[\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+(?:[.-][\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+){0,10}@\\w+(?:[.-]\\w+){0,10}\\.\\w{2,10}$", Pattern.CASE_INSENSITIVE);
-            if (!emailRegex.matcher(emailaddress).matches())
+            if (!emailRegex.matcher(emailaddress).matches()) {
+                log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+            }
         }
         else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
         {
             final Pattern phoneRegex = Pattern.compile("^(00|\\+)393\\d{8,9}$", Pattern.CASE_INSENSITIVE);
-            if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches())
+            if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches()) {
+                log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+            }
         }
+
+        log.logCheckingOutcome(process, true);
     }
 
 

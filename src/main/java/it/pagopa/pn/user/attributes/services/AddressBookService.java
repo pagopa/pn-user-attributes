@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
+
 @Service
 @Slf4j
 public class AddressBookService {
@@ -381,7 +383,7 @@ public class AddressBookService {
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
-                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, verificationCodeUtils.hashAddress(addressVerificationDto.getValue()),
+                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                     channelType, senderId, legal, addressVerificationDto.getValue());
                             return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
                         } else {

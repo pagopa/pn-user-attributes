@@ -95,23 +95,22 @@ public class LegalAddressController implements LegalApi {
                                                                                           ServerWebExchange exchange) {
 
         return addressVerificationDto
-                .map(addressVerificationDto1 -> {
-                    MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDto1.getValue()));
-                    return addressVerificationDto1;
-                })
-                .map(addressVerificationDto1 -> {
-                    // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
-                    Optional<PnAuditLogEvent> auditLogEvent;
-                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
-                        auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
-                    }
-                    else {
-                        auditLogEvent = Optional.empty();
-                    }
+                .flatMap(addressVerificationDtoMdc -> {
+                    MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
+                    return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
+                            .map(addressVerificationDto1 -> {
+                                // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
+                                Optional<PnAuditLogEvent> auditLogEvent;
+                                if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
+                                    auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
+                                }
+                                else {
+                                    auditLogEvent = Optional.empty();
+                                }
 
-                    return Tuples.of(addressVerificationDto1, auditLogEvent);
-                })
-                .flatMap(tupleVerCodeLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
+                                return Tuples.of(addressVerificationDto1, auditLogEvent);
+                            })
+                            .flatMap(tupleVerCodeLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
                                     .onErrorResume(throwable -> {
                                         if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
@@ -130,7 +129,8 @@ public class LegalAddressController implements LegalApi {
                                             tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
                                             return ResponseEntity.noContent().build();
                                         }
-                                    }));
+                                    })));
+                });
     }
 
 

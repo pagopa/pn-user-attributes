@@ -4,14 +4,13 @@ import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Set;
 
-@Slf4j
+@lombok.CustomLog
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class PgUtils {
 
@@ -25,12 +24,15 @@ public class PgUtils {
      * @param pnCxGroups gruppi
      */
     public static Mono<Object> validaAccesso(CxTypeAuthFleetDto pnCxType, String pnCxRole, List<String> pnCxGroups) {
+        String process = "validating access admin only";
+        log.logChecking(process);
         if (CxTypeAuthFleetDto.PG.equals(pnCxType)
                 && (pnCxRole == null || !ALLOWED_ROLES.contains(pnCxRole.toUpperCase()) || !CollectionUtils.isEmpty(pnCxGroups))) {
-            log.warn("only a PG admin can access this resource");
+            log.logCheckingOutcome(process, false, "only a PG admin can access this resource");
             return Mono.error(new PnForbiddenException());
         }
         log.debug("access granted for {}, role: {}, groups: {}", pnCxType, pnCxRole, pnCxGroups);
+        log.logCheckingOutcome(process, true);
         return Mono.just(new Object());
     }
 

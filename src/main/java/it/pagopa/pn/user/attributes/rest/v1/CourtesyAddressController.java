@@ -104,41 +104,41 @@ public class CourtesyAddressController implements CourtesyApi {
 
 
         return addressVerificationDto
-                .map(addressVerificationDto1 -> {
-                    MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDto1.getValue()));
-                    return addressVerificationDto1;
-                })
-                .map(addressVerificationDto1 -> {
-                    // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
-                    Optional<PnAuditLogEvent> auditLogEvent;
-                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
-                        auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
-                    }
-                    else {
-                        auditLogEvent = Optional.empty();
-                    }
+                .flatMap(addressVerificationDtoMdc -> {
+                    MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
+                    return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
+                            .map(addressVerificationDto1 -> {
+                                // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
+                                Optional<PnAuditLogEvent> auditLogEvent;
+                                if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
+                                    auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
+                                }
+                                else {
+                                    auditLogEvent = Optional.empty();
+                                }
 
-                    return Tuples.of(addressVerificationDto1, auditLogEvent);
-                })
-                .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
-                        .onErrorResume(throwable -> {
-                            if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
-                            else
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
-                            return Mono.error(throwable);
-                        })
-                        .map(m -> {
-                            log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-                            if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
-                                AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
-                                responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
-                                return ResponseEntity.ok(responseDto);
-                            } else {
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
-                                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
-                            }
-                        }));
+                                return Tuples.of(addressVerificationDto1, auditLogEvent);
+                            })
+                            .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
+                                    .onErrorResume(throwable -> {
+                                        if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
+                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
+                                        else
+                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+                                        return Mono.error(throwable);
+                                    })
+                                    .map(m -> {
+                                        log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
+                                        if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                            AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                            responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                            return ResponseEntity.ok(responseDto);
+                                        } else {
+                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
+                                            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+                                        }
+                                    })));
+                });
     }
 
     @NotNull

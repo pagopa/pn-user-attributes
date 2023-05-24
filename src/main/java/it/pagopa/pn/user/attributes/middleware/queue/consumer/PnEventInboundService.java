@@ -40,13 +40,15 @@ public class PnEventInboundService {
             public FunctionRoutingResult routingResult(Message<?> message) {
                 MessageHeaders messageHeaders = message.getHeaders();
 
-                String traceId;
+                String traceId = null;
                 String messageId = null;
 
                 if (messageHeaders.containsKey("aws_messageId"))
                     messageId = messageHeaders.get("aws_messageId", String.class);
+                if (messageHeaders.containsKey("X-Amzn-Trace-Id"))
+                    traceId = messageHeaders.get("X-Amzn-Trace-Id", String.class);
 
-                traceId = Objects.requireNonNullElseGet(messageId, () -> "traceId:" + UUID.randomUUID());
+                traceId = Objects.requireNonNullElseGet(traceId, () -> "traceId:" + UUID.randomUUID());
 
                 MDCUtils.clearMDCKeys();
                 MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);

@@ -25,6 +25,7 @@ public class ActionHandler {
             try {
                 log.logStartingProcess(process);
                 Action action = message.getPayload();
+                log.debug("pnUserAttributesSendMessageActionConsumer action={}", action);
                 ioNotificationService.consumeIoSendMessageEvent(action.getInternalId(), action.getSentNotification()).block();
                 log.logEndingProcess(process);
             } catch (Exception ex) {
@@ -42,6 +43,7 @@ public class ActionHandler {
             try {
                 log.logStartingProcess(process);
                 Action action = message.getPayload();
+                log.debug("pnUserAttributesIoActivatedActionConsumer action={}", action);
                 ioNotificationService.consumeIoActivationEvent(action.getInternalId(), action.getCheckFromWhen()).then().block();
                 log.logEndingProcess(process);
             } catch (Exception ex) {
