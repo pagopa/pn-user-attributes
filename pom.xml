@@ -164,6 +164,7 @@
               <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
@@ -173,7 +174,6 @@
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
-                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
@@ -195,6 +195,7 @@
               <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
@@ -206,7 +207,6 @@
                 <dateLibrary>java11</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
-                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
                 <documentationProvider>source</documentationProvider>
@@ -227,6 +227,7 @@
               <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal-io.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
@@ -237,7 +238,6 @@
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
-                <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
                 <documentationProvider>source</documentationProvider>
