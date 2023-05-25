@@ -1,9 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.db.entities;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
@@ -74,7 +71,9 @@ public class VerificationCodeEntity extends BaseEntity {
 
     @Getter(onMethod=@__({@DynamoDbAttribute("addressType")}))  private String addressType;
 
-    @Getter(onMethod=@__({@DynamoDbAttribute("address")}))  private String address;
+    @Getter(onMethod=@__({@DynamoDbAttribute("address")}))
+    @ToString.Exclude
+    private String address;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
 }

@@ -5,14 +5,14 @@ import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationRecipient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.SendMessageRequest;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.Action;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -57,11 +57,13 @@ public class IONotificationService   {
                     Instant checkFromWhen = Instant.now().minus(ioactivationSendolderthanDays, ChronoUnit.DAYS);
                     if (checkFromWhen.isBefore(lastDisabledStateTransitionTimestamp))
                     {
-                        log.info("there is a disabled transition more recent than configured days, starting from that checkpoint");
+                        log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} there is a disabled transition more recent than configured days, starting from that checkpoint lastDisabledStateTransitionTimestamp={}", internalId, lastDisabledStateTransitionTimestamp);
                         checkFromWhen = lastDisabledStateTransitionTimestamp;
                     }
+                    else {
+                        log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} lastDisabledStateTransitionTimestamp={} checkFromWhen={}", internalId, lastDisabledStateTransitionTimestamp, checkFromWhen);
+                    }
 
-                    log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} lastDisabledStateTransitionTimestamp={} checkFromWhen={}", internalId, lastDisabledStateTransitionTimestamp, checkFromWhen);
                     Action action = Action.builder()
                             .actionId(UUID.randomUUID().toString())
                             .internalId(internalId)
@@ -133,7 +135,7 @@ public class IONotificationService   {
 
 
     public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotification sentNotification) {
-        log.info("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
+        log.debug("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
         SendMessageRequest sendMessageRequest = this.getSendMessageRequest(sentNotification, internalId);
         return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest)
                 .flatMap(res -> {

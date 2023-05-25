@@ -6,7 +6,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.commons.log.MDCWebFilter;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import lombok.extern.slf4j.Slf4j;
@@ -39,14 +39,20 @@ public class PnEventInboundService {
             @Override
             public FunctionRoutingResult routingResult(Message<?> message) {
                 MessageHeaders messageHeaders = message.getHeaders();
-                String traceId;
+
+                String traceId = null;
+                String messageId = null;
 
                 if (messageHeaders.containsKey("aws_messageId"))
-                    traceId = messageHeaders.get("aws_messageId", String.class);
-                else
-                    traceId = "traceId:" + UUID.randomUUID();
+                    messageId = messageHeaders.get("aws_messageId", String.class);
+                if (messageHeaders.containsKey("X-Amzn-Trace-Id"))
+                    traceId = messageHeaders.get("X-Amzn-Trace-Id", String.class);
 
-                MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
+                traceId = Objects.requireNonNullElseGet(traceId, () -> "traceId:" + UUID.randomUUID());
+
+                MDCUtils.clearMDCKeys();
+                MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
+                MDC.put(MDCUtils.MDC_PN_CTX_MESSAGE_ID, messageId);
                 return new FunctionRoutingResult(handleMessage(message));
             }
         };
