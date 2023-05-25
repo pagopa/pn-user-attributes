@@ -56,9 +56,8 @@ public class PnExternalChannelClient {
 
 
 
-    public Mono<String> sendPecConfirm(String recipientId, String address)
+    public Mono<String> sendPecConfirm(String requestId, String recipientId, String address)
     {
-        String requestId = UUID.randomUUID().toString();
         log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending PEC confirm", requestId);
 
         if ( ! pnUserattributesConfig.isDevelopment() ) {

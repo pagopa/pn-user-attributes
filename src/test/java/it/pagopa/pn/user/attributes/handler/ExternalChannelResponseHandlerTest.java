@@ -93,7 +93,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -125,7 +125,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -158,7 +158,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertThrows(NullPointerException.class, () -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -192,7 +192,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -220,14 +220,14 @@ class ExternalChannelResponseHandlerTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnExternalChannelClient.sendPecConfirm(Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
+        Mockito.when(pnExternalChannelClient.sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -259,7 +259,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -288,6 +288,6 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 }
