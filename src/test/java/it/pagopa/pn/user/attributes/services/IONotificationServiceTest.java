@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -87,7 +88,7 @@ class IONotificationServiceTest {
         // WHEN
         Mockito.when(this.pnDeliveryClient.searchNotificationPrivate(Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Flux.fromIterable(List.of(sentNotification)));
 
-        Mono<Void> mono = service.consumeIoActivationEvent(recipientId, Instant.now());
+        Mono<Void> mono = service.consumeIoActivationEvent(UUID.randomUUID().toString(), recipientId, Instant.now());
 
         //THEN
         assertDoesNotThrow(() -> {

@@ -92,12 +92,12 @@ public class IONotificationService   {
         }
     }
 
-    public Mono<Void> scheduleSendMessage(String internalId, SentNotification sentNotification) {
+    public Mono<Void> scheduleSendMessage(String actionIdPrefix, String internalId, SentNotification sentNotification) {
 
         return Mono.fromRunnable(() -> {
             log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={}", internalId);
             Action action = Action.builder()
-                    .actionId(UUID.randomUUID().toString())
+                    .actionId(actionIdPrefix +"_"+ UUID.randomUUID())
                     .internalId(internalId)
                     .sentNotification(sentNotification)
                     .timestamp(Instant.now())
@@ -120,12 +120,12 @@ public class IONotificationService   {
     }
 
 
-    public Mono<Void> consumeIoActivationEvent(String internalId, Instant checkFromWhen) {
+    public Mono<Void> consumeIoActivationEvent(String actionId, String internalId, Instant checkFromWhen) {
         log.info("consumeIoActivationEvent internalId={} checkFromWhen={}", internalId, checkFromWhen);
         return Mono.defer(() -> this.pnDeliveryClient.searchNotificationPrivate(checkFromWhen.atOffset(ZoneOffset.UTC), OffsetDateTime.now(ZoneOffset.UTC), internalId)
                 .flatMap(sentNotification -> {
                     log.info("scheduling send IO Message for iun={} internalId={}", sentNotification.getIun(), internalId);
-                    return this.scheduleSendMessage(internalId, sentNotification);
+                    return this.scheduleSendMessage(actionId, internalId, sentNotification);
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                       log.info("nothing to send  for internalId={}", internalId);
