@@ -28,6 +28,7 @@ public class ActionHandler {
                 Action action = message.getPayload();
                 MDC.put(MDCUtils.MDC_PN_IUN_KEY, action.getSentNotification().getIun());
                 MDC.put(MDCUtils.MDC_CX_ID_KEY, action.getInternalId());
+                MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, action.getActionId());
 
                 // messo lo starting process dopo, così nei log ha MDC aggiornato
                 log.logStartingProcess(process);
@@ -49,10 +50,11 @@ public class ActionHandler {
             try {
                 Action action = message.getPayload();
                 MDC.put(MDCUtils.MDC_CX_ID_KEY, action.getInternalId());
+                MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, action.getActionId());
                 // messo lo starting process dopo, così nei log ha MDC aggiornato
                 log.logStartingProcess(process);
                 log.debug("pnUserAttributesIoActivatedActionConsumer action={}", action);
-                MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoActivationEvent(action.getInternalId(), action.getCheckFromWhen()).then()).block();
+                MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoActivationEvent(action.getActionId(), action.getInternalId(), action.getCheckFromWhen()).then()).block();
                 log.logEndingProcess(process);
             } catch (Exception ex) {
                 HandleEventUtils.handleException(message.getHeaders(), ex);
