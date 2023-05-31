@@ -59,7 +59,7 @@ public class PnEventInboundService {
     }
 
     private String handleMessage(Message<?> message) {
-        log.debug("messaggio ricevuto da customRouter message={}", message);
+        log.debug("messaggio ricevuto da customRouter message");
         String eventType = (String) message.getHeaders().get("eventType");
         log.debug("messaggio ricevuto da customRouter eventType={}", eventType );
         if(eventType != null){
