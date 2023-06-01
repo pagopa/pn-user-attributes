@@ -239,6 +239,10 @@ Parameters:
     Type: Number
     Description: maximum autoscaling number of tasks 
 
+  LogAlarmStrategy:
+    Type: String
+    Default: 'FATAL'
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
@@ -295,6 +299,7 @@ Resources:
         AlbSecurityGroup: !Ref AlbSecurityGroup
         TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
+        LogAlarmStrategyV1: !Ref LogAlarmStrategy
 
   UserAttributesMicroserviceTaskManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
