@@ -38,25 +38,6 @@ Parameters:
 
 Resources:
 
-  # KMS AWS managed key for SSE pn-user-attributes DynamoDB table
-  UserAttributesTableEncryptKey:
-    Type: 'AWS::KMS::Key'
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      Description: Symmetric default key to encrypt table
-      KeySpec: SYMMETRIC_DEFAULT
-      KeyUsage: ENCRYPT_DECRYPT
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: 'kms:*'
-            Resource: '*'
-
   UserAttributesTable:
     Type: AWS::DynamoDB::Table
     UpdateReplacePolicy: Retain
@@ -92,10 +73,6 @@ Resources:
         StreamViewType: NEW_IMAGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
-      SSESpecification:
-        KMSMasterKeyId: !Ref UserAttributesTableEncryptKey
-        SSEEnabled: true
-        SSEType: KMS
           
   UserAttributesActionsQueue:
     Type: AWS::CloudFormation::Stack
@@ -149,8 +126,3 @@ Outputs:
   # Log group exports
   EcsLogGroup:
     Value: !GetAtt PnUserAttributesLogGroup.Outputs.LogGroupName
-
-
-  # Key per dynamotable
-  UserAttributesTableEncryptKeyId:
-    Value: !Ref UserAttributesTableEncryptKey

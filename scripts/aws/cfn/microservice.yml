@@ -143,10 +143,6 @@ Parameters:
     Type: String
     Description: 'Application load balancer security group'
 
-  UserAttributesTableEncryptKeyId:
-    Type: String
-    Description: 'Key per dynamodb'
-
   # OpenApi Bucket params
   MicroserviceBucketName:
     Type: String
@@ -336,12 +332,6 @@ Resources:
             Resource:
               - !Ref UserAttributesActionsQueueARN
               - !Ref ExternalChannels2UserAttributesQueueARN
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-            Resource:
-              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${UserAttributesTableEncryptKeyId}
 
   # Expose PN-user-attributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
