@@ -1,18 +1,18 @@
 package it.pagopa.pn.user.attributes.handler;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalAddressTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.CourtesyMessageProgressEventDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.LegalMessageSentDetailsDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.SingleStatusUpdateDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerifiedAddressUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.CourtesyMessageProgressEventDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAddressTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,7 +93,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -125,7 +125,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -158,7 +158,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertThrows(NullPointerException.class, () -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -192,7 +192,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -220,14 +220,14 @@ class ExternalChannelResponseHandlerTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnExternalChannelClient.sendPecConfirm(Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
+        Mockito.when(pnExternalChannelClient.sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -259,7 +259,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
 
@@ -288,6 +288,6 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 }

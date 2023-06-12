@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.utils;
 
 import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 

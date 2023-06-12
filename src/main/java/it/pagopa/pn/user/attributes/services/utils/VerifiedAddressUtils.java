@@ -3,11 +3,11 @@ package it.pagopa.pn.user.attributes.services.utils;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,8 @@ public class VerifiedAddressUtils {
 
     @NotNull
     private PnAuditLogEvent getLogEvent(AddressBookEntity addressBook) {
-        String logMessage = String.format("save addressbook - recipientId=%s - senderId=%s - channelType=%s",
-                addressBook.getRecipientId(), addressBook.getSenderId(), addressBook.getChannelType());
+        String logMessage = String.format("save addressbook - recipientId=%s - senderId=%s - channelType=%s - hashedAddress=%s",
+                addressBook.getRecipientId(), addressBook.getSenderId(), addressBook.getChannelType(), addressBook.getAddresshash());
 
         PnAuditLogEventType auditLogEventType = PnAuditLogEventType.AUD_AB_DD_INSUP;
         if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.APPIO.getValue())) {

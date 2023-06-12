@@ -1,12 +1,12 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,7 +102,40 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendPecConfirm(recipientId, address).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", recipientId, address).block(Duration.ofMillis(3000));
+        assertNotNull(res);
+    }
+
+
+    @Test
+    void sendPECConfirm_pecconfirm_skip() {
+        //Given
+        String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String address ="realaddress@pec.it";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        CourtesyChannelTypeDto courtesyChannelType = null;
+        String verificationCode = "12345";
+        String path = "/external-channels/v1/digital-deliveries/legal-full-message-requests/.*";
+
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId(recipientId);
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+
+
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+        // When - Then
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(path))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(204));
+
+        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", recipientId, address).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 

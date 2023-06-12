@@ -5,6 +5,8 @@
     "MaxTasksNumber": "1",
     "ValidationCodeMaxAttempts": "3",
     "VerificationCodeLegalTTL": "1d",
-    "VerificationCodeCourtesyTTL": "15m"
+    "VerificationCodeCourtesyTTL": "15m",
+    "CpuValue": "2048",
+    "MemoryAmount": "4GB"
   }
 }

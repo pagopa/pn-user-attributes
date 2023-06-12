@@ -1,11 +1,9 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.VerificationCodeEntityToLegalAndUnverifiedDigitalAddressDtoMapper;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -13,6 +11,8 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,8 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @Service
 @Slf4j
@@ -381,7 +383,7 @@ public class AddressBookService {
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
-                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, verificationCodeUtils.hashAddress(addressVerificationDto.getValue()),
+                            VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                     channelType, senderId, legal, addressVerificationDto.getValue());
                             return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
                         } else {

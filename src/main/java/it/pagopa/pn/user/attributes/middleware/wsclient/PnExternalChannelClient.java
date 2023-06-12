@@ -4,31 +4,29 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
-import it.pagopa.pn.commons.pnclients.CommonBaseClient;
+import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.ApiClient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalCourtesyMessagesApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.api.DigitalLegalMessagesApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalchannels.v1.dto.DigitalNotificationRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.api.DigitalCourtesyMessagesApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.api.DigitalLegalMessagesApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalNotificationRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.utils.TemplateGenerator;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static it.pagopa.pn.commons.pnclients.CommonBaseClient.elabExceptionMessage;
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_INVALID_COURTESY_CHANNEL;
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_INVALID_LEGAL_CHANNEL;
 
@@ -36,39 +34,32 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
  * Classe wrapper di pn-external-channels, con gestione del backoff
  */
 @Component
-@Slf4j
-public class PnExternalChannelClient extends CommonBaseClient {
+@lombok.CustomLog
+public class PnExternalChannelClient {
 
     public static final String EVENT_TYPE_VERIFICATION_CODE = "VerificationCode";
     private final PnUserattributesConfig pnUserattributesConfig;
-    private DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
-    private DigitalLegalMessagesApi digitalLegalMessagesApi;
+    private final DigitalCourtesyMessagesApi digitalCourtesyMessagesApi;
+    private final DigitalLegalMessagesApi digitalLegalMessagesApi;
     private final PnDataVaultClient dataVaultClient;
     private final TemplateGenerator templateGenerator;
 
-    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient dataVaultClient, TemplateGenerator templateGenerator) {
+    public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig,
+                                   DigitalCourtesyMessagesApi digitalCourtesyMessagesApi, DigitalLegalMessagesApi digitalLegalMessagesApi, PnDataVaultClient dataVaultClient,
+                                   TemplateGenerator templateGenerator) {
         this.pnUserattributesConfig = pnUserattributesConfig;
+        this.digitalCourtesyMessagesApi = digitalCourtesyMessagesApi;
+        this.digitalLegalMessagesApi = digitalLegalMessagesApi;
         this.dataVaultClient = dataVaultClient;
         this.templateGenerator = templateGenerator;
     }
 
-    @PostConstruct
-    public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
-
-        this.digitalLegalMessagesApi = new DigitalLegalMessagesApi(apiClient);
-
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalchannelsBasepath());
-
-        this.digitalCourtesyMessagesApi = new DigitalCourtesyMessagesApi(apiClient);
-    }
 
 
-    public Mono<String> sendPecConfirm(String recipientId, String address)
+    public Mono<String> sendPecConfirm(String requestId, String recipientId, String address)
     {
-        String requestId = UUID.randomUUID().toString();
+        log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending PEC confirm", requestId);
+
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
                     templateGenerator.generatePecConfirmBody(), pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject());
@@ -100,6 +91,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
 
     private Mono<String> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
     {
+        log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending legal verification code", requestId);
         String logMessage = String.format(
                 "sendLegalVerificationCode PEC sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
                 recipientId, LogUtils.maskEmailAddress(address), verificationCode, legalChannelType.getValue(), requestId);
@@ -162,6 +154,7 @@ public class PnExternalChannelClient extends CommonBaseClient {
 
     private Mono<String> sendCourtesyVerificationCode(String recipientId, String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
     {
+        log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending courtesy verification code", requestId);
         if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
         {
             String logMessage = String.format(
