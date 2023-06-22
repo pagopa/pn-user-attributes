@@ -369,7 +369,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-user-attributes-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: 3000
+        Limit: 300
 
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
