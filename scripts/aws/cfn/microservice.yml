@@ -235,7 +235,7 @@ Parameters:
     Description: minimum autoscaling number of tasks
 
   MaxTasksNumber:
-    Default: 6
+    Default: 1
     Type: Number
     Description: maximum autoscaling number of tasks 
 
