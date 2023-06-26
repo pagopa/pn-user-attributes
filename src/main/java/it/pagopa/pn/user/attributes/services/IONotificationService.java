@@ -174,8 +174,7 @@ public class IONotificationService   {
         sendMessageRequest.setSenderDenomination(notification.getSenderDenomination());
         sendMessageRequest.setIun(notification.getIun());
 
-        String subject = notification.getSenderDenomination() +"-"+ notification.getSubject();
-        sendMessageRequest.setSubject(subject);
+        sendMessageRequest.setSubject(prepareSubjectForIO(notification.getSenderDenomination(), notification.getSubject()));
 
         if(recipient.getPayment() != null){
             sendMessageRequest.setNoticeNumber(recipient.getPayment().getNoticeCode());
@@ -185,5 +184,17 @@ public class IONotificationService   {
         }
 
         return sendMessageRequest;
+    }
+
+    private String prepareSubjectForIO(String senderDenomination, String subject) {
+        // tronca il nome della PA se oltre i 50 caratteri, per lasciare spazio all'oggetto
+        // della notifica (IO supporta max 120 caratteri)
+        if (senderDenomination == null)
+            return subject;
+
+        if (senderDenomination.length() > 50)
+            senderDenomination = senderDenomination.substring(0,47) + "...";
+
+        return senderDenomination +" - "+ subject;
     }
 }
