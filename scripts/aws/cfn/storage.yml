@@ -24,10 +24,43 @@ Parameters:
     Type: String
     Description: 'Where to send CDC'
 
+  AlarmSNSTopicName:
+    Type: String
+    Description: 'Topic alarm'
+
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send Logs'
+  
+  LogRetention:
+    Type: Number
+    Default: 14
+
 Resources:
-   
+
+  # KMS AWS managed key for SSE pn-user-attributes DynamoDB table
+  UserAttributesTableEncryptKey:
+    Type: 'AWS::KMS::Key'
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Symmetric default key to encrypt table
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
   UserAttributesTable:
     Type: AWS::DynamoDB::Table
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain 
     Properties:
       TableName: !Sub '${ProjectName}-UserAttributes'
       AttributeDefinitions:
@@ -35,11 +68,20 @@ Resources:
           AttributeType: "S"
         - AttributeName: "sk"
           AttributeType: "S"
+        - AttributeName: "requestId"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "pk"
           KeyType: "HASH"
         - AttributeName: "sk"
           KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: "requestId-gsi"
+          KeySchema:
+            - AttributeName: "requestId"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
       BillingMode: "PAY_PER_REQUEST"
       TimeToLiveSpecification:
         AttributeName: "ttl"
@@ -48,14 +90,34 @@ Resources:
         StreamArn: !Ref CdcKinesisSourceStreamArn
       StreamSpecification: 
         StreamViewType: NEW_IMAGE
-  
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        KMSMasterKeyId: !Ref UserAttributesTableEncryptKey
+        SSEEnabled: true
+        SSEType: KMS
+          
   UserAttributesActionsQueue:
     Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain 
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
       Parameters:
         QueueName: !Sub '${ProjectName}-user-attributes-actions'
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName 
         DelaySeconds: 1
+
+  PnUserAttributesLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain 
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub '${ProjectName}-user-attributes'
+        LogGroupRetention: !Ref LogRetention
+        LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 
 Outputs:
 
@@ -72,6 +134,9 @@ Outputs:
   UserAttributesActionsQueueAlarmARN:
     Value: !GetAtt UserAttributesActionsQueue.Outputs.SqsDLQAlarmArn
     Description: pn-user-attributes-actions input queue alarm ARN
+  UserAttributesActionsQueueAgeAlarmARN:
+    Value: !GetAtt UserAttributesActionsQueue.Outputs.SqsAgeAlarmArn
+    Description: pn-user-attributes-actions input queue alarm ARN
 
   # Table parameters
   UserAttributesTableName:
@@ -80,3 +145,12 @@ Outputs:
   UserAttributesTableArn:
     Description: ARM Dynamo Name used by application to access the key-value store
     Value: !Sub '${UserAttributesTable.Arn}'
+
+  # Log group exports
+  EcsLogGroup:
+    Value: !GetAtt PnUserAttributesLogGroup.Outputs.LogGroupName
+
+
+  # Key per dynamotable
+  UserAttributesTableEncryptKeyId:
+    Value: !Ref UserAttributesTableEncryptKey

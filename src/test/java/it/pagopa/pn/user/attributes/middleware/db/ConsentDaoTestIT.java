@@ -1,18 +1,18 @@
 package it.pagopa.pn.user.attributes.middleware.db;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.user.attributes.LocalStackTestConfig;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Duration;
@@ -22,7 +22,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-@ExtendWith(SpringExtension.class)
 @Import(LocalStackTestConfig.class)
 @SpringBootTest
 public class ConsentDaoTestIT {
@@ -39,7 +38,10 @@ public class ConsentDaoTestIT {
     PnUserattributesConfig pnUserattributesConfig;
 
     @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
 
     TestDao<ConsentEntity> testDao;
 
@@ -80,7 +82,7 @@ public class ConsentDaoTestIT {
     }
 
     public static ConsentEntity newConsent(boolean accepted) {
-        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", "TOS", null);
+        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174000", ConsentTypeDto.TOS.getValue(), null);
         c.setAccepted(accepted);
         c.setCreated(Instant.now());
         c.setLastModified(Instant.now());

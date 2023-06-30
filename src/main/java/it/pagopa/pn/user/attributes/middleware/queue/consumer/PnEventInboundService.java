@@ -6,44 +6,60 @@
 package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import it.pagopa.pn.commons.log.MDCWebFilter;
+import it.pagopa.pn.commons.utils.MDCUtils;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING;
-import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_INVALID_EVENT_TYPE;
 
+import java.util.Objects;
 import java.util.UUID;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING;
 
 @Configuration
 @Slf4j
 public class PnEventInboundService {
 
+    private final String externalChannelEventQueueName;
+
+    public PnEventInboundService(PnUserattributesConfig cfg) {
+        this.externalChannelEventQueueName = cfg.getTopics().getFromexternalchannel();
+    }
 
     @Bean
     public MessageRoutingCallback customRouter() {
-       return message -> {
-           MessageHeaders messageHeaders = message.getHeaders();
-           String traceId = "";
+        return new MessageRoutingCallback() {
+            @Override
+            public FunctionRoutingResult routingResult(Message<?> message) {
+                MessageHeaders messageHeaders = message.getHeaders();
 
-           if (messageHeaders.containsKey("aws_messageId"))
-               traceId = messageHeaders.get("aws_messageId", String.class);
-           else
-               traceId = "traceId:" + UUID.randomUUID().toString();
+                String traceId = null;
+                String messageId = null;
 
-           MDC.put(MDCWebFilter.MDC_TRACE_ID_KEY, traceId);
+                if (messageHeaders.containsKey("aws_messageId"))
+                    messageId = messageHeaders.get("aws_messageId", String.class);
+                if (messageHeaders.containsKey("X-Amzn-Trace-Id"))
+                    traceId = messageHeaders.get("X-Amzn-Trace-Id", String.class);
 
-           return handleMessage(message);
-       };
+                traceId = Objects.requireNonNullElseGet(traceId, () -> "traceId:" + UUID.randomUUID());
+
+                MDCUtils.clearMDCKeys();
+                MDC.put(MDCUtils.MDC_TRACE_ID_KEY, traceId);
+                MDC.put(MDCUtils.MDC_PN_CTX_MESSAGE_ID, messageId);
+                return new FunctionRoutingResult(handleMessage(message));
+            }
+        };
     }
 
     private String handleMessage(Message<?> message) {
-        log.debug("messaggio ricevuto da customRouter "+message);
+        log.debug("messaggio ricevuto da customRouter message");
         String eventType = (String) message.getHeaders().get("eventType");
         log.debug("messaggio ricevuto da customRouter eventType={}", eventType );
         if(eventType != null){
@@ -51,12 +67,31 @@ public class PnEventInboundService {
                 return "pnUserAttributesIoActivatedActionConsumer";
             else if(ActionType.SEND_MESSAGE_ACTION.name().equals(eventType))
                 return "pnUserAttributesSendMessageActionConsumer";
+            else if(eventType.equals("EXTERNAL_CHANNELS_EVENT")) {
+                return "pnExternalChannelEventConsumer";
+            }
+            else
+            {
+                log.error("eventType not recognized, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
+                throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING);
+            }
         }else {
-            log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
-            throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING);
+            return handleOtherEvent(message);
+        }
+    }
+
+
+    @NotNull
+    private String handleOtherEvent(Message<?> message) {
+
+        String queueName = (String) message.getHeaders().get("aws_receivedQueue");
+        if (Objects.equals(queueName, externalChannelEventQueueName)) {
+            return "pnExternalChannelEventConsumer";
         }
 
-        throw new PnInternalException("eventType is not valid, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_INVALID_EVENT_TYPE);
+        log.error("eventType not present, cannot start scheduled action headers={} payload={}", message.getHeaders(), message.getPayload());
+        throw new PnInternalException("eventType not present, cannot start scheduled action", ERROR_CODE_USERATTRIBUTES_EVENT_TYPE_MISSING);
+
     }
 
     

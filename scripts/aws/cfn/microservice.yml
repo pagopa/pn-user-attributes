@@ -75,7 +75,7 @@ Parameters:
     Type: String
     Description: 'ARN of dynamodb table containing User Attributes information'
 
-  ExternalChannelBasePath:
+  ExternalChannelBaseUrl:
     Type: String
     Description: 'Base url of external channel microservice'
 
@@ -99,6 +99,10 @@ Parameters:
     Type: String
     Description: pn-user-attributes-actions input queue alarm ARN
 
+  UserAttributesActionsQueueAgeAlarmARN:
+    Type: String
+    Description: pn-user-attributes-actions input queue age alarm ARN
+
   ExternalChannels2UserAttributesQueueName:
     Type: String
     Description: 'external channels to user attributes queue name'
@@ -111,16 +115,136 @@ Parameters:
     Type: String
     Description: external channels to user attributes queue alarm ARN
 
+  ExternalChannels2UserAttributesQueueAgeAlarmARN:
+    Type: String
+    Description: external channels to user attributes queue age alarm ARN
+
   IoActivationSendOlderThanDays:
     Type: String
     Description: 'Parametro per il toc toc di Io'
-  
+
+  VerificationCodeLegalTTL:
+    Type: String
+    Description: 'Parametro durata massima per validazione per messaggi di tipo legal'
+
+  VerificationCodeCourtesyTTL:
+    Type: String
+    Description: 'Parametro durata massima per validazione per messaggi di cortesia'
+
+  ValidationCodeMaxAttempts:
+    Type: String
+    Description: 'Parametro numero massimo di tentativi di validazione'
+
   LogsKinesisSourceStreamArn:
     Type: String
     Description: 'Kinesis stream that receive logs'
 
+  AlbSecurityGroup:
+    Type: String
+    Description: 'Application load balancer security group'
+
+  UserAttributesTableEncryptKeyId:
+    Type: String
+    Description: 'Key per dynamodb'
+
+  # OpenApi Bucket params
+  MicroserviceBucketName:
+    Type: String
+    Default: ''
+    Description: 'Name of the bucket where the microservice files are copied during deploy'
+
+  MicroserviceBucketBaseKey:
+    Type: String
+    Default: ''
+    Description: 'Base key of the microservice in the s3 bucket'
+
+  # Log group parameters
+  EcsLogGroup:
+    Type: String
+    Description: 'Ecs log group name'
+
+  # Heath Check parameters
+  HealthCheckInterval:
+    Description: Seconds between two health check
+    Type: Number
+    Default: 60
+
+  HealthCheckTimeout:
+    Description: health check timeout seconds
+    Type: Number
+    Default: 5
+  
+  HealthyThresholdCount:
+    Description: |
+      The number of consecutive health checks successes required before considering 
+      an unhealthy target healthy. 
+    Type: Number
+    Default: 5
+  
+  UnhealthyThresholdCount:
+    Description: |
+      The number of consecutive health check failures required before considering a target unhealthy. 
+    Type: Number
+    Default: 2
+
+  # Instance parameters
+  # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+  # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+  # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+  # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+  # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+  CpuValue:
+    Type: Number
+    Default: 1024
+    Description: Fargate virtual CPU quantity 1024 equals one vCPU
+
+  # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+  # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+  # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+  # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+  # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+  MemoryAmount:
+    Type: String
+    Default: 2GB
+    Description: memory amount reserved to the task pod.
+    AllowedValues: [ 2GB, 4GB, 6GB, 8GB ]
+
+  # Autoscaling parameters
+  AutoscalingCheckPeriod:
+    Default: 60
+    Type: Number
+    Description: minimum autoscaling number of tasks\
+
+  AutoscalingDataPointN:
+    Default: 1
+    Type: Number
+    Description: activate when N datapoint on M
+
+  AutoscalingDataPointM:
+    Default: 1
+    Type: Number
+    Description: activate when N datapoint on M
+
+  AutoscalingThreshold:
+    Default: 70
+    Type: String
+  
+  MinTasksNumber:
+    Default: 1
+    Type: Number
+    Description: minimum autoscaling number of tasks
+
+  MaxTasksNumber:
+    Default: 6
+    Type: Number
+    Description: maximum autoscaling number of tasks 
+
+  LogAlarmStrategy:
+    Type: String
+    Default: 'FATAL'
+
 Conditions:
-  UseExternalChannelMock: !Equals [ !Ref ExternalChannelBasePath, "Mock" ]
+  UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
 Resources:
 
@@ -130,9 +254,20 @@ Resources:
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/ecs-service.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
-        CpuValue: 1024
-        MemoryAmount: 2GB
+        MicroServiceUniqueName: !Sub '${ProjectName}-user-attributes'
+        CpuValue: !Ref CpuValue
+        MemoryAmount: !Ref MemoryAmount
+        HealthCheckTimeout: !Ref HealthCheckTimeout
+        HealthCheckInterval: !Ref HealthCheckInterval
+        HealthyThresholdCount: !Ref HealthyThresholdCount
+        UnhealthyThresholdCount: !Ref UnhealthyThresholdCount
+        AutoscalingStrategy: REST-API
+        AutoscalingThreshold: !Ref AutoscalingThreshold
+        AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
+        MinTasksNumber: !Ref MinTasksNumber
+        MaxTasksNumber: !Ref MaxTasksNumber
+        AutoscalingDataPointN: !Ref AutoscalingDataPointN
+        AutoscalingDataPointM: !Ref AutoscalingDataPointM
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         ContainerImageURI: !Sub '${ContainerImageUri}'
         ContainerEnvEntry1: !Sub 'AWS_REGIONCODE=${AWS::Region}'
@@ -143,13 +278,17 @@ Resources:
           Fn::If:
             - UseExternalChannelMock
             - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-            - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBasePath}'
+            - !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_BASEPATH=${ExternalChannelBaseUrl}'
         ContainerEnvEntry6: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALCHANNELS_HEADER_EXTCH_CX_ID=${HeaderValueExternalChannelCxId}'
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_IOACTIVATIONSENDOLDERTHANDAYS=${IoActivationSendOlderThanDays}'
-        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName},${ExternalChannels2UserAttributesQueueName}'
         ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_TOPICS_ACTIONS=${UserAttributesActionsQueueName}'
+        ContainerEnvEntry12: !Sub 'PN_USER_ATTRIBUTES_VALIDATIONCODEMAXATTEMPTS=${ValidationCodeMaxAttempts}'
+        ContainerEnvEntry13: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODELEGALTTL=${VerificationCodeLegalTTL}'
+        ContainerEnvEntry14: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODECOURTESYTTL=${VerificationCodeCourtesyTTL}'
+        ContainerEnvEntry15: !Sub 'PN_USER_ATTRIBUTES_TOPICS_FROMEXTERNALCHANNEL=${ExternalChannels2UserAttributesQueueName}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -157,14 +296,14 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        AlbSecurityGroup: !Ref AlbSecurityGroup
+        TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
+        EcsLogGroup: !Ref EcsLogGroup
+        LogAlarmStrategyV1: !Ref LogAlarmStrategy
 
-  UserAttributesMicroserviceTaskPolicy:
-    Type: AWS::IAM::Policy
+  UserAttributesMicroserviceTaskManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: !Sub '${ProjectName}-UserAttributes-CustomTaskPolicy'
-      Roles:
-        - !GetAtt UserAttributesMicroservice.Outputs.TaskRoleName
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -182,6 +321,7 @@ Resources:
               - dynamodb:UpdateItem
             Resource:
               - !Ref UserAttributesTableArn
+              - !Sub "${UserAttributesTableArn}/*"
           - Effect: Allow
             Action:
               - sqs:ChangeMessageVisibility
@@ -195,14 +335,21 @@ Resources:
               - sqs:SendMessageBatch
             Resource:
               - !Ref UserAttributesActionsQueueARN
+              - !Ref ExternalChannels2UserAttributesQueueARN
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource:
+              - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${UserAttributesTableEncryptKeyId}
 
-  # Expose PN-UserAttributes microservice public API with API-GW for WEB usage
+  # Expose PN-user-attributes microservice public API with API-GW for WEB usage
   UserAttributesMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-UserAttributes'
+        MicroServiceUniqueName: !Sub '${ProjectName}-user-attributes'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -211,12 +358,16 @@ Resources:
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-user-consents-WEB-aws.yaml
+
   UserAttributesMicroservicePublicWebApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-UserAttributes-web'
+        WAFName: !Sub '${ProjectName}-user-attributes-web'
+        IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: 3000
 
@@ -225,9 +376,9 @@ Resources:
   AddressBookMicroservicePublicWebAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBook'
+        MicroServiceUniqueName: !Sub '${ProjectName}-address-book'
         IntendedUsage: WEB
         DnsName: !Ref WebApiDnsName
         ProjectName: !Ref ProjectName
@@ -235,13 +386,17 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn    
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-address-book-WEB-aws.yaml
+
   AddressBookMicroservicePublicWebApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-AddressBook-web'
+        WAFName: !Sub '${ProjectName}-address-book-web'
+        IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: 3000
 
@@ -249,9 +404,9 @@ Resources:
   AddressBookMicroservicePublicIoAPI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service.yaml"
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
       Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-AddressBookIO'
+        MicroServiceUniqueName: !Sub '${ProjectName}-address-book-io'
         IntendedUsage: IO
         DnsName: !Ref IoApiDnsName
         ProjectName: !Ref ProjectName
@@ -259,13 +414,17 @@ Resources:
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
         ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn    
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-address-book-io-IO-aws.yaml
+
   AddressBookMicroservicePublicIoApiWaf:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
       Parameters:
-        WAFName: !Sub '${ProjectName}-AddressBook-io'
+        WAFName: !Sub '${ProjectName}-address-book-io'
+        IntendedUsage: IO
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.APIGatewayARN
   
   ## Dashboard
@@ -290,14 +449,21 @@ Resources:
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
         AlarmArns: !Join
           - ','
-          - - !GetAtt UserAttributesMicroservice.Outputs.AutoScalingAlarmArn
-            - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
+          - - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
+            - !Ref UserAttributesActionsQueueAgeAlarmARN
+            - !Ref ExternalChannels2UserAttributesQueueAgeAlarmARN
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
             - !Ref ExternalChannels2UserAttributesQueueARN
+        LogGroupsNames: !Join
+          - ','
+          - - !Sub '/aws/ecs/${ProjectName}-user-attributes'

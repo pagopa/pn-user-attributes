@@ -18,6 +18,8 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE;
 
@@ -47,8 +49,18 @@ public class PnUserattributesConfig {
     private String verificationCodeMessageSMS;
     private String verificationCodeMessageEMAIL;
     private String verificationCodeMessageEMAILSubject;
+    private String verificationCodeMessagePEC;
+    private String verificationCodeMessagePECSubject;
+    private String verificationCodeMessagePECConfirm;
+    private String verificationCodeMessagePECConfirmSubject;
 
     private int ioactivationSendolderthandays;
+
+    private int validationCodeMaxAttempts;
+    private Duration verificationCodeLegalTTL;
+    private Duration verificationCodeCourtesyTTL;
+
+    private List<String> externalChannelDigitalCodesSuccess;
 
     private Topics topics;
 
@@ -56,6 +68,7 @@ public class PnUserattributesConfig {
     public static class Topics {
 
         private String actions;
+        private String fromexternalchannel;
 
     }
 
@@ -65,8 +78,12 @@ public class PnUserattributesConfig {
     @PostConstruct
     public void init(){
         this.verificationCodeMessageEMAILSubject = fetchMessage("emailsubject.txt");
-        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.txt");
+        this.verificationCodeMessageEMAIL = fetchMessage("emailbody.html");
         this.verificationCodeMessageSMS = fetchMessage("smsbody.txt");
+        this.verificationCodeMessagePECSubject = fetchMessage("pecsubject.txt");
+        this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
+        this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
+        this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
 
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");

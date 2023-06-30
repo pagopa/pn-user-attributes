@@ -1,15 +1,11 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyDigitalAddressDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import org.junit.jupiter.api.BeforeEach;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyDigitalAddressDto;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -18,9 +14,16 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 @WebFluxTest(controllers = {CourtesyAddressController.class})
 class CourtesyAddressControllerTest {
+
     private static final String PA_ID = "x-pagopa-pn-cx-id";
+    private static final String PN_CX_TYPE_HEADER = "x-pagopa-pn-cx-type";
+    private static final String PN_CX_TYPE_PF = "PF";
     private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
     private static final String CHANNELTYPE = "SMS";
@@ -31,24 +34,6 @@ class CourtesyAddressControllerTest {
     @MockBean
     AddressBookService svc;
 
-
-    @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
-
-    PnAuditLogEvent logEvent;
-
-    @BeforeEach
-    public void init(){
-        logEvent = Mockito.mock(PnAuditLogEvent.class);
-
-        Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
-        Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(pnAuditLogBuilder.uid(Mockito.anyString())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.log()).thenReturn(logEvent);
-    }
-
     @Test
     void postRecipientCourtesyAddress() {
         // Given
@@ -58,16 +43,12 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("test@email.com");
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
-                                         Mockito.anyString(),
-                                         Mockito.any(),
-                                         Mockito.any()))
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
-
 
         // Then
         webTestClient.post()
@@ -75,11 +56,10 @@ class CourtesyAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerificationDto)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isNoContent();
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+                .expectStatus()
+                .isNoContent();
     }
 
     @Test
@@ -91,16 +71,11 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("+393333300666");
 
         // When
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
-
 
         // Then
         webTestClient.post()
@@ -108,11 +83,10 @@ class CourtesyAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerificationDto)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().is5xxServerError();
-
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
+                .expectStatus()
+                .is5xxServerError();
     }
 
     @Test
@@ -124,16 +98,12 @@ class CourtesyAddressControllerTest {
 
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setVerificationCode("12345");
-        addressVerificationDto.setValue("value");
+        addressVerificationDto.setValue("00393333300666");
 
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
-
 
         // Then
         webTestClient.post()
@@ -141,8 +111,10 @@ class CourtesyAddressControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(addressVerificationDto)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus()
+                .isOk();
     }
 
     @Test
@@ -157,13 +129,8 @@ class CourtesyAddressControllerTest {
         addressVerificationDto.setValue("value");
 
         // When
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any(),
-                        Mockito.any()))
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
-
 
         // Then
         webTestClient.post()
@@ -172,7 +139,8 @@ class CourtesyAddressControllerTest {
                 .bodyValue(addressVerificationDto)
                 .header(PA_ID, RECIPIENTID)
                 .exchange()
-                .expectStatus().is4xxClientError();
+                .expectStatus()
+                .is4xxClientError();
     }
 
     @Test
@@ -185,20 +153,17 @@ class CourtesyAddressControllerTest {
 
         // When
         Mono<Object> voidReturn  = Mono.just("");
-        Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any()))
+        when(svc.deleteCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
         webTestClient.delete()
                 .uri(url)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isNoContent();
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+                .expectStatus()
+                .isNoContent();
     }
 
     @Test
@@ -210,21 +175,17 @@ class CourtesyAddressControllerTest {
 
 
         // When
-        Mono<Object> voidReturn  = Mono.just("");
-        Mockito.when(svc.deleteCourtesyAddressBook(Mockito.anyString(),
-                        Mockito.anyString(),
-                        Mockito.any()))
+        when(svc.deleteCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
         webTestClient.delete()
                 .uri(url)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().is5xxServerError();
-
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
+                .expectStatus()
+                .is5xxServerError();
     }
 
     @Test
@@ -237,9 +198,8 @@ class CourtesyAddressControllerTest {
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);
 
-
         // When
-        Mockito.when(svc.getCourtesyAddressByRecipient(Mockito.anyString()))
+        when(svc.getCourtesyAddressByRecipient(anyString(), any(), any(), any()))
                 .thenReturn(retValue);
 
         // Then
@@ -247,8 +207,10 @@ class CourtesyAddressControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus()
+                .isOk();
     }
 
     @Test
@@ -265,7 +227,7 @@ class CourtesyAddressControllerTest {
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);
 
-        Mockito.when(svc.getCourtesyAddressByRecipientAndSender(Mockito.anyString(), Mockito.anyString()))
+        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
                 .thenReturn(retValue);
 
         // Then

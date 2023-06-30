@@ -2,12 +2,13 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.AddressDtoDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.RecipientAddressesDtoDto;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -40,14 +41,16 @@ class PnDataVaultClientTest {
     private PnDataVaultClient pnDataVaultClient;
 
     @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
-
-    @MockBean
     ActionHandler actionHandler;
 
     @MockBean
     SqsActionProducer sqsActionProducer;
 
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
    /*@MockBean
     private PnUserattributesConfig pnUserattributesConfig;
 */
@@ -70,9 +73,6 @@ class PnDataVaultClientTest {
         String internalId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String addressId = "abcd-123-fghi";
         String realaddress ="realaddress";
-        String name= "mario";
-        String surname= "rossi";
-        String ragionesociale= "mr srl";
         String path = "/datavault-private/v1/recipients/internal/{internalId}/addresses/{addressId}"
                 .replace("{internalId}",internalId)
                 .replace("{addressId}",addressId);
@@ -127,10 +127,6 @@ class PnDataVaultClientTest {
         //Given
         String internalId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String addressId = "abcd-123-fghi";
-        String realaddress ="realaddress";
-        String name= "mario";
-        String surname= "rossi";
-        String ragionesociale= "mr srl";
         String path = "/datavault-private/v1/recipients/internal/{internalId}/addresses/{addressId}"
                 .replace("{internalId}",internalId)
                 .replace("{addressId}",addressId);
@@ -152,7 +148,6 @@ class PnDataVaultClientTest {
     @Test
     void getRecipientDenominationByInternalId() throws JsonProcessingException {
         //Given
-        String cf = "RSSMRA85T10A562S";
         String iuid= "abcd-123-fghi";
         String denominazione = "mario rossi";
         List<String> list = new ArrayList<>();

@@ -15,7 +15,7 @@ import java.time.Instant;
 public class BaseEntity {
 
     public static final String COL_PK = "pk";
-    private static final String COL_SK = "sk";
+    public static final String COL_SK = "sk";
     private static final String COL_CREATED = "created";
     private static final String COL_LAST_MODIFIED = "lastModified";
 

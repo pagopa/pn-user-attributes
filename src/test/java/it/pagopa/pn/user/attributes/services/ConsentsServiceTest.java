@@ -1,23 +1,21 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentActionDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.ConsentTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
-import it.pagopa.pn.user.attributes.mapper.ConsentEntityConsentDtoMapper;
 import it.pagopa.pn.user.attributes.middleware.db.ConsentDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentActionDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,16 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
-@SpringBootTest
-@ActiveProfiles("test")
-@ContextConfiguration(classes = {
-        PnAuditLogBuilder.class
-})
+@ExtendWith(MockitoExtension.class)
 class ConsentsServiceTest {
 
     private final Duration d = Duration.ofMillis(3000);
-
-
 
     @InjectMocks
     private ConsentsService service;
@@ -48,10 +40,10 @@ class ConsentsServiceTest {
     IConsentDao consentDao;
 
     @Mock
-    ConsentEntityConsentDtoMapper consentEntityConsentDtoMapper;
+    ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper;
 
     @Mock
-    ConsentActionDtoToConsentEntityMapper consentActionDtoToConsentEntityMapper;
+    PnExternalRegistryClient pnExternalRegistryClient;
 
     @Test
     void consentAction_Accept() {
@@ -101,16 +93,147 @@ class ConsentsServiceTest {
         assertNotNull( result );
     }
 
+
+    @Test
+    void getConsentByType_version() {
+        //GIVEN
+        String recipientId = "recipientid";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
+        ConsentDto expected = new ConsentDto();
+        expected.setAccepted(true);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(false);
+
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1);
+        consentEntity.setAccepted(true);
+
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.just(consentEntity));
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.empty());
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, vers1).block(d);
+
+        //THEN
+        assertEquals( expected, result );
+    }
+
+
+    @Test
+    void getConsentByType_version_notaccepted() {
+        //GIVEN
+        String recipientId = "recipientid";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
+        ConsentDto expected = new ConsentDto();
+        expected.setAccepted(false);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(false);
+
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1);
+        consentEntity.setAccepted(false);
+
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.just(consentEntity));
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.empty());
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, vers1).block(d);
+
+        //THEN
+        assertEquals( expected, result );
+    }
+
+
+    @Test
+    void getConsentByType_version_notfound() {
+        //GIVEN
+        String recipientId = "recipientid";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
+        ConsentDto expected = new ConsentDto();
+        expected.setAccepted(false);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(false);
+
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1+"OLD");
+        consentEntity.setAccepted(true);
+
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.empty());
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.fromIterable(List.of(consentEntity)));
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, vers1).block(d);
+
+        //THEN
+        assertEquals( expected, result );
+    }
+
     @Test
     void getConsentByType() {
         //GIVEN
         String recipientId = "recipientid";
         ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
         ConsentDto expected = new ConsentDto();
+        expected.setAccepted(true);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(false);
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
-        Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.just(new ConsentEntity()));
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1);
+        consentEntity.setAccepted(true);
 
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.just(consentEntity));
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.empty());
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
+
+        //THEN
+        assertEquals( expected, result );
+    }
+
+
+    @Test
+    void getConsentByType_notaccepted() {
+        //GIVEN
+        String recipientId = "recipientid";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
+        ConsentDto expected = new ConsentDto();
+        expected.setAccepted(false);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(false);
+
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1);
+        consentEntity.setAccepted(false);
+
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.just(consentEntity));
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.empty());
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
 
         // WHEN
         ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
@@ -120,35 +243,58 @@ class ConsentsServiceTest {
     }
 
     @Test
-    void getConsentByType_differentCxType() {
+    void getConsentByType_isFirst() {
         //GIVEN
         String recipientId = "recipientid";
         ConsentTypeDto dto = ConsentTypeDto.TOS;
+        String vers1 = "VERS1";
+        ConsentDto expected = new ConsentDto();
+        expected.setAccepted(false);
+        expected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        expected.setConsentType(dto);
+        expected.setConsentVersion(vers1);
+        expected.isFirstAccept(true);
+
+        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1+"_NO");
+        consentEntity.setAccepted(true);
+
+
+        Mockito.when(consentDao.getConsentByType(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId, dto.getValue(), vers1)).thenReturn(Mono.empty());
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.empty());
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
+
+        //THEN
+        assertEquals( expected, result );
+    }
+
+    @Test
+    void getConsentByType_differentVersion() {
+        //GIVEN
+        String recipientId = "recipientid";
+        String vers1 = "VERS1";
+        String vers2 = "VERS2";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
         ConsentDto PFexpected = new ConsentDto();
-        PFexpected.setAccepted(true);
-        ConsentDto PGexpected = new ConsentDto();
         PFexpected.setAccepted(false);
+        PFexpected.setConsentType(dto);
+        PFexpected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        PFexpected.setConsentVersion(vers2);
+        PFexpected.isFirstAccept(false);
 
         String PFrecipientId = CxTypeAuthFleetDto.PF + "-" + recipientId;
-        String PGrecipientId = CxTypeAuthFleetDto.PG + "-" + recipientId;
 
-        ConsentEntity PFconsentEntity = new ConsentEntity();
+        ConsentEntity PFconsentEntity = new ConsentEntity(PFrecipientId, dto.getValue(), vers1);
         PFconsentEntity.setLastModified(Instant.now());
         PFconsentEntity.setAccepted(true);
-        PFconsentEntity.setPk(PFrecipientId);
-        PFconsentEntity.setSk(dto.getValue());
-
-        ConsentEntity PGconsentEntity = new ConsentEntity();
-        PGconsentEntity.setLastModified(Instant.now());
-        PGconsentEntity.setAccepted(false);
-        PGconsentEntity.setPk(PFrecipientId);
-        PGconsentEntity.setSk(dto.getValue());
 
 
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers2));
         Mockito.when(consentDao.getConsentByType(Mockito.eq(PFrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PFconsentEntity));
-        Mockito.when(consentEntityConsentDtoMapper.toDto(PFconsentEntity)).thenReturn(PFexpected);
-        Mockito.when(consentDao.getConsentByType(Mockito.eq(PGrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.just(PGconsentEntity));
-        Mockito.when(consentEntityConsentDtoMapper.toDto(PGconsentEntity)).thenReturn(PGexpected);
+        Mockito.when(consentDao.getConsents(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId)).thenReturn(Flux.fromIterable(List.of(PFconsentEntity)));
 
         // WHEN
         ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null).block(d);
@@ -157,16 +303,54 @@ class ConsentsServiceTest {
         assertEquals( PFexpected, result );
     }
 
+
+    @Test
+    void getConsentByType_differentCxType() {
+        //GIVEN
+        String recipientId = "recipientid";
+        String vers1 = "VERS1";
+        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        ConsentDto PGexpected = new ConsentDto();
+        PGexpected.setAccepted(false);
+        PGexpected.recipientId(CxTypeAuthFleetDto.PG.getValue() + "-" + recipientId);
+        PGexpected.setConsentType(dto);
+        PGexpected.setConsentVersion(vers1);
+        PGexpected.isFirstAccept(true);
+
+        String PGrecipientId = CxTypeAuthFleetDto.PG + "-" + recipientId;
+
+        ConsentEntity PFconsentEntity = new ConsentEntity(PGrecipientId, dto.getValue(), vers1);
+        PFconsentEntity.setLastModified(Instant.now());
+        PFconsentEntity.setAccepted(true);
+
+
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PG.getValue())).thenReturn(Mono.just(vers1));
+        Mockito.when(consentDao.getConsentByType(Mockito.eq(PGrecipientId), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(consentDao.getConsents(PGrecipientId)).thenReturn(Flux.empty());
+
+        // WHEN
+        ConsentDto result = service.getConsentByType(recipientId, CxTypeAuthFleetDto.PG, dto, null).block(d);
+
+        //THEN
+        assertEquals( PGexpected, result );
+    }
+
     @Test
     void getConsentByType_NotFound() {
         //GIVEN
         String recipientId = "recipientid";
+        String vers1 = "VERS1";
         ConsentTypeDto dto = ConsentTypeDto.TOS;
-        ConsentDto expected = new ConsentDto();
+        ConsentDto PFexpected = new ConsentDto();
+        PFexpected.setAccepted(false);
+        PFexpected.recipientId(CxTypeAuthFleetDto.PF.getValue() + "-" + recipientId);
+        PFexpected.setConsentType(dto);
+        PFexpected.setConsentVersion(vers1);
+        PFexpected.isFirstAccept(true);
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
         Mockito.when(consentDao.getConsentByType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
+        Mockito.when(consentDao.getConsents(Mockito.any())).thenReturn(Flux.empty());
 
         // WHEN
         Mono<ConsentDto> mono =  service.getConsentByType(recipientId, CxTypeAuthFleetDto.PF, dto, null);
@@ -182,14 +366,15 @@ class ConsentsServiceTest {
     void getConsents() {
         //GIVEN
         String recipientId = "recipientid";
+        String vers1 = "VERS1";
         ConsentTypeDto dto = ConsentTypeDto.TOS;
         ConsentDto expected = new ConsentDto();
         List<ConsentEntity> list = new ArrayList<>();
         list.add(ConsentDaoTestIT.newConsent(true));
         list.add(ConsentDaoTestIT.newConsent(false));
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
         Mockito.when(consentDao.getConsents(Mockito.any())).thenReturn(Flux.fromIterable(list));
+        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
 
 
         // WHEN
@@ -204,10 +389,7 @@ class ConsentsServiceTest {
     void getConsents_NotFound() {
         //GIVEN
         String recipientId = "recipientid";
-        ConsentTypeDto dto = ConsentTypeDto.TOS;
-        ConsentDto expected = new ConsentDto();
 
-        Mockito.when(consentEntityConsentDtoMapper.toDto(Mockito.any())).thenReturn(expected);
         Mockito.when(consentDao.getConsents(Mockito.any())).thenReturn(Flux.empty());
 
 

@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
 import lombok.*;
 
 import java.time.Instant;

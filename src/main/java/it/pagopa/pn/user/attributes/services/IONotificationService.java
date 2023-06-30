@@ -1,18 +1,18 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.api.dto.events.MomProducer;
+import it.pagopa.pn.api.dto.events.StandardEventHeader;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.DateFormatUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.NotificationRecipient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.delivery.io.v1.dto.SentNotification;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.SendMessageRequest;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.Action;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipient;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -22,8 +22,9 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_MISSING_RECIPIENTID;
 
@@ -56,11 +57,13 @@ public class IONotificationService   {
                     Instant checkFromWhen = Instant.now().minus(ioactivationSendolderthanDays, ChronoUnit.DAYS);
                     if (checkFromWhen.isBefore(lastDisabledStateTransitionTimestamp))
                     {
-                        log.info("there is a disabled transition more recent than configured days, starting from that checkpoint");
+                        log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} there is a disabled transition more recent than configured days, starting from that checkpoint lastDisabledStateTransitionTimestamp={}", internalId, lastDisabledStateTransitionTimestamp);
                         checkFromWhen = lastDisabledStateTransitionTimestamp;
                     }
+                    else {
+                        log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} lastDisabledStateTransitionTimestamp={} checkFromWhen={}", internalId, lastDisabledStateTransitionTimestamp, checkFromWhen);
+                    }
 
-                    log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={} lastDisabledStateTransitionTimestamp={} checkFromWhen={}", internalId, lastDisabledStateTransitionTimestamp, checkFromWhen);
                     Action action = Action.builder()
                             .actionId(UUID.randomUUID().toString())
                             .internalId(internalId)
@@ -89,12 +92,12 @@ public class IONotificationService   {
         }
     }
 
-    public Mono<Void> scheduleSendMessage(String internalId, SentNotification sentNotification) {
+    public Mono<Void> scheduleSendMessage(String actionIdPrefix, String internalId, SentNotification sentNotification) {
 
         return Mono.fromRunnable(() -> {
             log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={}", internalId);
             Action action = Action.builder()
-                    .actionId(UUID.randomUUID().toString())
+                    .actionId(actionIdPrefix +"_"+ UUID.randomUUID())
                     .internalId(internalId)
                     .sentNotification(sentNotification)
                     .timestamp(Instant.now())
@@ -117,12 +120,12 @@ public class IONotificationService   {
     }
 
 
-    public Mono<Void> consumeIoActivationEvent(String internalId, Instant checkFromWhen) {
+    public Mono<Void> consumeIoActivationEvent(String actionId, String internalId, Instant checkFromWhen) {
         log.info("consumeIoActivationEvent internalId={} checkFromWhen={}", internalId, checkFromWhen);
         return Mono.defer(() -> this.pnDeliveryClient.searchNotificationPrivate(checkFromWhen.atOffset(ZoneOffset.UTC), OffsetDateTime.now(ZoneOffset.UTC), internalId)
                 .flatMap(sentNotification -> {
                     log.info("scheduling send IO Message for iun={} internalId={}", sentNotification.getIun(), internalId);
-                    return this.scheduleSendMessage(internalId, sentNotification);
+                    return this.scheduleSendMessage(actionId, internalId, sentNotification);
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                       log.info("nothing to send  for internalId={}", internalId);
@@ -132,7 +135,7 @@ public class IONotificationService   {
 
 
     public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotification sentNotification) {
-        log.info("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
+        log.debug("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
         SendMessageRequest sendMessageRequest = this.getSendMessageRequest(sentNotification, internalId);
         return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest)
                 .flatMap(res -> {
@@ -145,9 +148,15 @@ public class IONotificationService   {
     @NotNull
     private SendMessageRequest getSendMessageRequest(SentNotification notification, String internalId) {
 
-        Optional<NotificationRecipient> recipient = notification.getRecipients().stream().filter(rec -> rec.getInternalId().equals(internalId)).findFirst();
-        if (recipient.isEmpty())
+        // recupero l'indice del recipient, mi servirà poi
+        OptionalInt indexRecipient = IntStream.range(0, notification.getRecipients().size())
+                .filter(i -> internalId.equals(notification.getRecipients().get(i).getInternalId()))
+                .findFirst();
+
+        if (indexRecipient.isEmpty())
             throw new PnInternalException("recipient is empty", ERROR_CODE_MISSING_RECIPIENTID);
+
+        NotificationRecipient recipient = notification.getRecipients().get(indexRecipient.getAsInt());
 
         SendMessageRequest sendMessageRequest = new SendMessageRequest();
         sendMessageRequest.setAmount(notification.getAmount());
@@ -155,21 +164,37 @@ public class IONotificationService   {
             sendMessageRequest.setDueDate(DateFormatUtils.parseDate(notification.getPaymentExpirationDate()).toOffsetDateTime());
         sendMessageRequest.setRequestAcceptedDate(notification.getSentAt());
 
-        sendMessageRequest.setRecipientTaxID(recipient.get().getTaxId());
+        sendMessageRequest.setRecipientTaxID(recipient.getTaxId());
+        sendMessageRequest.setRecipientInternalID(internalId);
+        sendMessageRequest.setRecipientIndex(indexRecipient.getAsInt());
+
+        // voglio inviare il CC
+        sendMessageRequest.setCarbonCopyToDeliveryPush(true);
 
         sendMessageRequest.setSenderDenomination(notification.getSenderDenomination());
         sendMessageRequest.setIun(notification.getIun());
 
-        String subject = notification.getSenderDenomination() +"-"+ notification.getSubject();
-        sendMessageRequest.setSubject(subject);
+        sendMessageRequest.setSubject(prepareSubjectForIO(notification.getSenderDenomination(), notification.getSubject()));
 
-        if(recipient.get().getPayment() != null){
-            sendMessageRequest.setNoticeNumber(recipient.get().getPayment().getNoticeCode());
-            sendMessageRequest.setCreditorTaxId(recipient.get().getPayment().getCreditorTaxId());
+        if(recipient.getPayment() != null){
+            sendMessageRequest.setNoticeNumber(recipient.getPayment().getNoticeCode());
+            sendMessageRequest.setCreditorTaxId(recipient.getPayment().getCreditorTaxId());
         }else {
             log.warn("Recipient haven't payment information - iun={}", notification.getIun());
         }
 
         return sendMessageRequest;
+    }
+
+    private String prepareSubjectForIO(String senderDenomination, String subject) {
+        // tronca il nome della PA se oltre i 50 caratteri, per lasciare spazio all'oggetto
+        // della notifica (IO supporta max 120 caratteri)
+        if (senderDenomination == null)
+            return subject;
+
+        if (senderDenomination.length() > 50)
+            senderDenomination = senderDenomination.substring(0,47) + "...";
+
+        return senderDenomination +" - "+ subject;
     }
 }

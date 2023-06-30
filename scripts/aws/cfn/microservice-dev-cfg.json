@@ -1,7 +1,14 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "Mock",
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
-    "IoActivationSendOlderThanDays": "7"
+    "IoActivationSendOlderThanDays": "7",
+    "ValidationCodeMaxAttempts": "3",
+    "VerificationCodeLegalTTL": "1d",
+    "VerificationCodeCourtesyTTL": "15m",
+    "MinTasksNumber": "2",
+    "MaxTasksNumber": "7",
+    "AutoscalingThreshold": "5400",
+    "CpuValue": "2048",
+    "MemoryAmount": "4GB"
   }
 }

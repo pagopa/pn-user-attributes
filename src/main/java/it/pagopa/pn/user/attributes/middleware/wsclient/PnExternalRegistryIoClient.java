@@ -1,58 +1,38 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 
-import io.netty.handler.timeout.TimeoutException;
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.log.PnLogger;
+import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
-import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.ApiClient;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.IoActivationApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.api.SendIoMessageApi;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.externalregistry.io.v1.dto.*;
-import it.pagopa.pn.user.attributes.middleware.wsclient.common.BaseClient;
-import lombok.extern.slf4j.Slf4j;
+import it.pagopa.pn.user.attributes.services.AuditLogService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
-import javax.annotation.PostConstruct;
-import java.net.ConnectException;
-import java.time.Duration;
 import java.util.List;
 
 /**
  * Classe wrapper di io-external-channel, con gestione del backoff
  */
 @Component
-@Slf4j
-public class PnExternalRegistryIoClient extends BaseClient {
+@lombok.CustomLog
+public class PnExternalRegistryIoClient extends CommonBaseClient {
 
-    private IoActivationApi ioApi;
-    private SendIoMessageApi ioMessageApi;
-    private final PnUserattributesConfig pnUserattributesConfig;
+    private final IoActivationApi ioApi;
+    private final SendIoMessageApi ioMessageApi;
     private final PnDataVaultClient pnDataVaultClient;
-    private final PnAuditLogBuilder auditLogBuilder;
+    private final AuditLogService auditLogService;
 
-    public PnExternalRegistryIoClient(PnUserattributesConfig pnUserattributesConfig, PnDataVaultClient pnDataVaultClient, PnAuditLogBuilder pnAuditLogBuilder) {
-        this.pnUserattributesConfig = pnUserattributesConfig;
+    public PnExternalRegistryIoClient(IoActivationApi ioApi, SendIoMessageApi ioMessageApi, PnDataVaultClient pnDataVaultClient, AuditLogService auditLogService) {
+        this.ioApi = ioApi;
+        this.ioMessageApi = ioMessageApi;
         this.pnDataVaultClient = pnDataVaultClient;
-        this.auditLogBuilder = pnAuditLogBuilder;
-    }
-
-    @PostConstruct
-    public void init(){
-        ApiClient apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
-
-        this.ioApi = new IoActivationApi(apiClient);
-
-        apiClient = new ApiClient(initWebClient(ApiClient.buildWebClientBuilder()).build());
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
-
-        this.ioMessageApi = new SendIoMessageApi(apiClient);
+        this.auditLogService = auditLogService;
     }
 
     /**
@@ -65,7 +45,8 @@ public class PnExternalRegistryIoClient extends BaseClient {
      */
     public Mono<Boolean> upsertServiceActivation(String internalId, boolean activated)
     {
-        log.info("upsertServiceActivation internalId={} activated={}", internalId, activated);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Upsert app IO activation");
+        log.debug("upsertServiceActivation internalId={} activated={}", internalId, activated);
 
         return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                 .take(1).next()
@@ -75,10 +56,6 @@ public class PnExternalRegistryIoClient extends BaseClient {
                     dto.setStatus(activated? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
 
                     return ioApi.upsertServiceActivation(dto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            )
                             .onErrorResume(throwable -> {
                                 log.error("error upserting service activation message={}", elabExceptionMessage(throwable) , throwable);
                                 return getServiceActivation(internalId);
@@ -91,17 +68,15 @@ public class PnExternalRegistryIoClient extends BaseClient {
     }
 
     public Mono<UserStatusResponse> checkValidUsers(String internalId) throws WebClientResponseException {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Check app IO user status");
+        log.debug("checkValidUsers internalId={}", internalId);
 
         return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                 .take(1).next()
                 .flatMap(user -> {
                     UserStatusRequest userStatusRequest = new UserStatusRequest();
                     userStatusRequest.setTaxId(user.getTaxId());
-                    return this.ioMessageApi.userStatus(userStatusRequest)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            );
+                    return this.ioMessageApi.userStatus(userStatusRequest);
                 });
     }
 
@@ -114,7 +89,8 @@ public class PnExternalRegistryIoClient extends BaseClient {
      */
     public Mono<Activation> getServiceActivation(String internalId)
     {
-        log.info("getServiceActivation internalId={}", internalId);
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Retrieving app IO activation");
+        log.debug("getServiceActivation internalId={}", internalId);
 
         return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                 .take(1).next()
@@ -123,10 +99,6 @@ public class PnExternalRegistryIoClient extends BaseClient {
                     dto.setFiscalCode(user.getTaxId());
 
                     return ioApi.getServiceActivationByPOST(dto)
-                            .retryWhen(
-                                    Retry.backoff(2, Duration.ofMillis(25))
-                                            .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException)
-                            )
                             .map(x -> {
                                 log.info("getServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
                                 return x;
@@ -135,16 +107,15 @@ public class PnExternalRegistryIoClient extends BaseClient {
     }
 
     public Mono<SendMessageResponse> sendIOMessage(SendMessageRequest sendMessageRequest) {
-        log.info("sendIOMessage sendMessageRequest iun={}", sendMessageRequest.getIun());
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Sending app IO message");
+        log.debug("sendIOMessage sendMessageRequest iun={}", sendMessageRequest.getIun());
 
-        PnAuditLogEvent logEvent = auditLogBuilder.before(PnAuditLogEventType.AUD_AD_SEND_IO, "sendIOMessage")
-                .iun(sendMessageRequest.getIun())
-                .build();
+        final PnAuditLogEvent logEvent = auditLogService.buildAuditLogEventWithIUN(sendMessageRequest.getIun(),
+                sendMessageRequest.getRecipientIndex(), PnAuditLogEventType.AUD_DA_SEND_IO, "sendIOMessage after io activated");
 
-        logEvent.log();
         return this.ioMessageApi.sendIOMessage(sendMessageRequest)
                 .onErrorResume(throwable -> {
-                    logEvent.generateFailure(throwable.getMessage()).log();
+                    logEvent.generateFailure("error sending message to ext-registry for IO exc={}", throwable).log();
                     return Mono.error(throwable);
                 })
                 .map(res -> {

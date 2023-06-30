@@ -4,57 +4,37 @@
   <parent>
     <groupId>it.pagopa.pn</groupId>
     <artifactId>pn-parent</artifactId>
-    <version>1.0.0</version>
+    <version>2.1.0</version>
     <relativePath />
   </parent>
   <groupId>it.pagopa.pn.user.attributes</groupId>
   <artifactId>pn-user-attributes</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>2.0.0</version>
   <name>pn-user-attributes</name>
   <description>TODO</description>
   <scm>
     <connection>${git.conn}</connection>
     <developerConnection>${git.devConn}</developerConnection>
     <url>${git.url}</url>
-    <tag>v1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <springdoc-openapi-webflux-version>1.6.7</springdoc-openapi-webflux-version>
-    <software.amazon.awssdk-version>2.17.174</software.amazon.awssdk-version>
-    <awspring.version>2.3.2</awspring.version>
-    <testcontainers.version>1.16.2</testcontainers.version>
-  </properties>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.awspring.cloud</groupId>
-        <artifactId>spring-cloud-aws-dependencies</artifactId>
-        <version>${awspring.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers-bom</artifactId>
-        <version>${testcontainers.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+  <properties>
+    <sonar.coverage.exclusions>
+      src/main/java/it/pagopa/pn/user/attributes/springbootcfg/**
+    </sonar.coverage.exclusions>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-commons</artifactId>
-      <version>1.0.0</version>
+      <version>2.1.0</version>
     </dependency>
     <dependency>
       <groupId>it.pagopa.pn</groupId>
       <artifactId>pn-model</artifactId>
-      <version>1.0.0</version>
+      <version>2.1.0</version>
     </dependency>
 
     <dependency>
@@ -65,6 +45,10 @@
       <groupId>de.idealo.spring</groupId>
       <artifactId>spring-cloud-stream-binder-sqs</artifactId>
       <version>1.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-freemarker</artifactId>
     </dependency>
 
     <dependency>
@@ -84,7 +68,6 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
-      <version>${software.amazon.awssdk-version}</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -111,12 +94,6 @@
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-junit-jupiter</artifactId>
       <version>5.11.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mock-server</groupId>
-      <artifactId>mockserver-netty</artifactId>
-      <version>5.11.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -155,27 +132,47 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>unpack-dependencies</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>pn-commons</includeArtifactIds>
+              <outputDirectory>${project.build.directory}/dependency-resources</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
         <version>5.4.0</version>
         <executions>
           <execution>
             <id>pn-user-attributes-address-book-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-internal-v1.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -190,21 +187,23 @@
           </execution>
           <execution>
             <id>pn-user-attributes-user-consents-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-internal-v1.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
@@ -220,21 +219,23 @@
           </execution>
           <execution>
             <id>pn-user-attributes-address-book-b2b-io-server</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal-io-v1.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal-io.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
               <modelNameSuffix>Dto</modelNameSuffix>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <configOptions>
-                <basePackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1</basePackage>
-                <modelPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto</modelPackage>
-                <apiPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.api</apiPackage>
-                <configPackage>it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.config</configPackage>
+                <basePackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1</basePackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.dto</modelPackage>
+                <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.api</apiPackage>
+                <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -252,12 +253,13 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/647830b82cd7ee9f43dd5b4f6b10a17e50d6da12/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/1c1bcaef3837a15f866596a6d9af94e3978805ff/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
@@ -265,8 +267,8 @@
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.datavault.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.datavault.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.datavault.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
@@ -275,13 +277,14 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <inputSpec>${project.basedir}/docs/wsclient/pn-external-channels/api-internal-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
@@ -289,8 +292,8 @@
                 <openApiNullable>false</openApiNullable>
                 <additionalModelTypeAnnotations>@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY)</additionalModelTypeAnnotations>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.externalchannels.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalchannels.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalchannels.v1.api</apiPackage>
               <modelNameSuffix>Dto</modelNameSuffix>
             </configuration>
           </execution>
@@ -299,21 +302,46 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/073026c4038567d939aa82cf03c2147c00a3091b/docs/openapi/pn-io-message-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/7eb17aae8cc15e852768ec43fd4f2e383ccd5b46/docs/openapi/pn-io-message-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.externalregistry.io.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api</apiPackage>
+              <modelNameSuffix />
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client-external-registry-internal</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/7eb17aae8cc15e852768ec43fd4f2e383ccd5b46/docs/openapi/api-private-v1.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>
@@ -322,21 +350,46 @@
             <goals>
               <goal>generate</goal>
             </goals>
-            <phase>process-resources</phase>
+            <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/ed61108cc61fb8bb9421d3ba12694c9a20ef2367/docs/openapi/api-private-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/53f77f4c3e2127518678815c213be472a8f84cae/docs/openapi/api-private.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>true</generateSupportingFiles>
               <configOptions>
                 <swaggerAnnotations>false</swaggerAnnotations>
                 <openApiNullable>false</openApiNullable>
               </configOptions>
-              <modelPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.dto</modelPackage>
-              <apiPackage>${project.groupId}.microservice.msclient.generated.delivery.io.v1.api</apiPackage>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.delivery.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.delivery.v1.api</apiPackage>
+              <modelNameSuffix />
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-client-selfcare-internal</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/7eb17aae8cc15e852768ec43fd4f2e383ccd5b46/docs/openapi/pn-selfcare-internal-v1.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <library>webclient</library>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateApiTests>false</generateApiTests>
+              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/client</templateDirectory>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <swaggerAnnotations>false</swaggerAnnotations>
+                <openApiNullable>false</openApiNullable>
+              </configOptions>
+              <modelPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto</modelPackage>
+              <apiPackage>${project.groupId}.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api</apiPackage>
               <modelNameSuffix />
             </configuration>
           </execution>

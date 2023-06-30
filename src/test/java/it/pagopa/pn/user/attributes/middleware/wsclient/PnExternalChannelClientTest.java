@@ -1,12 +1,12 @@
 package it.pagopa.pn.user.attributes.middleware.wsclient;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.microservice.msclient.generated.datavault.v1.dto.BaseRecipientDtoDto;
+import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
+import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -48,31 +49,24 @@ class PnExternalChannelClientTest {
     PnDataVaultClient pnDataVaultClient;
 
     @MockBean
-    PnAuditLogBuilder pnAuditLogBuilder;
-
-    @MockBean
     ActionHandler actionHandler;
 
     @MockBean
     SqsActionProducer sqsActionProducer;
 
+    @MockBean
+    ExternalChannelResponseHandler externalChannelResponseHandler;
+
+    @MockBean
+    ExternalChannelHandler externalChannelHandler;
+
     private static ClientAndServer mockServer;
 
     private final Duration duration = Duration.ofMillis(3000);
 
-    PnAuditLogEvent logEvent;
-
     @BeforeEach
     public void init(){
-
         mockServer = startClientAndServer(9998);
-
-        logEvent = Mockito.mock(PnAuditLogEvent.class);
-
-        Mockito.when(pnAuditLogBuilder.build()).thenReturn(logEvent);
-        Mockito.when(pnAuditLogBuilder.before(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(pnAuditLogBuilder);
-        Mockito.when(logEvent.generateSuccess(Mockito.any())).thenReturn(logEvent);
-        Mockito.when(logEvent.generateFailure(Mockito.any(), Mockito.any())).thenReturn(logEvent);
     }
 
     @AfterEach
@@ -81,9 +75,8 @@ class PnExternalChannelClientTest {
     }
 
     @Test
-    void sendVerificationCodePEC() {
+    void sendPECConfirm() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
@@ -100,7 +93,7 @@ class PnExternalChannelClientTest {
 
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
-
+        // When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -109,17 +102,78 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        //When
-        assertDoesNotThrow(() -> pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000)));
+        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", recipientId, address).block(Duration.ofMillis(3000));
+        assertNotNull(res);
+    }
 
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+
+    @Test
+    void sendPECConfirm_pecconfirm_skip() {
+        //Given
+        String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String address ="realaddress@pec.it";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        CourtesyChannelTypeDto courtesyChannelType = null;
+        String verificationCode = "12345";
+        String path = "/external-channels/v1/digital-deliveries/legal-full-message-requests/.*";
+
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId(recipientId);
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+
+
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+        // When - Then
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(path))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(204));
+
+        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", recipientId, address).block(Duration.ofMillis(3000));
+        assertNotNull(res);
+    }
+
+    @Test
+    void sendVerificationCodePEC() {
+        //Given
+        String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String address ="realaddress@pec.it";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        CourtesyChannelTypeDto courtesyChannelType = null;
+        String verificationCode = "12345";
+        String path = "/external-channels/v1/digital-deliveries/legal-full-message-requests/.*";
+
+        BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
+        baseRecipientDtoDto.setInternalId(recipientId);
+        baseRecipientDtoDto.setDenomination("mario rossi");
+        List<BaseRecipientDtoDto> list = new ArrayList<>();
+        list.add(baseRecipientDtoDto);
+
+
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
+
+        // When - Then
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(path))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(204));
+
+        String res = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        assertNotNull(res);
     }
 
     @Test
     void sendVerificationCodePEC_FAIL() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd2";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
@@ -136,6 +190,7 @@ class PnExternalChannelClientTest {
 
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
+        //When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -144,18 +199,14 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        //When
-        Mono<Void> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
     }
 
     @Test
     void sendVerificationCodeEMAIL() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = null;
@@ -170,6 +221,7 @@ class PnExternalChannelClientTest {
 
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
+        //When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -178,18 +230,14 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        //When
-        assertDoesNotThrow(() -> pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000)));
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+        String res = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        assertNotNull(res);
     }
 
 
     @Test
     void sendVerificationCodeEMAIL_FAIL() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd2";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = null;
@@ -204,6 +252,7 @@ class PnExternalChannelClientTest {
 
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
+        //When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -212,19 +261,15 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        //When
-        Mono<Void> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
     }
 
 
     @Test
     void sendVerificationCodeSMS() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = null;
@@ -232,7 +277,7 @@ class PnExternalChannelClientTest {
         String verificationCode = "12345";
         String path = "/external-channels/v1/digital-deliveries/courtesy-simple-message-requests/.*";
 
-
+        // When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -241,18 +286,14 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        //When
-        assertDoesNotThrow(() -> pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000)));
-
-        Mockito.verify(logEvent).generateSuccess(Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateFailure(Mockito.any(), Mockito.any());
+        String res = pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        assertNotNull(res);
     }
 
 
     @Test
     void sendVerificationCodeSMS_FAIL() {
         //Given
-        String requestIdx ="id-0d69-4ed6-a39f-4ef2f01f2fd1";
         String recipientId ="id-0d69-4ed6-a39f-4ef2f01f2fd2";
         String address ="realaddress@pec.it";
         LegalChannelTypeDto legalChannelType = null;
@@ -260,7 +301,7 @@ class PnExternalChannelClientTest {
         String verificationCode = "12345";
         String path = "/external-channels/v1/digital-deliveries/courtesy-simple-message-requests/.*";
 
-
+        // When - Then
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -269,11 +310,8 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        //When
-        Mono<Void> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono =  pnExternalChannelClient.sendVerificationCode(recipientId, address, legalChannelType, courtesyChannelType, verificationCode);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
 
-        Mockito.verify(logEvent).generateFailure(Mockito.any(), Mockito.any());
-        Mockito.verify(logEvent, Mockito.never()).generateSuccess(Mockito.any());
     }
 }

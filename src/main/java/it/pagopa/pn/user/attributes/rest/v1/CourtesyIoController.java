@@ -1,13 +1,10 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
-import it.pagopa.pn.commons.log.PnAuditLogBuilder;
-import it.pagopa.pn.commons.log.PnAuditLogEvent;
-import it.pagopa.pn.commons.log.PnAuditLogEventType;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.api.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.api.CourtesyApi;
-import it.pagopa.pn.user.attributes.generated.openapi.server.rest.io.api.v1.dto.IoCourtesyDigitalAddressActivationDto;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.io.v1.api.CourtesyApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.io.v1.dto.IoCourtesyDigitalAddressActivationDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +17,9 @@ import reactor.core.publisher.Mono;
 public class CourtesyIoController implements CourtesyApi {
 
     private final AddressBookService addressBookService;
-    private final PnAuditLogBuilder auditLogBuilder;
 
-    public CourtesyIoController(AddressBookService addressBookService, PnAuditLogBuilder auditLogBuilder) {
+    public CourtesyIoController(AddressBookService addressBookService) {
         this.addressBookService = addressBookService;
-        this.auditLogBuilder = auditLogBuilder;
     }
 
     @Override
@@ -50,37 +45,18 @@ public class CourtesyIoController implements CourtesyApi {
 
                     if (dto.getActivationStatus())
                     {
-                        PnAuditLogEvent logEvent = auditLogBuilder
-                                .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
-                                .uid(xPagopaPnCxId)
-                                .build();
-                        logEvent.log();
-                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, Mono.just(new AddressVerificationDto()))
-                                .onErrorResume(throwable -> {
-                                    logEvent.generateFailure(throwable.getMessage()).log();
-                                    return Mono.error(throwable);
-                                })
+                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
+
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
-                                    logEvent.generateSuccess(logMessage).log();
-                                    return ResponseEntity.noContent().build();
+                                     return ResponseEntity.noContent().build();
                                 });
                     }
                     else
                     {
-                        PnAuditLogEvent logEvent = auditLogBuilder
-                                .before(PnAuditLogEventType.AUD_AB_DA_IO_DEL, logMessage)
-                                .uid(xPagopaPnCxId)
-                                .build();
-                        logEvent.log();
                         return this.addressBookService.deleteCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO)
-                                .onErrorResume(throwable -> {
-                                    logEvent.generateFailure(throwable.getMessage()).log();
-                                    return Mono.error(throwable);
-                                })
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
-                                    logEvent.generateSuccess(logMessage).log();
                                     return ResponseEntity.noContent().build();
                                 });
                     }

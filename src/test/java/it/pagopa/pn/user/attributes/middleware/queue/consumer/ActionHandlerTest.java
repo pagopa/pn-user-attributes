@@ -13,10 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.messaging.Message;
 
-import java.time.Instant;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ActionHandlerTest {
 

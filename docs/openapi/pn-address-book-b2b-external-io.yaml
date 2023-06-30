@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: |
     OpenApi definition for PN User Attributes - Address Book for IO backend
-  version: v1
+  version: '1.0.0'
   title: PN User Attributes - Address Book for IO backend
   termsOfService: 'http://swagger.io/terms/'
   contact:
@@ -30,7 +30,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -57,7 +57,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: '#/components/parameters/cxTaxIdAuthFleet'
+       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -75,13 +75,6 @@ paths:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
 components:
-  parameters:
-    cxTypeAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxTypeAuthFleet'
-    cxIdAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'
-    cxTaxIdAuthFleet:
-      $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'
   schemas:
     IoCourtesyDigitalAddressActivation:
       description: Io courtesy activation

@@ -1,7 +1,10 @@
 {
   "Parameters" : {
-    "ExternalChannelBasePath": "https://zq5g01oxkb.execute-api.eu-south-1.amazonaws.com/dev/",
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
-    "IoActivationSendOlderThanDays": "7"
+    "IoActivationSendOlderThanDays": "7",
+    "MaxTasksNumber": "1",
+    "ValidationCodeMaxAttempts": "3",
+    "VerificationCodeLegalTTL": "1d",
+    "VerificationCodeCourtesyTTL": "15m"
   }
 }
