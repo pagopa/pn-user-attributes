@@ -9,6 +9,7 @@
     "MaxTasksNumber": "7",
     "AutoscalingThreshold": "5400",
     "CpuValue": "2048",
-    "MemoryAmount": "4GB"
+    "MemoryAmount": "4GB",
+    "LoggingLevel": "INFO"
   }
 }
