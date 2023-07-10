@@ -243,6 +243,10 @@ Parameters:
     Type: String
     Default: 'FATAL'
 
+  IOBackendCidrs:
+    Type: CommaDelimitedList
+    Default: ''
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
@@ -426,7 +430,8 @@ Resources:
         WAFName: !Sub '${ProjectName}-address-book-io'
         IntendedUsage: IO
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.APIGatewayARN
-  
+        AllowedCidrs: !Ref IOBackendCidrs
+
   ## Dashboard
   UserAttributesMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
