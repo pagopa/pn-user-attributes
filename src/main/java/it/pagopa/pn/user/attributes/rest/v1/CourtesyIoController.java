@@ -46,10 +46,9 @@ public class CourtesyIoController implements CourtesyApi {
                     if (dto.getActivationStatus())
                     {
                         return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
-
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
-                                     return ResponseEntity.noContent().build();
+                                    return ResponseEntity.noContent().build();
                                 });
                     }
                     else
