@@ -1,5 +1,8 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.log.PnAuditLogBuilder;
+import it.pagopa.pn.commons.log.PnAuditLogEvent;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -372,7 +375,24 @@ public class AddressBookService {
             // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
             // senza dover passare per la creazione di un VC
             // Devo cmq creare un VA con il channelType
+            // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+            String logMessage = String.format("saveAddressBook - enabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
+                    .build();
+            logEvent.log();
+
             return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, senderId, channelType)
+                    .onErrorResume(throwable -> {
+                        logEvent.generateFailure("failed saving exception={}",throwable.getMessage(), throwable).log();
+                        return Mono.error(throwable);
+                    })
+                    .map(m -> {
+                        log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", recipientId, null, CourtesyChannelTypeDto.APPIO, m);
+                        logEvent.generateSuccess(logMessage).log();
+                        return m;
+                    })
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
         }
         else {
@@ -419,7 +439,23 @@ public class AddressBookService {
 
         if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
             // le richieste da APPIO hanno una gestione complessa dedicata
-            return appIOUtils.deleteAddressBookAppIo(addressBookEntity);
+            // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
+            String logMessage = String.format("deleteAddressBook  - disabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_DA_IO_DEL, logMessage)
+                    .build();
+            logEvent.log();
+            return appIOUtils.deleteAddressBookAppIo(addressBookEntity)
+                    .onErrorResume(throwable -> {
+                        logEvent.generateFailure("failed saving exception={}",throwable.getMessage(), throwable).log();
+                        return Mono.error(throwable);
+                    })
+                    .map(m -> {
+                        log.info("deleteAddressBook done - recipientId={} - senderId={} - channelType={} res={}", recipientId, null, CourtesyChannelTypeDto.APPIO, m);
+                        logEvent.generateSuccess(logMessage).log();
+                        return m;
+                    });
         }
         else {
             return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())

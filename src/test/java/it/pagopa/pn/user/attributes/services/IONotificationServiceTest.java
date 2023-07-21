@@ -120,6 +120,32 @@ class IONotificationServiceTest {
 
     }
 
+
+    @Test
+    void consumeIoSendMessageEventLongPA() {
+        //GIVEN
+        String recipientId = "recipientid";
+        SentNotification sentNotification = new SentNotification();
+        sentNotification.setSenderDenomination(sentNotification.getSenderDenomination() + "12345678901234567890123456789012345678901234567890123456789012345678901234567890");
+        sentNotification.setRecipients(new ArrayList<>());
+        sentNotification.getRecipients().add(new NotificationRecipient());
+        sentNotification.getRecipients().get(0).setInternalId(recipientId);
+
+        SendMessageResponse sendMessageResponse = new SendMessageResponse();
+        sendMessageResponse.setId("23423423423");
+
+        // WHEN
+        Mockito.when(this.pnExternalRegistryIoClient.sendIOMessage(Mockito.any())).thenReturn(Mono.just(sendMessageResponse));
+
+
+        Mono<Void> mono = service.consumeIoSendMessageEvent(recipientId, sentNotification);
+        //THEN
+        assertDoesNotThrow(() -> {
+            mono.block(d);
+        });
+
+    }
+
     @Test
     void consumeIoSendMessageEventThrow() {
         //GIVEN
@@ -139,6 +165,7 @@ class IONotificationServiceTest {
         String recipientId = "recipientid";
         SentNotification sentNotification = new SentNotification();
         sentNotification.setPaymentExpirationDate("2022-03-03");
+        sentNotification.setSenderDenomination("comune");
         sentNotification.setRecipients(new ArrayList<>());
         sentNotification.getRecipients().add(new NotificationRecipient());
         sentNotification.getRecipients().get(0).setInternalId(recipientId);
