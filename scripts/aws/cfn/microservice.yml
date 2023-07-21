@@ -408,6 +408,7 @@ Resources:
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: 3000
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
