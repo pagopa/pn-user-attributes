@@ -247,6 +247,11 @@ Parameters:
     Type: String
     Default: ''
 
+  WebApiLimit:
+    Type: Number
+    Default: 600
+    Description: WEB api WAF Limit (per IP)
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
@@ -373,8 +378,8 @@ Resources:
         WAFName: !Sub '${ProjectName}-user-attributes-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: 3000
-
+        Limit: !Ref WebApiLimit
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -402,7 +407,8 @@ Resources:
         WAFName: !Sub '${ProjectName}-address-book-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: 3000
+        Limit: !Ref WebApiLimit
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
