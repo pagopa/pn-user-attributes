@@ -379,7 +379,7 @@ Resources:
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: !Ref WebApiLimit
-
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -407,7 +407,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-address-book-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: 3000
+        Limit: !Ref WebApiLimit
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
