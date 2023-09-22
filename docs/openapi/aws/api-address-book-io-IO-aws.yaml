@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: GWzNxSe/873cq23wtQD7/GnF40ITDA90EaaCtFoJMgA=
+  version: 9DKcB2yWSuEbPr3ptVLd9ZfvxyuE6xfDjLsEXuMAHpY=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -55,6 +55,7 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''IO'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -98,6 +99,7 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''IO'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000

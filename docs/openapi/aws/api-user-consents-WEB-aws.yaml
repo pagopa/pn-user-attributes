@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: c3rZH847g+J6P+tCLC32gAa7MwpM/dIJgrhZTTsPaxE=
+  version: hILKg2dNApUHX3j3jBdoHyZKsewjFDbrjBxBT41LYUE=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -50,6 +50,7 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -108,6 +109,7 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.path.consentType: method.request.path.consentType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
@@ -151,6 +153,7 @@ paths:
           integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.path.consentType: method.request.path.consentType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
