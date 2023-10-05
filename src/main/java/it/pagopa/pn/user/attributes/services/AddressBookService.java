@@ -19,6 +19,8 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -208,6 +210,22 @@ public class AddressBookService {
                 .flatMapIterable(x -> x);
     }
 
+    @NotNull
+    private Mono<List<AddressBookEntity>> getAddressList(String recipientId, String senderId,  String type) {
+        return resolveSenderId(senderId)
+            .flatMapMany(rootSenderId -> dao.getAddresses(recipientId, rootSenderId, type))
+            .collectList();
+    }
+
+    private Mono<String> resolveSenderId(String origSenderId) {
+        if (aoouoSenderId != null && aoouoSenderId.contains(origSenderId)){
+            return Mono.just(origSenderId);
+        } else {
+            return externalRegistryClient.getRootSenderId(origSenderId);
+        }
+    }
+
+
     /**
      * Ritorna gli indirizzi di CORTESIA in base al recipientId
      * Ritorna anche gli indirizzi in corso di validazione
@@ -254,8 +272,7 @@ public class AddressBookService {
      * @return lista indirizzi
      */
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId,  LegalAddressTypeDto.LEGAL.getValue())
-                .collectList()
+        return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
                 .flatMapIterable(x -> x);
     }
