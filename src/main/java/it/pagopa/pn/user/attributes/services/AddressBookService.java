@@ -11,6 +11,7 @@ import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
@@ -41,7 +42,10 @@ public class AddressBookService {
     private final VerificationCodeUtils verificationCodeUtils;
     private final AppIOUtils appIOUtils;
 
+    private final PnExternalRegistryClient externalRegistryClient;
 
+    @Value("pn.user-attributes.aoouo-senderId:")
+    private List<String> aoouoSenderId;
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
@@ -54,7 +58,8 @@ public class AddressBookService {
                               PnDataVaultClient dataVaultClient,
                               AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto,
-                              PnSelfcareClient pnSelfcareClient, VerificationCodeUtils verificationCodeUtils, AppIOUtils appIOUtils) {
+                              PnSelfcareClient pnSelfcareClient, VerificationCodeUtils verificationCodeUtils,
+                              AppIOUtils appIOUtils, PnExternalRegistryClient externalRegistryClient) {
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
@@ -62,6 +67,7 @@ public class AddressBookService {
         this.pnSelfcareClient = pnSelfcareClient;
         this.verificationCodeUtils = verificationCodeUtils;
         this.appIOUtils = appIOUtils;
+        this.externalRegistryClient = externalRegistryClient;
     }
 
 
@@ -195,8 +201,8 @@ public class AddressBookService {
      * @return lista indirizzi di cortesia
      */
     public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId, CourtesyAddressTypeDto.COURTESY.getValue())
-                .collectList()
+
+        return getAddressList(recipientId, senderId, CourtesyAddressTypeDto.COURTESY.getValue())
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
                 .flatMap(list -> appIOUtils.enrichWithAppIo(recipientId, list))
                 .flatMapIterable(x -> x);
@@ -241,7 +247,7 @@ public class AddressBookService {
     }
 
     /**
-     * Ritorna gli indirizzi LEGALI per li recipitent e il sender id
+     * Ritorna gli indirizzi LEGALI per il recipient e il sender id
      *
      * @param recipientId id utente
      * @param senderId id mittente

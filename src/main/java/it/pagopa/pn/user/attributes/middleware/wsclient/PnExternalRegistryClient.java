@@ -3,7 +3,13 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api.PrivacyNoticeApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto.PrivacyNoticeVersionResponse;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.AooUoIdsApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.RootSenderIdApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
+import java.util.List;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -14,9 +20,15 @@ import reactor.core.publisher.Mono;
 public class PnExternalRegistryClient {
 
     private final PrivacyNoticeApi extregistryApi;
+    private final RootSenderIdApi rootSenderIdApi;
 
-    public PnExternalRegistryClient(PrivacyNoticeApi extregistryApi) {
+    private final AooUoIdsApi aooUoIdsApi;
+
+    public PnExternalRegistryClient(PrivacyNoticeApi extregistryApi, RootSenderIdApi rootSenderIdApi
+        ,AooUoIdsApi aooUoIdsApi) {
         this.extregistryApi = extregistryApi;
+        this.rootSenderIdApi = rootSenderIdApi;
+        this.aooUoIdsApi = aooUoIdsApi;
     }
 
 
@@ -38,4 +50,13 @@ public class PnExternalRegistryClient {
                 .map(Object::toString);
     }
 
+    @Cacheable("pncache")
+    public Mono<String> getRootSenderId(String id){
+        return this.rootSenderIdApi.getRootSenderIdPrivate(id).map(RootSenderIdResponse::getRootId);
+    }
+
+    public Flux<String> getAooUoIdsApi (List<String> ids){
+        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids);
+    }
 }
+

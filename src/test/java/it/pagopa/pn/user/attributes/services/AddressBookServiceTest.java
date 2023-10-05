@@ -14,6 +14,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
@@ -63,6 +64,8 @@ class AddressBookServiceTest {
 
     private VerifiedAddressUtils verifiedAddressUtils;
 
+    private PnExternalRegistryClient pnExternalRegistryClient;
+
     @Mock
     PnDataVaultClient pnDatavaultClient;
 
@@ -96,7 +99,8 @@ class AddressBookServiceTest {
         verifiedAddressUtils = new VerifiedAddressUtils(addressBookDao);
         verificationCodeUtils = new VerificationCodeUtils(addressBookDao, pnUserattributesConfig, pnDatavaultClient, pnExternalChannelClient, verifiedAddressUtils);
         appIOUtils = new AppIOUtils(addressBookDao, verifiedAddressUtils, ioFunctionServicesClient, ioNotificationService);
-        addressBookService = new AddressBookService(addressBookDao, pnDatavaultClient, courtesyDigitalAddressToDto, legalDigitalAddressToDto, pnSelfcareClient, verificationCodeUtils, appIOUtils);
+        addressBookService = new AddressBookService(addressBookDao, pnDatavaultClient, courtesyDigitalAddressToDto, legalDigitalAddressToDto, pnSelfcareClient, verificationCodeUtils, appIOUtils
+        ,pnExternalRegistryClient);
     }
 
 
