@@ -50,8 +50,9 @@ public class PnExternalRegistryClient {
                 .map(Object::toString);
     }
 
-    @Cacheable("pncache")
+    @Cacheable(value = "aooSenderIdCache")
     public Mono<String> getRootSenderId(String id){
+        log.info("asking rootId for sender {}", id);
         return this.rootSenderIdApi.getRootSenderIdPrivate(id).map(RootSenderIdResponse::getRootId);
     }
 

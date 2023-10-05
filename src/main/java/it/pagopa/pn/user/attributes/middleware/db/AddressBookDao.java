@@ -7,13 +7,10 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
@@ -45,8 +42,6 @@ public class AddressBookDao extends BaseDao {
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
     String table;
 
-    PnExternalRegistryClient externalRegistryClient;
-
     public enum CHECK_RESULT {
         NOT_EXISTS,
         ALREADY_VALIDATED
@@ -54,8 +49,7 @@ public class AddressBookDao extends BaseDao {
 
     public AddressBookDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                           DynamoDbAsyncClient dynamoDbAsyncClient,
-                          PnUserattributesConfig pnUserattributesConfig,
-                          PnExternalRegistryClient externalRegistryClient
+                          PnUserattributesConfig pnUserattributesConfig
                           ) {
         this.dynamoDbAsyncClient = dynamoDbAsyncClient;
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
@@ -63,7 +57,6 @@ public class AddressBookDao extends BaseDao {
         this.addressBookTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(AddressBookEntity.class));
         this.verificationCodeTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerificationCodeEntity.class));
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
-        this.externalRegistryClient = externalRegistryClient;
     }
 
     public Mono<Void> deleteVerificationCode(VerificationCodeEntity verificationCodeEntity) {
@@ -130,9 +123,7 @@ public class AddressBookDao extends BaseDao {
                 .scanIndexForward(true)
                 .build();
 
-
-
-
+        String finalSenderId = senderId;
         return Flux.from(addressBookTable.query(qeRequest)
                         .items())
                 .collectList()

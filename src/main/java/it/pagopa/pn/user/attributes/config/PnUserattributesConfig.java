@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.ResourceUtils;
@@ -26,10 +27,11 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
 @Getter
 @Setter
 @Configuration
+@EnableCaching
 @ConfigurationProperties(prefix = "pn.user-attributes")
 @NoArgsConstructor
 @Slf4j
-@Import(SharedAutoConfiguration.class)
+@Import({SharedAutoConfiguration.class})
 public class PnUserattributesConfig {
 
     private String dynamodbTableName;
