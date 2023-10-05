@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.config;
 
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import java.util.ArrayList;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -66,6 +67,8 @@ public class PnUserattributesConfig {
 
     private Topics topics;
 
+    private List<String> aooUoSenderID;
+
     @Data
     public static class Topics {
 
@@ -86,7 +89,9 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
-
+        if (this.aooUoSenderID == null){
+            this.aooUoSenderID = new ArrayList<>();
+        }
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");
         }

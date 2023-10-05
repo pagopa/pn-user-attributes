@@ -100,7 +100,7 @@ class AddressBookServiceTest {
         verificationCodeUtils = new VerificationCodeUtils(addressBookDao, pnUserattributesConfig, pnDatavaultClient, pnExternalChannelClient, verifiedAddressUtils);
         appIOUtils = new AppIOUtils(addressBookDao, verifiedAddressUtils, ioFunctionServicesClient, ioNotificationService);
         addressBookService = new AddressBookService(addressBookDao, pnDatavaultClient, courtesyDigitalAddressToDto, legalDigitalAddressToDto, pnSelfcareClient, verificationCodeUtils, appIOUtils
-        ,pnExternalRegistryClient);
+        ,pnExternalRegistryClient, pnUserattributesConfig);
     }
 
 

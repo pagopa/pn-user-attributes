@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.services;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -46,8 +47,7 @@ public class AddressBookService {
 
     private final PnExternalRegistryClient externalRegistryClient;
 
-    @Value("pn.user-attributes.aoouo-senderId:")
-    private List<String> aoouoSenderId;
+    private final PnUserattributesConfig pnUserattributesConfig;
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
@@ -61,7 +61,10 @@ public class AddressBookService {
                               AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto,
                               PnSelfcareClient pnSelfcareClient, VerificationCodeUtils verificationCodeUtils,
-                              AppIOUtils appIOUtils, PnExternalRegistryClient externalRegistryClient) {
+                              AppIOUtils appIOUtils, PnExternalRegistryClient externalRegistryClient,
+                              PnUserattributesConfig pnUserattributesConfig) {
+
+        this.pnUserattributesConfig = pnUserattributesConfig;
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
@@ -218,7 +221,7 @@ public class AddressBookService {
     }
 
     private Mono<String> resolveSenderId(String origSenderId) {
-        if (aoouoSenderId != null && aoouoSenderId.contains(origSenderId)){
+        if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
             return Mono.just(origSenderId);
         } else {
             return externalRegistryClient.getRootSenderId(origSenderId);
