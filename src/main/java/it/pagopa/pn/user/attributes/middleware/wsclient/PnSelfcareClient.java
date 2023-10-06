@@ -30,8 +30,9 @@ public class PnSelfcareClient extends CommonBaseClient {
      */
     public Flux<PaSummary> getManyPaByIds(List<String> ids)
     {
-        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Retrieving PAs summary infos");
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.SELFCARE_PA, "Retrieving PAs summary infos");
         log.debug("getManyPaByIds ids={}", ids);
-        return this.infoPaApi.getManyPa(ids);
+        return this.infoPaApi.getManyPa(ids).doOnError(
+                throwable -> log.logInvokationResultDownstreamFailed(PnLogger.EXTERNAL_SERVICES.SELFCARE_PA, throwable.getMessage()));
     }
 }
