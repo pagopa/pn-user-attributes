@@ -21,7 +21,6 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -30,6 +29,8 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
@@ -215,17 +216,34 @@ public class AddressBookService {
 
     @NotNull
     private Mono<List<AddressBookEntity>> getAddressList(String recipientId, String senderId,  String type) {
-        return resolveSenderId(senderId)
-            .flatMapMany(rootSenderId -> dao.getAddresses(recipientId, rootSenderId, type))
-            .collectList();
+        Tuple2<Mono<String>, Boolean> tuple = resolveSenderId(senderId);
+
+        return tuple.mapT1(newSenderId->
+            newSenderId.flatMapMany(rootSenderId ->
+                dao.getAddresses(recipientId, rootSenderId, type, !tuple.getT2()).switchIfEmpty(
+                    tuple.getT2() ?
+                        getRoot(senderId).flatMapMany (retryId -> dao.getAddresses(recipientId, retryId, type, true))
+                        :Flux.empty()
+                ))
+            .collectList()).getT1();
     }
 
-    private Mono<String> resolveSenderId(String origSenderId) {
+    //Tiny call
+    private Mono<String> getRoot(String senderId){
+        return externalRegistryClient.getRootSenderId(senderId);
+    }
+
+    private Tuple2<Mono<String>, Boolean> resolveSenderId(String origSenderId) {
+        Mono<String> sender;
+        Boolean isSpecialSender;
         if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
-            return Mono.just(origSenderId);
+            sender = Mono.just(origSenderId);
+            isSpecialSender = true;
         } else {
-            return externalRegistryClient.getRootSenderId(origSenderId);
+            sender = getRoot(origSenderId);
+            isSpecialSender = false;
         }
+        return Tuples.of(sender, isSpecialSender);
     }
 
 
