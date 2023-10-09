@@ -408,15 +408,14 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param firstSenderId eventuale id PA
+     * @param a eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
     private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-
-        return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
+         return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
             String legal = verificationCodeUtils.getLegalType(legalChannelType);
             String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
@@ -473,15 +472,30 @@ public class AddressBookService {
                         }
                     });
             }
-        }).switchIfEmpty(
+        })
+            .switchIfEmpty(
             Mono.error(new PnInternalException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT))
         );
+
     }
 
-    private Mono<String> filterNotRootSender(String senderId){
-        return senderId==null ?
-                Mono.just(AddressBookEntity.SENDER_ID_DEFAULT) :
-                (externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next());
+    private Mono<String> filterNotRootSender(final String senderId){
+
+        if (senderId == null) return Mono.just(AddressBookEntity.SENDER_ID_DEFAULT);
+
+        return  externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next()
+            .switchIfEmpty(Mono.just( "")) //Root case
+            .flatMap(s -> {
+                    if (StringUtils.hasText(s)){
+                        // Not Root
+                        return Mono.error(new PnInternalException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT));
+                    } else {
+                        // Root
+                        return Mono.just(senderId);
+                    }
+                }
+            );
+
     }
 
 
