@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -19,6 +20,7 @@ import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ import java.util.stream.Stream;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @Service
@@ -405,31 +408,34 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param senderId eventuale id PA
+     * @param firstSenderId eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        String legal = verificationCodeUtils.getLegalType(legalChannelType);
-        String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
 
-        if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
-            // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
-            // senza dover passare per la creazione di un VC
-            // Devo cmq creare un VA con il channelType
-            // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
-            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-            String logMessage = String.format("saveAddressBook - enabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
-            PnAuditLogEvent logEvent = auditLogBuilder
+        return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
+        {
+            String legal = verificationCodeUtils.getLegalType(legalChannelType);
+            String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
+
+            if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
+                // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
+                // senza dover passare per la creazione di un VC
+                // Devo cmq creare un VA con il channelType
+                // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
+                PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+                String logMessage = String.format("saveAddressBook - enabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
+                PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
                     .build();
-            logEvent.log();
+                logEvent.log();
 
-            return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, senderId, channelType)
+                return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, checkedSenderId, channelType)
                     .onErrorResume(throwable -> {
-                        logEvent.generateFailure("failed saving exception={}",throwable.getMessage(), throwable).log();
+                        logEvent.generateFailure("failed saving exception={}", throwable.getMessage(), throwable).log();
                         return Mono.error(throwable);
                     })
                     .map(m -> {
@@ -438,9 +444,8 @@ public class AddressBookService {
                         return m;
                     })
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
-        }
-        else {
-            return  verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
+            } else {
+                return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
                         if (Boolean.TRUE.equals(res)) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
@@ -448,13 +453,18 @@ public class AddressBookService {
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
-                                    channelType, senderId, legal, addressVerificationDto.getValue());
+                                channelType, checkedSenderId, legal, addressVerificationDto.getValue());
                             return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
-                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, addressVerificationDto.getValue(), legalChannelType, courtesyChannelType, senderId);
+                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                                    recipientId,
+                                    addressVerificationDto.getValue(),
+                                    legalChannelType,
+                                    courtesyChannelType,
+                                    checkedSenderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType);
@@ -462,7 +472,16 @@ public class AddressBookService {
 
                         }
                     });
-        }
+            }
+        }).switchIfEmpty(
+            Mono.error(new PnInternalException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT))
+        );
+    }
+
+    private Mono<String> filterNotRootSender(String senderId){
+        return senderId==null ?
+                Mono.just(AddressBookEntity.SENDER_ID_DEFAULT) :
+                (externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next());
     }
 
 
