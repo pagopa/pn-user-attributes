@@ -256,6 +256,14 @@ Parameters:
     Default: 600
     Description: WEB api WAF Limit (per IP)
 
+  EnhancedWebSecurityEnabled:
+    Type: String
+    Default: false
+    Description: Enable additional WAF Web rules
+    AllowedValues:
+      - true
+      - false
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
@@ -385,6 +393,7 @@ Resources:
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: !Ref WebApiLimit
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -414,6 +423,7 @@ Resources:
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: !Ref WebApiLimit
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
