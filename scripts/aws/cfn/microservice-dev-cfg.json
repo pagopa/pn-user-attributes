@@ -11,6 +11,7 @@
     "CpuValue": "2048",
     "MemoryAmount": "4GB",
     "WebApiLimit": "3000",
+    "AooUoSenderID": "dummy1,dummy2",
     "EnhancedWebSecurityEnabled": "true"
   }
 }

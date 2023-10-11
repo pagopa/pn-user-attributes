@@ -1,8 +1,11 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -11,13 +14,16 @@ import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -26,7 +32,10 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @Service
@@ -41,7 +50,9 @@ public class AddressBookService {
     private final VerificationCodeUtils verificationCodeUtils;
     private final AppIOUtils appIOUtils;
 
+    private final PnExternalRegistryClient externalRegistryClient;
 
+    private final PnUserattributesConfig pnUserattributesConfig;
 
     public enum SAVE_ADDRESS_RESULT{
         SUCCESS,
@@ -54,7 +65,11 @@ public class AddressBookService {
                               PnDataVaultClient dataVaultClient,
                               AddressBookEntityToCourtesyDigitalAddressDtoMapper addressBookEntityToDto,
                               AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto,
-                              PnSelfcareClient pnSelfcareClient, VerificationCodeUtils verificationCodeUtils, AppIOUtils appIOUtils) {
+                              PnSelfcareClient pnSelfcareClient, VerificationCodeUtils verificationCodeUtils,
+                              AppIOUtils appIOUtils, PnExternalRegistryClient externalRegistryClient,
+                              PnUserattributesConfig pnUserattributesConfig) {
+
+        this.pnUserattributesConfig = pnUserattributesConfig;
         this.dao = dao;
         this.dataVaultClient = dataVaultClient;
         this.addressBookEntityToDto = addressBookEntityToDto;
@@ -62,6 +77,7 @@ public class AddressBookService {
         this.pnSelfcareClient = pnSelfcareClient;
         this.verificationCodeUtils = verificationCodeUtils;
         this.appIOUtils = appIOUtils;
+        this.externalRegistryClient = externalRegistryClient;
     }
 
 
@@ -195,12 +211,45 @@ public class AddressBookService {
      * @return lista indirizzi di cortesia
      */
     public Flux<CourtesyDigitalAddressDto> getCourtesyAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId, CourtesyAddressTypeDto.COURTESY.getValue())
-                .collectList()
+
+        return getAddressList(recipientId, senderId, CourtesyAddressTypeDto.COURTESY.getValue())
                 .flatMap(list -> deanonimizeCourtesy(recipientId, list))
                 .flatMap(list -> appIOUtils.enrichWithAppIo(recipientId, list))
                 .flatMapIterable(x -> x);
     }
+
+    @NotNull
+    private Mono<List<AddressBookEntity>> getAddressList(String recipientId, String senderId,  String type) {
+        Tuple2<Mono<String>, Boolean> tuple = resolveSenderId(senderId);
+
+        return tuple.mapT1(newSenderId->
+            newSenderId.flatMapMany(rootSenderId ->
+                dao.getAddresses(recipientId, rootSenderId, type, !tuple.getT2()).switchIfEmpty(
+                    tuple.getT2() ?
+                        getRoot(senderId).flatMapMany (retryId -> dao.getAddresses(recipientId, retryId, type, true))
+                        :Flux.empty()
+                ))
+            .collectList()).getT1();
+    }
+
+    //Tiny call
+    private Mono<String> getRoot(String senderId){
+        return externalRegistryClient.getRootSenderId(senderId);
+    }
+
+    private Tuple2<Mono<String>, Boolean> resolveSenderId(String origSenderId) {
+        Mono<String> sender;
+        Boolean isSpecialSender;
+        if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
+            sender = Mono.just(origSenderId);
+            isSpecialSender = true;
+        } else {
+            sender = getRoot(origSenderId);
+            isSpecialSender = false;
+        }
+        return Tuples.of(sender, isSpecialSender);
+    }
+
 
     /**
      * Ritorna gli indirizzi di CORTESIA in base al recipientId
@@ -241,15 +290,14 @@ public class AddressBookService {
     }
 
     /**
-     * Ritorna gli indirizzi LEGALI per li recipitent e il sender id
+     * Ritorna gli indirizzi LEGALI per il recipient e il sender id
      *
      * @param recipientId id utente
      * @param senderId id mittente
      * @return lista indirizzi
      */
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
-        return dao.getAddresses(recipientId, senderId,  LegalAddressTypeDto.LEGAL.getValue())
-                .collectList()
+        return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
                 .flatMapIterable(x -> x);
     }
@@ -361,31 +409,33 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param senderId eventuale id PA
+     * @param a eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        String legal = verificationCodeUtils.getLegalType(legalChannelType);
-        String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+         return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
+        {
+            String legal = verificationCodeUtils.getLegalType(legalChannelType);
+            String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
 
-        if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
-            // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
-            // senza dover passare per la creazione di un VC
-            // Devo cmq creare un VA con il channelType
-            // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
-            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-            String logMessage = String.format("saveAddressBook - enabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
-            PnAuditLogEvent logEvent = auditLogBuilder
+            if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.APPIO)) {
+                // le richieste da APPIO non hanno "indirizzo", posso procedere con l salvataggio in dynamodb,
+                // senza dover passare per la creazione di un VC
+                // Devo cmq creare un VA con il channelType
+                // l'auditlog viene fatto qui, in modo da racchiudere TUTTE le attività fatte (salvataggio su dynamo, invocazione BE io, ecc ecc)
+                PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+                String logMessage = String.format("saveAddressBook - enabling PN for IO - recipientId=%s - senderId=%s - channelType=%s", recipientId, null, CourtesyChannelTypeDto.APPIO);
+                PnAuditLogEvent logEvent = auditLogBuilder
                     .before(PnAuditLogEventType.AUD_AB_DA_IO_INSUP, logMessage)
                     .build();
-            logEvent.log();
+                logEvent.log();
 
-            return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, senderId, channelType)
+                return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, checkedSenderId, channelType)
                     .onErrorResume(throwable -> {
-                        logEvent.generateFailure("failed saving exception={}",throwable.getMessage(), throwable).log();
+                        logEvent.generateFailure("failed saving exception={}", throwable.getMessage(), throwable).log();
                         return Mono.error(throwable);
                     })
                     .map(m -> {
@@ -394,9 +444,8 @@ public class AddressBookService {
                         return m;
                     })
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
-        }
-        else {
-            return  verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
+            } else {
+                return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
                         if (Boolean.TRUE.equals(res)) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
@@ -404,13 +453,18 @@ public class AddressBookService {
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
-                                    channelType, senderId, legal, addressVerificationDto.getValue());
+                                channelType, checkedSenderId, legal, addressVerificationDto.getValue());
                             return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
-                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(recipientId, addressVerificationDto.getValue(), legalChannelType, courtesyChannelType, senderId);
+                                return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                                    recipientId,
+                                    addressVerificationDto.getValue(),
+                                    legalChannelType,
+                                    courtesyChannelType,
+                                    checkedSenderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType);
@@ -418,7 +472,31 @@ public class AddressBookService {
 
                         }
                     });
-        }
+            }
+        })
+            .switchIfEmpty(
+            Mono.error(new PnAddressNotFoundException())
+        );
+
+    }
+
+    private Mono<String> filterNotRootSender(final String senderId){
+
+        if (senderId == null) return Mono.just(AddressBookEntity.SENDER_ID_DEFAULT);
+
+        return  externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next()
+            .switchIfEmpty(Mono.just( "")) //Root case
+            .flatMap(s -> {
+                    if (StringUtils.hasText(s)){
+                        // Not Root
+                        return Mono.error(new PnInternalException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT));
+                    } else {
+                        // Root
+                        return Mono.just(senderId);
+                    }
+                }
+            );
+
     }
 
 
