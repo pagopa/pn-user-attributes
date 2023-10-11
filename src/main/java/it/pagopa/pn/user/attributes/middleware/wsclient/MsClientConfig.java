@@ -11,7 +11,9 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api.PrivacyNoticeApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.AooUoIdsApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.InfoPaApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.RootSenderIdApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -67,6 +69,19 @@ public class MsClientConfig  extends CommonBaseClient {
         apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
 
         return new PrivacyNoticeApi(apiClient);
+    }
+    @Bean
+    RootSenderIdApi rootSenderIdApi(PnUserattributesConfig pnUserattributesConfig) {
+        it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient apiClient = new it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient(initWebClient(it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
+        return new RootSenderIdApi(apiClient);
+    }
+
+    @Bean
+    AooUoIdsApi aooUoIdsApi(PnUserattributesConfig pnUserattributesConfig) {
+        it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient apiClient = new it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient(initWebClient(it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient.buildWebClientBuilder()));
+        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
+        return new AooUoIdsApi(apiClient);
     }
 
     @Bean
