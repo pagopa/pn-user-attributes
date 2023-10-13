@@ -490,7 +490,7 @@ public class AddressBookService {
             .flatMap(s -> {
                     if (StringUtils.hasText(s)){
                         // Not Root
-                        return Mono.error(new PnInvalidInputException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT));
+                        return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
                     } else {
                         // Root
                         return Mono.just(senderId);
