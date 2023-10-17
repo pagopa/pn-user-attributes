@@ -897,7 +897,6 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(pnExternalRegistryClient.getRootSenderId(listFromDb.get(0).getSenderId())).thenReturn(Mono.just(listFromDb.get(0).getSenderId()));
 
         //When
         List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
@@ -953,7 +952,6 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(ioFunctionServicesClient.checkValidUsers(Mockito.any())).thenReturn(Mono.just(user));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(pnExternalRegistryClient.getRootSenderId(listFromDb.get(0).getSenderId())).thenReturn(Mono.just(listFromDb.get(0).getSenderId()));
 
         //When
         List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
@@ -1010,7 +1008,6 @@ class AddressBookServiceTest {
         when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any(), Mockito.anyBoolean())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(pnExternalRegistryClient.getRootSenderId(listFromDb.get(0).getSenderId())).thenReturn(Mono.just(listFromDb.get(0).getSenderId()));
 
         //When
         List<CourtesyDigitalAddressDto> result = addressBookService.getCourtesyAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
@@ -1223,7 +1220,6 @@ class AddressBookServiceTest {
         when(addressBookDao.getAddresses(Mockito.any(),Mockito.any(),Mockito.any(), Mockito.anyBoolean())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
-        when(pnExternalRegistryClient.getRootSenderId(listFromDb.get(0).getSenderId())).thenReturn(Mono.just(listFromDb.get(0).getSenderId()));
 
         //When
         List<LegalDigitalAddressDto> result = addressBookService.getLegalAddressByRecipientAndSender(listFromDb.get(0).getRecipientId(),listFromDb.get(0).getSenderId()).collectList().block(d);
