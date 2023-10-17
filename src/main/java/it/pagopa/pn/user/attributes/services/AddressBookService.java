@@ -6,6 +6,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -492,7 +493,7 @@ public class AddressBookService {
             .flatMap(s -> {
                     if (StringUtils.hasText(s)){
                         // Not Root
-                        return Mono.error(new PnInternalException("sender Id not root, cannot save address", ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT));
+                        return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
                     } else {
                         // Root
                         return Mono.just(senderId);

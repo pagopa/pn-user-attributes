@@ -1641,8 +1641,8 @@ class AddressBookServiceTest {
 
         Mockito.when(pnExternalRegistryClient.getAooUoIdsApi(Arrays.asList("NOTROOT"))).thenReturn(Flux.just("NOTROOT"));
 
-        PnInternalException thrown = assertThrows(
-            PnInternalException.class,
+        PnInvalidInputException thrown = assertThrows(
+                PnInvalidInputException.class,
             () -> addressBookService.saveLegalAddressBook(recipientId, "NOTROOT", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null).block(),
             "Expected saveLegalAddressBook() to throw, but it didn't"
         );
