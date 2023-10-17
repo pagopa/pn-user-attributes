@@ -240,7 +240,10 @@ public class AddressBookService {
     private Tuple2<Mono<String>, Boolean> resolveSenderId(String origSenderId) {
         Mono<String> sender;
         Boolean isSpecialSender;
-        if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
+        if (AddressBookEntity.SENDER_ID_DEFAULT.equals(origSenderId)){
+            sender = Mono.just(origSenderId);
+            isSpecialSender = false;
+        }else if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
             sender = Mono.just(origSenderId);
             isSpecialSender = true;
         } else {
