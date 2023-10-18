@@ -123,6 +123,10 @@ Parameters:
     Type: String
     Description: 'Parametro per il toc toc di Io'
 
+  AooUoSenderID:
+    Type: String
+    Description: 'Parametro per elenco di Id AOO/UO con domicili/recapiti pre rilascio'
+
   VerificationCodeLegalTTL:
     Type: String
     Description: 'Parametro durata massima per validazione per messaggi di tipo legal'
@@ -252,6 +256,14 @@ Parameters:
     Default: 600
     Description: WEB api WAF Limit (per IP)
 
+  EnhancedWebSecurityEnabled:
+    Type: String
+    Default: false
+    Description: Enable additional WAF Web rules
+    AllowedValues:
+      - true
+      - false
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
@@ -298,6 +310,7 @@ Resources:
         ContainerEnvEntry13: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODELEGALTTL=${VerificationCodeLegalTTL}'
         ContainerEnvEntry14: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODECOURTESYTTL=${VerificationCodeCourtesyTTL}'
         ContainerEnvEntry15: !Sub 'PN_USER_ATTRIBUTES_TOPICS_FROMEXTERNALCHANNEL=${ExternalChannels2UserAttributesQueueName}'
+        ContainerEnvEntry16: !Sub 'PN_USER_ATTRIBUTES_AOOUOSENDERID=${AooUoSenderID}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -380,6 +393,7 @@ Resources:
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: !Ref WebApiLimit
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   # Expose PN-AddressBook microservice public API with API-GW for WEB usage
   AddressBookMicroservicePublicWebAPI:
@@ -409,6 +423,7 @@ Resources:
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
         Limit: !Ref WebApiLimit
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
