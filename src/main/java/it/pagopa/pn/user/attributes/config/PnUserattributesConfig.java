@@ -67,7 +67,7 @@ public class PnUserattributesConfig {
 
     private Topics topics;
 
-    private List<String> aooUoSenderID;
+    private List<String> aoouosenderid;
 
     @Data
     public static class Topics {
@@ -89,13 +89,16 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
-        if (this.aooUoSenderID == null){
-            this.aooUoSenderID = new ArrayList<>();
+        if (this.aoouosenderid == null){
+            this.aoouosenderid = new ArrayList<>();
         }
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");
         }
+
+        log.info("CONFIGURATION {}",this);
     }
+
 
     private String fetchMessage(String filename){
         try( InputStream in = getInputStreamFromResource(filename)) {

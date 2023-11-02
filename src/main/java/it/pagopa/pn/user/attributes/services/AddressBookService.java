@@ -244,7 +244,7 @@ public class AddressBookService {
         if (AddressBookEntity.SENDER_ID_DEFAULT.equals(origSenderId)){
             sender = Mono.just(origSenderId);
             isSpecialSender = false;
-        }else if (pnUserattributesConfig.getAooUoSenderID().contains(origSenderId)){
+        }else if (pnUserattributesConfig.getAoouosenderid().contains(origSenderId)){
             sender = Mono.just(origSenderId);
             isSpecialSender = true;
         } else {
