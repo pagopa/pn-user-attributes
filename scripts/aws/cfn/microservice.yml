@@ -251,7 +251,12 @@ Parameters:
     Type: String
     Default: ''
 
-  WebApiLimit:
+  WebWafLimitUserAttributes:
+    Type: Number
+    Default: 600
+    Description: WEB api WAF Limit (per IP)
+
+  WebWafLimitAddressBook:
     Type: Number
     Default: 600
     Description: WEB api WAF Limit (per IP)
@@ -391,7 +396,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-user-attributes-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: !Ref WebApiLimit
+        Limit: !Ref WebWafLimitUserAttributes
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
@@ -421,7 +426,7 @@ Resources:
         WAFName: !Sub '${ProjectName}-address-book-web'
         IntendedUsage: WEB
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: !Ref WebApiLimit
+        Limit: !Ref WebWafLimitAddressBook
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
 
