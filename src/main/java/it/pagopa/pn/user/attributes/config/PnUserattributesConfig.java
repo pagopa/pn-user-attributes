@@ -3,10 +3,8 @@ package it.pagopa.pn.user.attributes.config;
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import java.util.ArrayList;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +30,7 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
 @ConfigurationProperties(prefix = "pn.user-attributes")
 @NoArgsConstructor
 @Slf4j
+@ToString
 @Import({SharedAutoConfiguration.class})
 public class PnUserattributesConfig {
 
