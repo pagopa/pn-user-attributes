@@ -95,7 +95,7 @@ public class PnUserattributesConfig {
             log.warn("DEVELOPMENT IS ACTIVE!");
         }
 
-        log.info("CONFIGURATION {}",this);
+        log.debug("CONFIGURATION {}",this);
     }
 
 
