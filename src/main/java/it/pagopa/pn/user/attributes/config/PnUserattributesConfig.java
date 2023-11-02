@@ -3,10 +3,8 @@ package it.pagopa.pn.user.attributes.config;
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import java.util.ArrayList;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +30,7 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
 @ConfigurationProperties(prefix = "pn.user-attributes")
 @NoArgsConstructor
 @Slf4j
+@ToString
 @Import({SharedAutoConfiguration.class})
 public class PnUserattributesConfig {
 
@@ -67,7 +66,7 @@ public class PnUserattributesConfig {
 
     private Topics topics;
 
-    private List<String> aooUoSenderID;
+    private List<String> aoouosenderid;
 
     @Data
     public static class Topics {
@@ -89,13 +88,16 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
-        if (this.aooUoSenderID == null){
-            this.aooUoSenderID = new ArrayList<>();
+        if (this.aoouosenderid == null){
+            this.aoouosenderid = new ArrayList<>();
         }
         if (isDevelopment()) {
             log.warn("DEVELOPMENT IS ACTIVE!");
         }
+
+        log.debug("CONFIGURATION {}",this);
     }
+
 
     private String fetchMessage(String filename){
         try( InputStream in = getInputStreamFromResource(filename)) {
