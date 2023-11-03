@@ -98,6 +98,10 @@ public class AddressBookDao extends BaseDao {
 
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
+        return getAddresses(recipientId, senderId, legalType, true);
+    }
+
+    public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType, boolean addDefaults) {
         log.debug("getAddresses recipientId={} senderId={} legalType={}", recipientId, senderId, legalType);
 
         if (senderId == null)
@@ -136,8 +140,10 @@ public class AddressBookDao extends BaseDao {
                         // inserisco tutti gli elementi che hanno il senderid specificato
                         res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(finalSenderId)).toList());
                         // inserisco tutti gli elementi che hanno il senderid di default e il channeltype NON era già presente nella lista dei risultati
-                        res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(AddressBookEntity.SENDER_ID_DEFAULT)
+                        if (addDefaults) {
+                            res.addAll(results.stream().filter(ab -> ab.getSenderId().equals(AddressBookEntity.SENDER_ID_DEFAULT)
                                 && res.stream().noneMatch(rab -> rab.getChannelType().equals(ab.getChannelType()))).toList());
+                        }
                         return  res;
                     }
                     else
