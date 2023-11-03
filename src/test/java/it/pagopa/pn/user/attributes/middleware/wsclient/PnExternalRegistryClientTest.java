@@ -37,7 +37,8 @@ import static org.mockserver.model.HttpResponse.response;
 @ContextConfiguration(classes = {
         PnExternalRegistryClient.class,
         MsClientExtRegistryConfig.class,
-        PnUserattributesConfig.class
+        PnUserattributesConfig.class,
+        MsClientConfig.class
 })
 class PnExternalRegistryClientTest {
 
@@ -49,6 +50,8 @@ class PnExternalRegistryClientTest {
 
     @Autowired
     private MsClientExtRegistryConfig msClientConfig;
+    @Autowired
+    private MsClientConfig msClientConfig1;
 
     private static ClientAndServer mockServer;
 
