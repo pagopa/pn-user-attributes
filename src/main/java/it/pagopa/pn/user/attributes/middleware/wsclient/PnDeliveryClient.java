@@ -4,7 +4,7 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.api.InternalOnlyApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationStatus;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,7 +38,7 @@ public class PnDeliveryClient {
      *
      * @return void
      */
-    public Flux<SentNotification> searchNotificationPrivate(OffsetDateTime startDate, OffsetDateTime endDate, String internalId)
+    public Flux<SentNotificationV21> searchNotificationPrivate(OffsetDateTime startDate, OffsetDateTime endDate, String internalId)
     {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DELIVERY, "Search notifications for user");
         log.debug("searchNotificationPrivate internalId={} startDate={} endDate={}", internalId, startDate, endDate);
@@ -61,7 +61,7 @@ public class PnDeliveryClient {
                 });
     }
 
-    public Mono<SentNotification> getSentNotificationPrivate(String iun)
+    public Mono<SentNotificationV21> getSentNotificationPrivate(String iun)
     {
         log.info("getSentNotificationPrivate iun={}", iun);
 
