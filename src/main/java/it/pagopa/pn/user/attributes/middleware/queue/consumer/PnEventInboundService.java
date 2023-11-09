@@ -67,6 +67,8 @@ public class PnEventInboundService {
                 return "pnUserAttributesIoActivatedActionConsumer";
             else if(ActionType.SEND_MESSAGE_ACTION.name().equals(eventType))
                 return "pnUserAttributesSendMessageActionConsumer";
+            else if(ActionType.PEC_REJECTED_ACTION.name().equals(eventType))
+                return "pnUserAttributesPecValidationExpiredActionConsumer";
             else if(eventType.equals("EXTERNAL_CHANNELS_EVENT")) {
                 return "pnExternalChannelEventConsumer";
             }

@@ -23,26 +23,26 @@ class ActionTest {
 
     @BeforeEach
     void setUp() {
-        action = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        action = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType, null);
     }
 
     @Test
     void testEquals() {
-        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType, null);
         boolean equals = action.equals(toCompare);
         assertTrue(equals);
     }
 
     @Test
     void canEqual() {
-        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType, null);
         boolean equals = action.canEqual(toCompare);
         assertTrue(equals);
     }
 
     @Test
     void testNotEquals() {
-        Action toCompare = new Action("NOT",internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        Action toCompare = new Action("NOT",internalId,checkFromWhen,sentNotification,timeStamp,actionType, null);
         boolean equals = action.equals(toCompare);
         assertFalse(equals);
     }
@@ -71,7 +71,7 @@ class ActionTest {
 
     @Test
     void testHashCode() {
-        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType);
+        Action toCompare = new Action(actionId,internalId,checkFromWhen,sentNotification,timeStamp,actionType, null);
         assertEquals(action.hashCode(),toCompare.hashCode());
     }
 

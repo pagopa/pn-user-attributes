@@ -24,4 +24,6 @@ public class Action {
     private Instant timestamp;
 
     private ActionType type;
+
+    @lombok.ToString.Exclude private String address;
 }

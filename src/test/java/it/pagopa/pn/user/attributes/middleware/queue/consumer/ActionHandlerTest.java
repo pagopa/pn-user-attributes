@@ -2,6 +2,7 @@ package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import it.pagopa.pn.api.dto.events.MomProducer;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.handler.PecValidationExpiredResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.Action;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
@@ -23,6 +24,8 @@ class ActionHandlerTest {
 
     @InjectMocks
     private IONotificationService ioNotificationService;
+    @InjectMocks
+    private PecValidationExpiredResponseHandler pecValidationExpiredResponseHandler;
 
     @Mock
     MomProducer<ActionEvent> actionsQueue;
@@ -38,7 +41,7 @@ class ActionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        actionHandler = new ActionHandler(ioNotificationService);
+        actionHandler = new ActionHandler(ioNotificationService, pecValidationExpiredResponseHandler);
     }
 
     @Test
@@ -52,5 +55,9 @@ class ActionHandlerTest {
         Consumer<Message<Action>> messageConsumer = actionHandler.pnUserAttributesIoActivatedActionConsumer();
         assertNotNull(messageConsumer);
     }
-
+    @Test
+    void pnUserAttributesPecValidationExpiredActionConsumer() {
+        Consumer<Message<Action>> messageConsumer = actionHandler.pnUserAttributesPecValidationExpiredActionConsumer();
+        assertNotNull(messageConsumer);
+    }
 }
