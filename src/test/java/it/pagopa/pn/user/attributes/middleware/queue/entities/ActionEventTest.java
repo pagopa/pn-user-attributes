@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
 import it.pagopa.pn.api.dto.events.StandardEventHeader;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,7 @@ class ActionEventTest {
     private ActionEvent actionEvent;
 
     private Action action = new Action("testID","testInternalID",
-            Instant.now(),new SentNotification(),Instant.now(),ActionType.IO_ACTIVATED_ACTION);
+            Instant.now(),new SentNotificationV21(),Instant.now(),ActionType.IO_ACTIVATED_ACTION);
     private StandardEventHeader standardEventHeader = new StandardEventHeader();
 
     @BeforeEach
