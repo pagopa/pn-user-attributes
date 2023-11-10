@@ -1,55 +1,52 @@
 const { TABLES } = require("./repository");
+const { parseKinesisObjToJsonObj } = require("./utils");
+const crypto = require('crypto');
 
 async function mapPayload(event) {
-  let timelineObj = parseKinesisObjToJsonObj(filteredEvents[i].dynamodb.NewImage);
-
+      let verificationCodeObj = parseKinesisObjToJsonObj(event);
+      let entity = verificationCodeObj.dynamodb.OldImage;
       let date = new Date();
 
       let action = {
-        iun: timelineObj.iun,
-        paId: timelineObj.paId,
-        timelineId: timelineObj.timelineElementId,
-        eventId: `${date.toISOString()}_${timelineObj.timelineElementId}`,
-        type: 'REGISTER_EVENT'
+        actionId: entity.pk+entity.requestId,
+        internalId: entity.pk.replace("VC#",""),
+        address: entity.address,
+        timestamp: date.toISOString(),
+        type: 'PEC_REJECTED_ACTION'
       };
+
 
       let messageAttributes = {
         publisher: {
           DataType: 'String',
-          StringValue: 'deliveryPush'
+          StringValue: 'userAttributes'
         },
         iun: {
           DataType: 'String',
-          StringValue: action.iun
+          StringValue: ""
         },
         eventId: {
           DataType: 'String',
           StringValue: crypto.randomUUID()
         },
-
         createdAt: {
           DataType: 'String',
           StringValue: date.toISOString()
         },
         eventType:  {
           DataType: 'String',
-          StringValue:'WEBHOOK_ACTION_GENERIC'
+          StringValue:'PEC_REJECTED_ACTION'
         },
       };
 
-      /*
-      let webhookEvent = {
-        header: header,
-        payload: action
-      };
-      */
 
       let resultElement = {
-        Id: filteredEvents[i].kinesisSeqNumber,
+        Id: event.kinesisSeqNumber,
         MessageAttributes: messageAttributes,
         MessageBody: JSON.stringify(action)
       };
 
+      return resultElement;
 }
 
 exports.mapEvents = async (events) => {
@@ -62,9 +59,9 @@ exports.mapEvents = async (events) => {
       e.userIdentity.type == "Service" &&
       e.userIdentity.principalId == "dynamodb.amazonaws.com" &&
       e.tableName == TABLES.USERATTRIBUTES &&
-      e.dynamodb.OldImage.pk.startWith("VC#") &&
-      e.dynamodb.OldImage.codeValid == true &&
-      e.dynamodb.OldImage.pecValid == false
+      e.dynamodb.OldImage.pk.S.startsWith("VC#") &&
+      e.dynamodb.OldImage.codeValid.BOOL == true &&
+      e.dynamodb.OldImage.pecValid.BOOL == false
     );
   });
   let ops = [];

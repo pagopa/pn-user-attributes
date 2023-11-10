@@ -1,7 +1,7 @@
 let options = {
   "sonar.organization": "pagopa",
   "sonar.projectKey":
-    "pagopa_pn-delivery-push-notificationCancellationActionInsert",
+    "pagopa_pn-user-attributes-pecValidationExpired",
 };
 
 if (process.env.PR_NUM) {

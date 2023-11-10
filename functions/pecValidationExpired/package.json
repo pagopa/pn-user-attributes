@@ -1,5 +1,5 @@
 {
-    "name": "notification-cancellation-action-insert",
+    "name": "pec-validation-expired",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
@@ -11,9 +11,8 @@
         "sonar": "node sonarqube-scanner.js -Dsonar.login=${SONAR_TOKEN}"
     },
     "devDependencies": {
-        "@aws-sdk/client-dynamodb": "^3.254.0",
-        "@aws-sdk/lib-dynamodb": "^3.254.0",
         "aws-sdk-client-mock": "^2.0.1",
+        "@aws-sdk/client-sqs": "^3.408.0",
         "chai": "^4.3.6",
         "eslint": "^8.23.1",
         "eslint-plugin-import": "^2.26.0",
@@ -26,4 +25,4 @@
     },
     "author": "",
     "license": "ISC"
-  }
+}

@@ -1,5 +1,9 @@
+const { SQSClient, SendMessageBatchCommand } = require("@aws-sdk/client-sqs");
 
-exports.mapEvents = async function sendMessages(messages) {
+const sqs = new SQSClient({ region: process.env.REGION });
+const QUEUE_URL = process.env.QUEUE_URL
+
+exports.sendMessages = async function sendMessages(messages) {
   let error = [];
   try{
 

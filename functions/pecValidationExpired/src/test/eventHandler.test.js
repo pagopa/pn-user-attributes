@@ -17,12 +17,9 @@ describe("event handler tests", function () {
           return [{ test: 1 }];
         },
       },
-      "./lib/repository.js": {
-        persistEvents: async () => {
-          return {
-            insertions: 1,
-            errors: [],
-          };
+      "./lib/sqs.js": {
+        sendMessages: async () => {
+          return  [];
         },
       },
     });
@@ -40,6 +37,16 @@ describe("event handler tests", function () {
       "./lib/kinesis.js": {
         extractKinesisData: () => {
           return [];
+        },
+      },
+      "./lib/eventMapper.js": {
+        mapEvents: () => {
+          return [];
+        },
+      },
+      "./lib/sqs.js": {
+        sendMessages: async () => {
+          return  [];
         },
       },
     });
@@ -64,6 +71,11 @@ describe("event handler tests", function () {
           return [];
         },
       },
+      "./lib/sqs.js": {
+        sendMessages: async () => {
+          return  [];
+        },
+      },
     });
 
     const res = await lambda.handleEvent(event);
@@ -86,12 +98,9 @@ describe("event handler tests", function () {
           return [{ test: 1 }];
         },
       },
-      "./lib/repository.js": {
-        persistEvents: async () => {
-          return {
-            insertions: 0,
-            errors: [{ kinesisSeqNumber: "4950" }],
-          };
+      "./lib/sqs.js": {
+        sendMessages: async () => {
+          return  [{ kinesisSeqNumber: "4950" }] ;
         },
       },
     });
