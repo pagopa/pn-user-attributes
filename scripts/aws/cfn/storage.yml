@@ -185,16 +185,16 @@ Outputs:
     Value: !Sub "${ProjectName}-PecValidationExpiredLambda"
 
   
-  # Webhook Step Manager DLQ
+  # PecValidationExpiredLambda Step Manager DLQ
   PecValidationExpiredDLQName:
     Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueName
-    Description: pn-delivery-push_webhook_event_manager_DLQ queue name
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue name
   PecValidationExpiredDLQURL:
     Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueURL
-    Description: pn-delivery-push_webhook_event_manager_DLQ queue URL
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue URL
   PecValidationExpiredDLQARN:
     Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueARN
-    Description: pn-delivery-push_webhook_event_manager_DLQ queue ARN
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue ARN
   PecValidationExpiredDLQAlarmARN:
     Value: !GetAtt PecValidationExpiredDLQ.Outputs.SqsDLQAlarmArn
-    Description: pn-delivery-push_webhook_event_manager_DLQ alarm ARN
+    Description: pn-user-attributes-pecvalidationexpired_DLQ alarm ARN
