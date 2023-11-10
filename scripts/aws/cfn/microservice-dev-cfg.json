@@ -12,6 +12,8 @@
     "MemoryAmount": "4GB",
     "WebApiLimit": "3000",
     "AooUoSenderID": "01cecde7-636d-4261-8271-7984807fc50e",
-    "EnhancedWebSecurityEnabled": "true"
+    "EnhancedWebSecurityEnabled": "true",
+    "PecValidationExpiredLambdaMaximumBatchingWindowInSeconds": "20",
+    "PecValidationExpiredLambdaBatchSize": "60"
   }
 }
