@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
 
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,7 @@ class ActionTest {
     private String internalId = "testInternalID";
     private Instant checkFromWhen = Instant.now();
     private Instant timeStamp = Instant.now();
-    private SentNotification sentNotification = new SentNotification();
+    private SentNotificationV21 sentNotification = new SentNotificationV21();
     private ActionType actionType = ActionType.IO_ACTIVATED_ACTION;
 
     @BeforeEach

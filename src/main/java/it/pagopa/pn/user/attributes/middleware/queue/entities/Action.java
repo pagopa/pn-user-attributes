@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotification;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
 import lombok.*;
 
 import java.time.Instant;
@@ -19,7 +19,7 @@ public class Action {
 
     private Instant checkFromWhen;
 
-    private SentNotification sentNotification;
+    private SentNotificationV21 sentNotification;
 
     private Instant timestamp;
 
