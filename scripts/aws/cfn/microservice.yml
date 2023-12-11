@@ -541,7 +541,7 @@ Resources:
         LogGroupsNames: !Join
           - ','
           - - !Sub '/aws/ecs/${ProjectName}-user-attributes'
-          - - !Sub '/aws/lambda/${PecValidationExpiredLambdaName}'
+            - !Sub '/aws/lambda/${PecValidationExpiredLambdaName}'
 
 
   #########################################################
