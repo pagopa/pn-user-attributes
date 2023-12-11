@@ -8,7 +8,6 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.api.InternalOnlyApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.api.DigitalCourtesyMessagesApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.api.DigitalLegalMessagesApi;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.api.PrivacyNoticeApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.AooUoIdsApi;
@@ -63,13 +62,6 @@ public class MsClientConfig  extends CommonBaseClient {
     }
 
 
-    @Bean
-    PrivacyNoticeApi privacyNoticeApi(PnUserattributesConfig pnUserattributesConfig) {
-        it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient apiClient = new it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient(initWebClient(it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient.buildWebClientBuilder()));
-        apiClient.setBasePath(pnUserattributesConfig.getClientExternalregistryBasepath());
-
-        return new PrivacyNoticeApi(apiClient);
-    }
     @Bean
     RootSenderIdApi rootSenderIdApi(PnUserattributesConfig pnUserattributesConfig) {
         it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient apiClient = new it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.ApiClient(initWebClient(it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.ApiClient.buildWebClientBuilder()));

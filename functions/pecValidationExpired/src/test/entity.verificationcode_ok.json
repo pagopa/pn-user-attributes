@@ -1,0 +1,37 @@
+{
+    "tableName": "pn-UserAttributes",
+    "eventName": "REMOVE",
+    "userIdentity": {
+        "type": "Service",
+        "principalId": "dynamodb.amazonaws.com"
+    },
+    "dynamodb": {
+        "OldImage": {
+            "address": {
+                "S": "email@email.it"
+            },
+            "pk": {
+                "S": "VC#PF-12345678"
+            },
+            "sk": {
+                "S": "2345678#123456"
+            },
+            "created": {
+                "S": "2023-01-20T14:48:00.000Z"
+            },
+            "lastModified": {
+                "S": "2023-01-20T14:48:00.000Z"
+            },
+            "requestId": {
+                "S": "026e8c72-7944-4dcd-8668-f596447fec6d"
+            },
+            "codeValid": {
+                "BOOL": true
+            },
+            "pecValid": {
+                "BOOL": false
+            }
+        },
+        "NewImage": {}
+    }
+}

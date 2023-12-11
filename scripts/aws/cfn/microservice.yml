@@ -90,6 +90,10 @@ Parameters:
   UserAttributesActionsQueueName:
     Type: String
     Description: 'Send and pull actions'
+
+  UserAttributesActionsQueueURL:
+    Type: String
+    Description: 'Send and pull actions URL'
   
   UserAttributesActionsQueueARN:
     Type: String
@@ -150,6 +154,40 @@ Parameters:
   UserAttributesTableEncryptKeyId:
     Type: String
     Description: 'Key per dynamodb'
+
+
+  PecValidationExpiredLambdaName:
+    Type: String
+
+  PecValidationExpiredDLQARN:
+    Type: String
+    Description: 'DLQ ARN for PecValidationExpiredLambda'
+
+  PecValidationExpiredDLQAlarmARN:
+    Type: String
+    Description: 'DLQ Alarm ARN for PecValidationExpiredLambda'
+
+  #PecValidationExpiredLambdaName parameters
+  PecValidationExpiredLambdaMaximumBatchingWindowInSeconds:
+    Type: String
+    Default: "20"
+    Description: 'MaximumBatchingWindow asseveration event source mapping'
+
+  PecValidationExpiredLambdaBatchSize:
+    Type: String
+    Default: "60"
+    Description: 'BatchSize asseveration event source mapping'
+
+
+  # CDC
+
+  CdcKinesisSourceStreamArn:
+    Type: String
+    Description: 'Where to send CDC'
+
+  CdcKinesisSourceStreamKeyArn:
+    Description: "Kinesis source CDC stream crypto key ARN"
+    Type: String
 
   # OpenApi Bucket params
   MicroserviceBucketName:
@@ -487,10 +525,15 @@ Resources:
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
+            - !Ref PecValidationExpiredDLQAlarmARN
+            - !GetAtt PecValidationExpiredLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
             - !Ref UserAttributesActionsQueueAgeAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAgeAlarmARN
+        LambdaArns: !Join
+            - ","
+            - - !GetAtt PecValidationExpiredLambda.Arn
         QueueArns: !Join
           - ','
           - - !Ref UserAttributesActionsQueueARN
@@ -498,3 +541,113 @@ Resources:
         LogGroupsNames: !Join
           - ','
           - - !Sub '/aws/ecs/${ProjectName}-user-attributes'
+          - - !Sub '/aws/lambda/${PecValidationExpiredLambdaName}'
+
+
+  #########################################################
+  ###              pecValidationExpiredLambda            ###
+  #########################################################
+
+  # Lambda function
+  PecValidationExpiredLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref PecValidationExpiredLambdaName
+      Runtime: nodejs18.x
+      Handler: "index.handler"
+      Code:
+        S3Bucket: !Ref MicroserviceBucketName
+        S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/pecValidationExpired.zip"
+      Role: !GetAtt PecValidationExpiredLambdaRole.Arn
+      Environment:
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          QUEUE_URL: !Ref UserAttributesActionsQueueURL
+      TracingConfig:
+        Mode: Active
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:339249233099:layer:LambdaInsightsExtension:13"
+      Timeout: 10
+
+  # Lambda function role
+  PecValidationExpiredLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-PecValidationExpiredLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Lambda function IAM policy
+  PecValidationExpiredLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-PecValidationExpiredLambdaPolicy
+      Roles:
+        - !Ref PecValidationExpiredLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - kinesis:DescribeStream
+              - kinesis:DescribeStreamSummary
+              - kinesis:GetShardIterator
+              - kinesis:GetRecords
+              - kinesis:ListShards
+              - kinesis:ListStreams
+              - kinesis:SubscribeToShard
+            Resource: !Ref CdcKinesisSourceStreamArn
+          - Action: kms:Decrypt
+            Effect: Allow
+            Resource: !Ref CdcKinesisSourceStreamKeyArn
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:SendMessage
+            Resource:
+              !Ref UserAttributesActionsQueueARN
+          - Effect: Allow
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:SendMessage
+            Resource:
+              !Ref PecValidationExpiredDLQARN
+
+
+  # CDC to PecValidationExpiredLambda Event Manager
+  PecValidationExpiredLambdaKinesisSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: !Sub ${PecValidationExpiredLambdaBatchSize}
+      BisectBatchOnFunctionError: true
+      EventSourceArn: !Ref CdcKinesisSourceStreamArn
+      FunctionName: !Ref PecValidationExpiredLambda
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      MaximumBatchingWindowInSeconds: !Sub ${PecValidationExpiredLambdaMaximumBatchingWindowInSeconds}
+      StartingPosition: TRIM_HORIZON
+      DestinationConfig:
+        OnFailure:
+          Destination: !Ref PecValidationExpiredDLQARN
+
+  PecValidationExpiredLambdaAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml"
+      Parameters:
+        FunctionName: !Ref PecValidationExpiredLambda
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+

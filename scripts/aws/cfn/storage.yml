@@ -89,7 +89,7 @@ Resources:
       KinesisStreamSpecification:
         StreamArn: !Ref CdcKinesisSourceStreamArn
       StreamSpecification: 
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
@@ -118,6 +118,31 @@ Resources:
         LogGroupName: !Sub '${ProjectName}-user-attributes'
         LogGroupRetention: !Ref LogRetention
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
+
+  # internal queues DLQ
+  PecValidationExpiredDLQ:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
+      Parameters:
+        QueueName: !Sub '${ProjectName}-user-attributes-pecvalidationexpired_DLQ'
+        DelaySeconds: 1
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+        HasDLQ: "false"
+        QueueHasAlarm: "true"
+
+  PecValidationExpiredLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/log-group.yaml"
+      Parameters:
+        LogGroupName: !Sub "${ProjectName}-PecValidationExpiredLambda"
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: '/aws/lambda'
 
 Outputs:
 
@@ -154,3 +179,22 @@ Outputs:
   # Key per dynamotable
   UserAttributesTableEncryptKeyId:
     Value: !Ref UserAttributesTableEncryptKey
+    
+  # Lambda functions
+  PecValidationExpiredLambdaName:
+    Value: !Sub "${ProjectName}-PecValidationExpiredLambda"
+
+  
+  # PecValidationExpiredLambda Step Manager DLQ
+  PecValidationExpiredDLQName:
+    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueName
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue name
+  PecValidationExpiredDLQURL:
+    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueURL
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue URL
+  PecValidationExpiredDLQARN:
+    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueARN
+    Description: pn-user-attributes-pecvalidationexpired_DLQ queue ARN
+  PecValidationExpiredDLQAlarmARN:
+    Value: !GetAtt PecValidationExpiredDLQ.Outputs.SqsDLQAlarmArn
+    Description: pn-user-attributes-pecvalidationexpired_DLQ alarm ARN
