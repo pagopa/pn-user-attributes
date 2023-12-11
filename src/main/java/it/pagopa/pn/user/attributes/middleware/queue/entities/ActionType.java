@@ -21,6 +21,17 @@ public enum ActionType {
                     action.getInternalId()
             );
         }
+    },
+
+    PEC_REJECTED_ACTION() { //NEW
+        @Override
+        public String buildActionId(Action action) {
+            return String.format(
+                    "%s_pec_rejected_%s",
+                    action.getActionId(),
+                    action.getInternalId()
+            );
+        }
     };
 
     public String buildActionId(Action action) {

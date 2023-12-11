@@ -33,3 +33,9 @@ build/
 .vscode/
 
 .DS_Store
+/scripts/generate-code-laf.sh
+/functions/pecValidationExpired/node_modules/
+/functions/pecValidationExpired/.nyc_output/
+/functions/pecValidationExpired/coverage/
+/functions/pecValidationExpired/.scannerwork/
+/functions/pecValidationExpired/.history/

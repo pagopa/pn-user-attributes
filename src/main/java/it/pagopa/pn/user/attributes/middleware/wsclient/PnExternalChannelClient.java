@@ -16,6 +16,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.utils.TemplateGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -55,6 +56,45 @@ public class PnExternalChannelClient {
     }
 
 
+
+
+    public Mono<String> sendCourtesyPecRejected(String requestId, String recipientId, String address)
+    {
+        log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending PEC rejected", requestId);
+
+        if ( ! pnUserattributesConfig.isDevelopment() ) {
+            String logMessage = String.format(
+                    "sendCourtesyPecRejected EMAIL sending pec address rejected rcipientId=%s address=%s channel=%s requestId=%s",
+                    recipientId, LogUtils.maskEmailAddress(address), DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL, requestId
+            );
+            PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+            PnAuditLogEvent logEvent = auditLogBuilder
+                    .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
+                    .build();
+            logEvent.log();
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(), address)
+                    .onErrorResume(x -> {
+                        String message = elabExceptionMessage(x);
+
+                        String failureMessage = String.format("sendCourtesyPecRejected EMAIL response error %s", message);
+                        logEvent.generateFailure(failureMessage).log();
+                        log.error("sendCourtesyPecRejected EMAIL response error {}", message, x);
+                        return Mono.error(x);
+                    })
+                    .then(Mono.fromSupplier(
+                            () -> {
+                                logEvent.generateWarning(logMessage).log(); // non genero il success, visto che la pec non era valida
+                                return requestId;
+                            }
+                    ));
+        }
+        else {
+            log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND REJECTED!!!!");
+            log.warn("recipientId={} address={}",
+                    recipientId, address);
+            return Mono.just(requestId);
+        }
+    }
 
     public Mono<String> sendPecConfirm(String requestId, String recipientId, String address)
     {
@@ -206,30 +246,7 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
             logEvent.log();
-            return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
-                    .map(recipientDtoDto -> {
-                        DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
-                        digitalNotificationRequestDto.setChannel(DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL);
-                        digitalNotificationRequestDto.setRequestId(requestId);
-                        digitalNotificationRequestDto.setCorrelationId(requestId);
-                        digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-                        digitalNotificationRequestDto.setQos(DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE);
-                        digitalNotificationRequestDto.setMessageText(templateGenerator.generateEmailBody(verificationCode));
-                        digitalNotificationRequestDto.setReceiverDigitalAddress(address);
-                        digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
-                        digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
-                        digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
-                        digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.HTML);
-                        if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
-                            digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
-
-                        return  digitalNotificationRequestDto;
-                    })
-                    .take(1)
-                    .next()
-                    .flatMap(digitalNotificationRequestDto -> digitalCourtesyMessagesApi
-                            .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
-                            )
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -250,6 +267,33 @@ public class PnExternalChannelClient {
             throw new PnInvalidInputException(ERROR_CODE_INVALID_COURTESY_CHANNEL, "courtesyChannelType");
     }
 
+    @NotNull
+    private Mono<Void> sendCourtesyEmail(String recipientId, String requestId, DigitalCourtesyMailRequestDto.QosEnum batch, String templateGenerator, String address) {
+        return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
+                .map(recipientDtoDto -> {
+                    DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
+                    digitalNotificationRequestDto.setChannel(DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL);
+                    digitalNotificationRequestDto.setRequestId(requestId);
+                    digitalNotificationRequestDto.setCorrelationId(requestId);
+                    digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
+                    digitalNotificationRequestDto.setQos(batch);
+                    digitalNotificationRequestDto.setMessageText(templateGenerator);
+                    digitalNotificationRequestDto.setReceiverDigitalAddress(address);
+                    digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
+                    digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
+                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                    digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.HTML);
+                    if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
+                        digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
+
+                    return digitalNotificationRequestDto;
+                })
+                .take(1)
+                .next()
+                .flatMap(digitalNotificationRequestDto -> digitalCourtesyMessagesApi
+                        .sendDigitalCourtesyMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), digitalNotificationRequestDto)
+                );
+    }
 
     private String getSMSVerificationCodeBody(String verificationCode)
     {

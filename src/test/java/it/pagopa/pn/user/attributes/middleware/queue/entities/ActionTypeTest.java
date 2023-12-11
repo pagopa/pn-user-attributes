@@ -17,7 +17,7 @@ class ActionTypeTest {
     @BeforeEach
     void setUp() {
         action = new Action("testID","testInternalID",
-                Instant.now(),new SentNotificationV21(),Instant.now(),ActionType.IO_ACTIVATED_ACTION);
+                Instant.now(),new SentNotificationV21(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null);
     }
 
 
@@ -33,6 +33,13 @@ class ActionTypeTest {
         valueBuildAction = String.format("%s_send_message_%s", action.getActionId(), action.getInternalId());
         assertNotNull(ActionType.SEND_MESSAGE_ACTION.buildActionId(action));
         assertEquals(ActionType.SEND_MESSAGE_ACTION.buildActionId(action),valueBuildAction);
+    }
+
+    @Test
+    void buildActionIdPecRejectedAction() {
+        valueBuildAction = String.format("%s_pec_rejected_%s", action.getActionId(), action.getInternalId());
+        assertNotNull(ActionType.PEC_REJECTED_ACTION.buildActionId(action));
+        assertEquals(ActionType.PEC_REJECTED_ACTION.buildActionId(action),valueBuildAction);
     }
 
     @Test
