@@ -15,7 +15,7 @@ async function mapPayload(event) {
         type: 'PEC_REJECTED_ACTION'
       };
 
-
+      const evId = crypto.randomUUID();
       let messageAttributes = {
         publisher: {
           DataType: 'String',
@@ -23,11 +23,11 @@ async function mapPayload(event) {
         },
         iun: {
           DataType: 'String',
-          StringValue: ""
+          StringValue: evId
         },
         eventId: {
           DataType: 'String',
-          StringValue: crypto.randomUUID()
+          StringValue: evId
         },
         createdAt: {
           DataType: 'String',
@@ -56,6 +56,7 @@ exports.mapEvents = async (events) => {
   const filteredEvents = events.filter((e) => {
     return (
       e.eventName == "REMOVE" &&
+      e.userIdentity != null &&
       e.userIdentity.type == "Service" &&
       e.userIdentity.principalId == "dynamodb.amazonaws.com" &&
       e.tableName == TABLES.USERATTRIBUTES &&
