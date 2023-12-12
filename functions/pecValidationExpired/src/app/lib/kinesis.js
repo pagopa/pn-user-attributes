@@ -1,5 +1,6 @@
 const { Buffer } = require("node:buffer");
 const { gunzipSync } = require("node:zlib");
+const { TABLES } = require("./repository");
 
 function myGunzip(buffer) {
   return gunzipSync(buffer);
@@ -20,8 +21,8 @@ function decodePayload(b64Str) {
 }
 
 function mustProcess(rec) {
-  const allowedTables = ["pn-Timelines"];
-  return allowedTables.indexOf(rec.tableName) > -1 && rec.eventName == "INSERT";
+  const allowedTables = [TABLES.USERATTRIBUTES];
+  return allowedTables.indexOf(rec.tableName) > -1 && rec.eventName == "REMOVE";
 }
 
 exports.extractKinesisData = function (kinesisEvent) {
