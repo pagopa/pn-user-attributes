@@ -51,7 +51,7 @@ describe("test sqs functions", () => {
     });
 
   it("should sendMessages wit exception", async () => {
-        const events = [{}];
+        const events = [buildMessage()];
 
         const mockSQSClient = {
           send: async () => {
@@ -102,7 +102,7 @@ describe("test sqs functions", () => {
             type: 'PEC_REJECTED_ACTION'
           };
 
-          const evId = crypto.randomUUID();
+          const evId = '123456789';
           let messageAttributes = {
             publisher: {
               DataType: 'String',
