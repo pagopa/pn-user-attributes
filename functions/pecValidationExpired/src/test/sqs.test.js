@@ -4,7 +4,8 @@ const proxyquire = require("proxyquire").noPreserveCache();
 describe("test sqs functions", () => {
 
   it("should sendMessages", async () => {
-    const events = [{}];
+
+    const events = [buildMessage()];
 
     const mockSQSClient = {
       send: async () => ({}) // Mock per un successo
@@ -27,7 +28,7 @@ describe("test sqs functions", () => {
   });
 
   it("should sendMessages wit failures", async () => {
-      const events = [{}];
+      const events = [buildMessage()];
 
       const mockSQSClient = {
         send: async () => ({Failed:[{Id:"123"}]}) // Mock per un failed
@@ -88,6 +89,50 @@ describe("test sqs functions", () => {
     if (errorMessage) {
       expect(error.message).to.equal(errorMessage)
     }
+  }
+
+  function buildMessage() {
+          let date = new Date();
+
+          let action = {
+            actionId: '1234567890',
+            internalId: 'PF-123456789',
+            address: 'test@test.it',
+            timestamp: date.toISOString(),
+            type: 'PEC_REJECTED_ACTION'
+          };
+
+          const evId = crypto.randomUUID();
+          let messageAttributes = {
+            publisher: {
+              DataType: 'String',
+              StringValue: 'userAttributes'
+            },
+            iun: {
+              DataType: 'String',
+              StringValue: evId
+            },
+            eventId: {
+              DataType: 'String',
+              StringValue: evId
+            },
+            createdAt: {
+              DataType: 'String',
+              StringValue: date.toISOString()
+            },
+            eventType:  {
+              DataType: 'String',
+              StringValue:'PEC_REJECTED_ACTION'
+            },
+          };
+
+
+          let resultElement = {
+            Id: '1234567890',
+            MessageAttributes: messageAttributes,
+            MessageBody: JSON.stringify(action)
+          };
+          return resultElement;
   }
 
 });
