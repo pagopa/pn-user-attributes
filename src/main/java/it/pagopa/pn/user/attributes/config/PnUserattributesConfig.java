@@ -54,6 +54,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECSubject;
     private String verificationCodeMessagePECConfirm;
     private String verificationCodeMessagePECConfirmSubject;
+    private String verificationCodeMessagePECRejectSubject;
 
     private int ioactivationSendolderthandays;
 
@@ -87,6 +88,7 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePEC = fetchMessage("pecbody.html");
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
+        this.verificationCodeMessagePECRejectSubject = fetchMessage("pecsubjectreject.txt");
         if (this.aoouosenderid == null){
             this.aoouosenderid = new ArrayList<>();
         }

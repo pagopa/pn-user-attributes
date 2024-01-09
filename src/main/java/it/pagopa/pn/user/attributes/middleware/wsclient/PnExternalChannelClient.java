@@ -72,7 +72,8 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(), address)
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(),
+                    pnUserattributesConfig.getVerificationCodeMessagePECRejectSubject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -246,7 +247,8 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode), address)
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode),
+                    pnUserattributesConfig.getVerificationCodeMessageEMAILSubject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -268,7 +270,7 @@ public class PnExternalChannelClient {
     }
 
     @NotNull
-    private Mono<Void> sendCourtesyEmail(String recipientId, String requestId, DigitalCourtesyMailRequestDto.QosEnum batch, String templateGenerator, String address) {
+    private Mono<Void> sendCourtesyEmail(String recipientId, String requestId, DigitalCourtesyMailRequestDto.QosEnum batch, String messageBody, String messageSubject, String address) {
         return dataVaultClient.getRecipientDenominationByInternalId(List.of(recipientId))
                 .map(recipientDtoDto -> {
                     DigitalCourtesyMailRequestDto digitalNotificationRequestDto = new DigitalCourtesyMailRequestDto();
@@ -277,11 +279,11 @@ public class PnExternalChannelClient {
                     digitalNotificationRequestDto.setCorrelationId(requestId);
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
                     digitalNotificationRequestDto.setQos(batch);
-                    digitalNotificationRequestDto.setMessageText(templateGenerator);
+                    digitalNotificationRequestDto.setMessageText(messageBody);
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                     digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
-                    digitalNotificationRequestDto.setSubjectText(pnUserattributesConfig.getVerificationCodeMessageEMAILSubject());
+                    digitalNotificationRequestDto.setSubjectText(messageSubject);
                     digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.HTML);
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
