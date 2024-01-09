@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.common.rest.error.v1.dto.ProblemError;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
@@ -13,11 +12,7 @@ import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDaoTestIT;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
-import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
+import it.pagopa.pn.user.attributes.middleware.wsclient.*;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerifiedAddressUtils;
@@ -28,8 +23,6 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.UserStatusResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
-import java.util.Arrays;
-import javax.validation.constraints.AssertTrue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -46,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -156,7 +149,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto)
@@ -184,8 +177,8 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
-        Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getValidationcodemaxattempts()).thenReturn(3);
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -217,7 +210,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -257,7 +250,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto)
@@ -286,7 +279,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -315,7 +308,7 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeLegalTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(10));
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
 
@@ -666,7 +659,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getVerificationcodecourtesyttl()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
@@ -693,8 +686,8 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
-        Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
+        Mockito.when(pnUserattributesConfig.getVerificationcodecourtesyttl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getValidationcodemaxattempts()).thenReturn(3);
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -724,8 +717,8 @@ class AddressBookServiceTest {
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationCodeCourtesyTTL()).thenReturn(Duration.ofSeconds(10));
-        Mockito.when(pnUserattributesConfig.getValidationCodeMaxAttempts()).thenReturn(3);
+        Mockito.when(pnUserattributesConfig.getVerificationcodecourtesyttl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.when(pnUserattributesConfig.getValidationcodemaxattempts()).thenReturn(3);
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
