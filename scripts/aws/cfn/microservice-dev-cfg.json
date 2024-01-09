@@ -2,9 +2,9 @@
   "Parameters" : {
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": "7",
-    "ValidationCodeMaxAttempts": "3",
-    "VerificationCodeLegalTTL": "1d",
-    "VerificationCodeCourtesyTTL": "15m",
+    "ValidationCodeMaxAttempts": "2",
+    "VerificationCodeLegalTTL": "1h",
+    "VerificationCodeCourtesyTTL": "5m",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "7",
     "AutoscalingThreshold": "5400",

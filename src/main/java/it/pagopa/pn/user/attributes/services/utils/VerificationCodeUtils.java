@@ -201,9 +201,9 @@ public class VerificationCodeUtils {
 
     private Duration getVerificationCodeTTL(LegalChannelTypeDto legalChannelType){
         if (legalChannelType != null)
-            return pnUserattributesConfig.getVerificationCodeLegalTTL();
+            return pnUserattributesConfig.getVerificationcodelegalttl();
         else
-            return pnUserattributesConfig.getVerificationCodeCourtesyTTL();
+            return pnUserattributesConfig.getVerificationcodecourtesyttl();
     }
 
     private Mono<VerificationCodeEntity> manageAttempts(VerificationCodeEntity verificationCodeEntity, String verificationCode, LegalChannelTypeDto legalChannelType) {
@@ -218,7 +218,7 @@ public class VerificationCodeUtils {
         else {
             // codice errato, incremento i tentativi (o elimino se ho raggiungo il massimo)
             verificationCodeEntity.setFailedAttempts(verificationCodeEntity.getFailedAttempts()+1);
-            if (verificationCodeEntity.getFailedAttempts() >= pnUserattributesConfig.getValidationCodeMaxAttempts()) {
+            if (verificationCodeEntity.getFailedAttempts() >= pnUserattributesConfig.getValidationcodemaxattempts()) {
                 // raggiunto limite tentativi, elimino
                 return dao.deleteVerificationCode(verificationCodeEntity)
                         .then(Mono.error(new PnRetryLimitVerificationCodeException()));

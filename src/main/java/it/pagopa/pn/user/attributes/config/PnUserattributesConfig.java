@@ -2,8 +2,6 @@ package it.pagopa.pn.user.attributes.config;
 
 import it.pagopa.pn.commons.conf.SharedAutoConfiguration;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
-import java.util.ArrayList;
-
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -19,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_BADCONFIGURATION_MISSING_TEMPLATE;
@@ -58,9 +57,9 @@ public class PnUserattributesConfig {
 
     private int ioactivationSendolderthandays;
 
-    private int validationCodeMaxAttempts;
-    private Duration verificationCodeLegalTTL;
-    private Duration verificationCodeCourtesyTTL;
+    private int validationcodemaxattempts;
+    private Duration verificationcodelegalttl;
+    private Duration verificationcodecourtesyttl;
 
     private List<String> externalChannelDigitalCodesSuccess;
 
