@@ -6,8 +6,8 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipientV21;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipientV23;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV23;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.SendMessageResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,7 +82,7 @@ class IONotificationServiceTest {
     void consumeIoActivationEvent() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotificationV21 sentNotification = new SentNotificationV21();
+        SentNotificationV23 sentNotification = new SentNotificationV23();
 
         // WHEN
         Mockito.when(this.pnDeliveryClient.searchNotificationPrivate(Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Flux.fromIterable(List.of(sentNotification)));
@@ -99,9 +99,9 @@ class IONotificationServiceTest {
     void consumeIoSendMessageEvent() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotificationV21 sentNotification = new SentNotificationV21();
+        SentNotificationV23 sentNotification = new SentNotificationV23();
         sentNotification.setRecipients(new ArrayList<>());
-        sentNotification.getRecipients().add(new NotificationRecipientV21());
+        sentNotification.getRecipients().add(new NotificationRecipientV23());
         sentNotification.getRecipients().get(0).setInternalId(recipientId);
 
         SendMessageResponse sendMessageResponse = new SendMessageResponse();
@@ -124,10 +124,10 @@ class IONotificationServiceTest {
     void consumeIoSendMessageEventLongPA() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotificationV21 sentNotification = new SentNotificationV21();
+        SentNotificationV23 sentNotification = new SentNotificationV23();
         sentNotification.setSenderDenomination(sentNotification.getSenderDenomination() + "12345678901234567890123456789012345678901234567890123456789012345678901234567890");
         sentNotification.setRecipients(new ArrayList<>());
-        sentNotification.getRecipients().add(new NotificationRecipientV21());
+        sentNotification.getRecipients().add(new NotificationRecipientV23());
         sentNotification.getRecipients().get(0).setInternalId(recipientId);
 
         SendMessageResponse sendMessageResponse = new SendMessageResponse();
@@ -149,7 +149,7 @@ class IONotificationServiceTest {
     void consumeIoSendMessageEventThrow() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotificationV21 sentNotification = new SentNotificationV21();
+        SentNotificationV23 sentNotification = new SentNotificationV23();
         sentNotification.setRecipients(new ArrayList<>());
 
         //THEN
@@ -162,11 +162,11 @@ class IONotificationServiceTest {
     void consumeIoSendMessageEventPaymentNotNull() {
         //GIVEN
         String recipientId = "recipientid";
-        SentNotificationV21 sentNotification = new SentNotificationV21();
+        SentNotificationV23 sentNotification = new SentNotificationV23();
         sentNotification.setPaymentExpirationDate("2022-03-03");
         sentNotification.setSenderDenomination("comune");
         sentNotification.setRecipients(new ArrayList<>());
-        sentNotification.getRecipients().add(new NotificationRecipientV21());
+        sentNotification.getRecipients().add(new NotificationRecipientV23());
         sentNotification.getRecipients().get(0).setInternalId(recipientId);
 
         SendMessageResponse sendMessageResponse = new SendMessageResponse();
