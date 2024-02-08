@@ -1,6 +1,6 @@
 package it.pagopa.pn.user.attributes.middleware.queue.entities;
 
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV21;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV23;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ class ActionTypeTest {
     @BeforeEach
     void setUp() {
         action = new Action("testID","testInternalID",
-                Instant.now(),new SentNotificationV21(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null);
+                Instant.now(),new SentNotificationV23(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null);
     }
 
 
