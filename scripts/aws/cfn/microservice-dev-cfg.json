@@ -16,7 +16,7 @@
     "PecValidationExpiredLambdaMaximumBatchingWindowInSeconds": "20",
     "PecValidationExpiredLambdaBatchSize": "60",
     "PnCronAnalyzer": "* */1 * * * *",
-    "WireTapLogActivation": "true",
-    "MountEfs": "true"
+    "WireTapLogActivation": "false",
+    "MountEfs": "false"
   }
 }
