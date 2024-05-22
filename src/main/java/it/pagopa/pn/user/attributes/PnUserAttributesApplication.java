@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes;
 
+import it.pagopa.pn.commons.configs.listeners.TaskIdApplicationListener;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class PnUserAttributesApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PnUserAttributesApplication.class, args);
+		SpringApplication app = new SpringApplication(PnUserAttributesApplication.class);
+		app.addListeners(new TaskIdApplicationListener());
+		app.run(args);
 	}
 
 	@RestController

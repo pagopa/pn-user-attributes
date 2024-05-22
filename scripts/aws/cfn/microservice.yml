@@ -179,6 +179,33 @@ Parameters:
     Description: 'BatchSize asseveration event source mapping'
 
 
+   # Logging parameters
+  WireTapLogActivation:
+    Type: String
+    Default: false
+    Description: Activation of wire logs
+    AllowedValues:
+      - true
+      - false
+
+  PnCronAnalyzer:
+    Type: String
+    Default: '-'
+    Description: Cron for which you send the metric to CloudWatch
+
+  # EFS parameters
+  FargateEFSFileSystemID:
+    Type: String
+    Description: "EFS Filesystem"
+
+  MountEfs:
+    Type: String
+    Default: false
+    AllowedValues:
+      - "true"
+      - "false"
+
+
   # CDC
 
   CdcKinesisSourceStreamArn:
@@ -330,6 +357,9 @@ Resources:
         AutoscalingCheckPeriod: !Ref AutoscalingCheckPeriod
         MinTasksNumber: !Ref MinTasksNumber
         MaxTasksNumber: !Ref MaxTasksNumber
+        EfsFilesystem: !Ref FargateEFSFileSystemID
+        MountEfs: !Ref MountEfs
+        WireTapLogActivation: !Ref WireTapLogActivation
         AutoscalingDataPointN: !Ref AutoscalingDataPointN
         AutoscalingDataPointM: !Ref AutoscalingDataPointM
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
@@ -354,6 +384,8 @@ Resources:
         ContainerEnvEntry14: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODECOURTESYTTL=${VerificationCodeCourtesyTTL}'
         ContainerEnvEntry15: !Sub 'PN_USER_ATTRIBUTES_TOPICS_FROMEXTERNALCHANNEL=${ExternalChannels2UserAttributesQueueName}'
         ContainerEnvEntry16: !Sub 'PN_USER_ATTRIBUTES_AOOUOSENDERID=${AooUoSenderID}'
+        ContainerEnvEntry17: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
+        ContainerEnvEntry18: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
