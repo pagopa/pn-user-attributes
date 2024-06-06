@@ -3,7 +3,7 @@
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": "7",
     "ValidationCodeMaxAttempts": "2",
-    "VerificationCodeLegalTTL": "1h",
+    "VerificationCodeLegalTTL": "5m",
     "VerificationCodeCourtesyTTL": "5m",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "7",
