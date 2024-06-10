@@ -4,7 +4,7 @@
     "IoActivationSendOlderThanDays": "7",
     "ValidationCodeMaxAttempts": "2",
     "VerificationCodeLegalTTL": "1h",
-    "VerificationCodeCourtesyTTL": "5m",
+    "VerificationCodeTTL": "5m",
     "MinTasksNumber": "2",
     "MaxTasksNumber": "7",
     "AutoscalingThreshold": "5400",
