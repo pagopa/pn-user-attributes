@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.ResourceUtils;
 
 import javax.annotation.PostConstruct;
@@ -25,6 +26,7 @@ import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionC
 @Getter
 @Setter
 @Configuration
+@EnableScheduling
 @EnableCaching
 @ConfigurationProperties(prefix = "pn.user-attributes")
 @NoArgsConstructor

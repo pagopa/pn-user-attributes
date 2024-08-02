@@ -14,6 +14,9 @@
     "AooUoSenderID": "01cecde7-636d-4261-8271-7984807fc50e",
     "EnhancedWebSecurityEnabled": "true",
     "PecValidationExpiredLambdaMaximumBatchingWindowInSeconds": "20",
-    "PecValidationExpiredLambdaBatchSize": "60"
+    "PecValidationExpiredLambdaBatchSize": "60",
+    "PnCronAnalyzer": "* */1 * * * *",
+    "WireTapLogActivation": "false",
+    "MountEfs": "false"
   }
 }
