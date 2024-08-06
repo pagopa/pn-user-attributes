@@ -265,7 +265,7 @@
               <generateModelTests>false</generateModelTests>
               <configOptions>
                 <basePackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1</basePackage>
-                <modelPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.dto</modelPackage>
+                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
