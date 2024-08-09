@@ -62,7 +62,7 @@ public class PnUserattributesConfig {
 
     private int validationcodemaxattempts;
     private Duration verificationcodelegalttl;
-    private Duration verificationcodecourtesyttl;
+    private Duration verificationcodettl;
 
     private List<String> externalChannelDigitalCodesSuccess;
 
