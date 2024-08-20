@@ -25,7 +25,6 @@ public class B2bAddressControllerTest {
     private static final String PN_CX_TYPE_PF = "PF";
     private static final String XPAGOPAPNCXID = "x-pagopa-pn-cx-id";
     private static final String SENDER_ID = "senderId";
-    private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String TYPE = "x-pagopa-pn-cx-type";
 
     @Autowired
@@ -33,9 +32,6 @@ public class B2bAddressControllerTest {
 
     @MockBean
     AddressBookService svc;
-
-    @Autowired
-    WebTestClient webTestClient;
 
     @Test
     void getLegalAddressBySenderTest() {
@@ -59,6 +55,8 @@ public class B2bAddressControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk();
+    }
+
     @Test
     void getCourtesyAddressBySender() {
         //Given
