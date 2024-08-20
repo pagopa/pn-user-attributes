@@ -19,6 +19,10 @@ tags:
     description: Receiver Digital Domicile
   - name: courtesy
     description: Receiver Digital Addresses
+  - name: legalB2B
+    description: Receiver Digital Domicile
+  - name: courtesyB2B
+    description: Receiver Digital Addresses
 
 paths:
   /address-book/v1/digital-address:
@@ -30,6 +34,8 @@ paths:
         - all
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       parameters:                                                               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
@@ -52,11 +58,13 @@ paths:
     get:
       summary: get the legal digital addresses of the recipient to the sender
       description: Returns a legal digital address for the recipient to the sender specified
-      operationId: getLegalAddressBySender
+      operationId: getLegalAddressBySenderB2B
       tags:
-        - legal
+        - legalB2B
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'             # NO EXTERNAL
@@ -82,9 +90,11 @@ paths:
     get:
       summary: get the courtesy digital addresses of the recipient to the sender
       description: Returns a courtesy digital address for the recipient to the sender specified
-      operationId: getCourtesyAddressBySender
+      operationId: getCourtesyAddressBySenderB2B
       tags:
-        - courtesy
+        - courtesyB2B
+      x-api-permissions:
+        - 'BASE'
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                   # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                 # NO EXTERNAL
@@ -115,6 +125,8 @@ paths:
         - legal
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       parameters:                                                                     # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'             # NO EXTERNAL
@@ -144,6 +156,8 @@ paths:
         - courtesy
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       parameters:                                                               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
@@ -184,6 +198,8 @@ paths:
         - legal
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       requestBody:
         required: true
         content:
@@ -224,6 +240,8 @@ paths:
         - legal
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '204':
           description: successful operation
@@ -260,6 +278,8 @@ paths:
         - courtesy
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       requestBody:
         required: true
         content:
@@ -301,6 +321,8 @@ paths:
         - courtesy
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '204':
           description: successful operation
