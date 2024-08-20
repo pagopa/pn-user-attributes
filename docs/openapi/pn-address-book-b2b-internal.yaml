@@ -19,6 +19,10 @@ tags:
     description: Receiver Digital Domicile
   - name: courtesy
     description: Receiver Digital Addresses
+  - name: legalB2B
+    description: Receiver Digital Domicile
+  - name: courtesyB2B
+    description: Receiver Digital Addresses
 
 paths:
   /address-book/v1/digital-address:
@@ -52,9 +56,9 @@ paths:
     get:
       summary: get the legal digital addresses of the recipient to the sender
       description: Returns a legal digital address for the recipient to the sender specified
-      operationId: getLegalAddressBySender
+      operationId: getLegalAddressBySenderB2B
       tags:
-        - legal
+        - legalB2B
       #      security:                                                                # ONLY EXTERNAL
       #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       parameters:
@@ -82,9 +86,9 @@ paths:
     get:
       summary: get the courtesy digital addresses of the recipient to the sender
       description: Returns a courtesy digital address for the recipient to the sender specified
-      operationId: getCourtesyAddressBySender
+      operationId: getCourtesyAddressBySenderB2B
       tags:
-        - courtesy
+        - courtesyB2B
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                   # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                 # NO EXTERNAL
