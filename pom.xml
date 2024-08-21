@@ -23,7 +23,7 @@
     <sonar.coverage.exclusions>
       src/main/java/it/pagopa/pn/user/attributes/springbootcfg/**
     </sonar.coverage.exclusions>
-    <pagopa.codegen.version>v01.03.01</pagopa.codegen.version>
+    <pagopa.codegen.version>v01.06.01</pagopa.codegen.version>
   </properties>
 
   <dependencies>
