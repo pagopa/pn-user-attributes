@@ -24,7 +24,7 @@
         {
             "intendedUsage": "B2BPG",
             "openapiFiles": [
-                "pn-address-book-b2b-internal.yaml"
+                "pn-address-book-b2b-pg-internal.yaml"
             ],
             "servicePath": "address-book"
         }
