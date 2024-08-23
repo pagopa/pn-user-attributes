@@ -256,7 +256,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal.yaml</inputSpec>
+              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-pg-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
               <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
