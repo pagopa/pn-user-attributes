@@ -410,7 +410,7 @@ components:
       enum:
         - PEC
         - APPIO
-
+        - SERCQ
     LegalAddressType:
       type: string
       description: Valore addresstype per legal
