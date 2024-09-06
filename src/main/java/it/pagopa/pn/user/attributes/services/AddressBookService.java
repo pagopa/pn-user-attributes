@@ -61,8 +61,6 @@ public class AddressBookService {
         PEC_VALIDATION_REQUIRED
     }
 
-    public static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
-
 
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
@@ -597,7 +595,8 @@ public class AddressBookService {
     private boolean verifySercqAddress(LegalAndUnverifiedDigitalAddressDto address) {
         LegalChannelTypeDto channelType = address.getChannelType();
         String addressValue = address.getValue();
-        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(SERCQ_ADDRESS)) {
+        String sercqAddress = pnUserattributesConfig.getSercqAddress();
+        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(sercqAddress)) {
             log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
             return false;
         }
@@ -607,7 +606,8 @@ public class AddressBookService {
     private boolean verifySercqAddress(LegalDigitalAddressDto legalDigitalAddressDto) {
         LegalChannelTypeDto channelType = legalDigitalAddressDto.getChannelType();
         String addressValue = legalDigitalAddressDto.getValue();
-        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(SERCQ_ADDRESS)) {
+        String sercqAddress = pnUserattributesConfig.getSercqAddress();
+        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(sercqAddress)) {
             log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
             return false;
         }
