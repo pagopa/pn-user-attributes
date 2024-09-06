@@ -61,6 +61,8 @@ public class AddressBookService {
         PEC_VALIDATION_REQUIRED
     }
 
+    public static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+
 
     public AddressBookService(AddressBookDao dao,
                               PnDataVaultClient dataVaultClient,
@@ -303,8 +305,10 @@ public class AddressBookService {
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
         return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
-                .flatMapIterable(x -> x);
+                .flatMapIterable(x -> x)
+                .filter(this::verifySercqAddress);
     }
+
 
     /**
      * Lista indirizzi in base al recipient
@@ -326,7 +330,8 @@ public class AddressBookService {
                     res.addAll(tuple2.getT2());
                     return res;
                 })
-                .flatMapIterable(x -> x);
+                .flatMapIterable(x -> x)
+                .filter(this::verifySercqAddress);
     }
 
     /**
@@ -369,6 +374,7 @@ public class AddressBookService {
         UserAddressesDto dto = new UserAddressesDto();
         dto.setCourtesy(new ArrayList<>());
         dto.setLegal(new ArrayList<>());
+
 
         return getCourtesyAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>())
                 .zipWith(getLegalAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>()))
@@ -587,6 +593,25 @@ public class AddressBookService {
 
                     return res;
                 });
+    }
+    private boolean verifySercqAddress(LegalAndUnverifiedDigitalAddressDto address) {
+        LegalChannelTypeDto channelType = address.getChannelType();
+        String addressValue = address.getValue();
+        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(SERCQ_ADDRESS)) {
+            log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean verifySercqAddress(LegalDigitalAddressDto legalDigitalAddressDto) {
+        LegalChannelTypeDto channelType = legalDigitalAddressDto.getChannelType();
+        String addressValue = legalDigitalAddressDto.getValue();
+        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(SERCQ_ADDRESS)) {
+            log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
+            return false;
+        }
+        return true;
     }
 
 
