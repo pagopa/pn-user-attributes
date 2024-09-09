@@ -17,6 +17,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi {
@@ -62,6 +64,30 @@ public class ConsentsController implements ConsentsApi {
         log.info("getConsents - xPagopaPnUid={} - xPagopaPnCxType={}", xPagopaPnUid, xPagopaPnCxType);
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(xPagopaPnUid, xPagopaPnCxType)));
+    }
+
+    /**
+     * GET /pg-consents/v1/consents/{consentType} : Get single consent by type
+     * Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+     *
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param consentType A cosa sto dando il consenso (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @param version La versione del consenso. se non presente il default è nessuna versione accettata. (optional)
+     * @return successful operation (status code 200)
+     *         or Invalid input (status code 400)
+     *         or Forbidden (status code 403)
+     */
+    @Override
+    public Mono<ResponseEntity<ConsentDto>> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole,
+                                                               ConsentTypeDto consentType, List<String>  xPagopaPnCxGroups, String version,
+                                                               final ServerWebExchange exchange) {
+        log.info("getPgConsentByType - xPagopaPnCxId={} - xPagopaPnCxType={} - xPagopaPnCxRole={} - consentType={} - version={}",
+                xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, consentType, version);
+        return this.consentsService.getPgConsentByType(xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, consentType, xPagopaPnCxGroups, version)
+                .map(ResponseEntity::ok);
     }
 }
 
