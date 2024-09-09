@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.utils;
 
 import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
+import it.pagopa.pn.user.attributes.exceptions.PnNotFoundException;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
@@ -33,13 +34,13 @@ class PgUtilsTest {
     @Test
     void testValidaAccessoPG_Failure() {
         StepVerifier.create(PgUtils.validaAccesso(CxTypeAuthFleetDto.PG, "operator", null))
-                .expectError(PnForbiddenException.class)
+                .expectError(PnNotFoundException.class)
                 .verify();
         StepVerifier.create(PgUtils.validaAccesso(CxTypeAuthFleetDto.PG, "admin", List.of("")))
-                .expectError(PnForbiddenException.class)
+                .expectError(PnNotFoundException.class)
                 .verify();
         StepVerifier.create(PgUtils.validaAccesso(CxTypeAuthFleetDto.PG, null, null))
-                .expectError(PnForbiddenException.class)
+                .expectError(PnNotFoundException.class)
                 .verify();
     }
 
