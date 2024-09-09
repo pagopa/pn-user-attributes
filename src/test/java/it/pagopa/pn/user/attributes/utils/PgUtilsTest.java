@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.utils;
 
-import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.exceptions.PnNotFoundException;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
