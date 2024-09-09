@@ -10,12 +10,9 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.utils.ConsentsUtils;
-import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
