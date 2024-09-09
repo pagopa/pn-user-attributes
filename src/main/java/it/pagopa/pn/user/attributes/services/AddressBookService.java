@@ -306,6 +306,7 @@ public class AddressBookService {
                 .flatMapIterable(x -> x);
     }
 
+
     /**
      * Lista indirizzi in base al recipient
      *
@@ -369,6 +370,7 @@ public class AddressBookService {
         UserAddressesDto dto = new UserAddressesDto();
         dto.setCourtesy(new ArrayList<>());
         dto.setLegal(new ArrayList<>());
+
 
         return getCourtesyAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>())
                 .zipWith(getLegalAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>()))
@@ -588,6 +590,7 @@ public class AddressBookService {
                     return res;
                 });
     }
+
 
 
 }
