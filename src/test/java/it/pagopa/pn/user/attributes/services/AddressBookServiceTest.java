@@ -1218,7 +1218,7 @@ class AddressBookServiceTest {
         when(addressBookDao.getAddresses(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(Flux.fromIterable(listFromDb));
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenCallRealMethod();
-        when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+        lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
 
         //Then
@@ -1255,7 +1255,7 @@ class AddressBookServiceTest {
         when(pnDatavaultClient.getRecipientAddressesByInternalId(Mockito.any())).thenReturn(Mono.just(recipientAddressesDtoDto));
         when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenCallRealMethod();
-        when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+        lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         //Then
         Mono<List<LegalAndUnverifiedDigitalAddressDto>> result = addressBookService.getLegalAddressByRecipient(listFromDb.get(0).getRecipientId(), CxTypeAuthFleetDto.PF, null, null).collectList();
@@ -1477,7 +1477,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenCallRealMethod();
         lenient().when(pnSelfcareClient.getManyPaByIds(Mockito.any())).thenReturn(Flux.fromIterable(paSummaries));
         when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
-        when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+        lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         //When
         UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDbCourtesy.get(0).getRecipientId(), null, null, null).block(d);
@@ -1543,7 +1543,7 @@ class AddressBookServiceTest {
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenCallRealMethod();
         lenient().when(pnSelfcareClient.getManyPaByIds(Mockito.any())).thenReturn(Flux.empty());
         when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
-        when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+        lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         //When
         UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDbCourtesy.get(0).getRecipientId(), null, null, null).block(d);
@@ -1608,7 +1608,7 @@ class AddressBookServiceTest {
         when(legalDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto1);
         when(courtesyDigitalAddressToDto.toDto(Mockito.any())).thenReturn(resdto2);
         when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.anyString(), Mockito.any())).thenReturn(Flux.empty());
-        when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+        lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         //When
         UserAddressesDto result = addressBookService.getAddressesByRecipient(listFromDbCourtesy.get(0).getRecipientId(), null, null, null).block(d);

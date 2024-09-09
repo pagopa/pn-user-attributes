@@ -592,22 +592,16 @@ public class AddressBookService {
                     return res;
                 });
     }
-    private boolean verifySercqAddress(LegalAndUnverifiedDigitalAddressDto address) {
-        LegalChannelTypeDto channelType = address.getChannelType();
-        String addressValue = address.getValue();
-        String sercqAddress = pnUserattributesConfig.getSercqAddress();
-        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(sercqAddress)) {
-            log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
-            return false;
-        }
-        return true;
+    private boolean verifySercqAddress(LegalAndUnverifiedDigitalAddressDto legalAndUnverifiedDigitalAddressDto) {
+        return verifySercqAddress(legalAndUnverifiedDigitalAddressDto.getChannelType().getValue(), legalAndUnverifiedDigitalAddressDto.getValue());
     }
 
     private boolean verifySercqAddress(LegalDigitalAddressDto legalDigitalAddressDto) {
-        LegalChannelTypeDto channelType = legalDigitalAddressDto.getChannelType();
-        String addressValue = legalDigitalAddressDto.getValue();
-        String sercqAddress = pnUserattributesConfig.getSercqAddress();
-        if (channelType == LegalChannelTypeDto.SERCQ && !addressValue.equals(sercqAddress)) {
+        return verifySercqAddress(legalDigitalAddressDto.getChannelType().getValue(), legalDigitalAddressDto.getValue());
+    }
+
+    private boolean verifySercqAddress(String channelType,String addressValue) {
+        if (channelType.equals(LegalChannelTypeDto.SERCQ.getValue()) && !addressValue.equals(pnUserattributesConfig.getSercqAddress())) {
             log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
             return false;
         }
