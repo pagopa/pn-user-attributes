@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
@@ -104,16 +103,12 @@ public class ConsentsService {
 
     public Mono<Void> setPgConsentAction(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, ConsentTypeDto consentType, String version, ConsentActionDto consentActionDto, List<String> xPagopaPnCxGroups) {
         return ConsentsUtils.validateCxType(xPagopaPnCxType)
-                .then(ConsentsUtils.validateContentType(consentType.getValue()))
-                .then(ConsentsUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
-                        .flatMap(isAdmin -> {
-                            if (isAdmin) {
-                                ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(computeRecipientIdWithCxType(xPagopaPnCxId, xPagopaPnCxType), consentType, consentActionDto, version);
-                                return consentDao.consentAction(consentEntity);
-                            } else {
-                                return Mono.error(new PnForbiddenException());
-                            }
-                        })
-                ).then();
+                .then(ConsentsUtils.validatePgConsentAction(consentType.getValue(), xPagopaPnCxRole, xPagopaPnCxGroups))
+                .then(Mono.defer(() -> {
+                    ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(computeRecipientIdWithCxType(xPagopaPnCxId, xPagopaPnCxType), consentType, consentActionDto, version);
+                    log.debug("Created consentEntity = {}", consentEntity);
+                    return consentDao.consentAction(consentEntity);
+                }))
+                .then();
     }
 }
