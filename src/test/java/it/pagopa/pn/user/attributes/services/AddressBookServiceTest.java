@@ -1714,7 +1714,6 @@ class AddressBookServiceTest {
         return Stream.of(
                 Arguments.of(LegalChannelTypeDto.PEC,LEGAL_ADDRESS,1),
                 Arguments.of(LegalChannelTypeDto.APPIO,COURTESY_ADDRESS,1),
-                Arguments.of(LegalChannelTypeDto.SERCQ,LEGAL_ADDRESS,0),
                 Arguments.of(LegalChannelTypeDto.SERCQ,SERCQ_ADDRESS,1)
 
         );

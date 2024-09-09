@@ -303,8 +303,7 @@ public class AddressBookService {
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
         return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
-                .flatMapIterable(x -> x)
-                .filter(this::verifySercqAddress);
+                .flatMapIterable(x -> x);
     }
 
 
@@ -328,8 +327,7 @@ public class AddressBookService {
                     res.addAll(tuple2.getT2());
                     return res;
                 })
-                .flatMapIterable(x -> x)
-                .filter(this::verifySercqAddress);
+                .flatMapIterable(x -> x);
     }
 
     /**
@@ -592,21 +590,7 @@ public class AddressBookService {
                     return res;
                 });
     }
-    private boolean verifySercqAddress(LegalAndUnverifiedDigitalAddressDto legalAndUnverifiedDigitalAddressDto) {
-        return verifySercqAddress(legalAndUnverifiedDigitalAddressDto.getChannelType().getValue(), legalAndUnverifiedDigitalAddressDto.getValue());
-    }
 
-    private boolean verifySercqAddress(LegalDigitalAddressDto legalDigitalAddressDto) {
-        return verifySercqAddress(legalDigitalAddressDto.getChannelType().getValue(), legalDigitalAddressDto.getValue());
-    }
-
-    private boolean verifySercqAddress(String channelType,String addressValue) {
-        if (channelType.equals(LegalChannelTypeDto.SERCQ.getValue()) && !addressValue.equals(pnUserattributesConfig.getSercqAddress())) {
-            log.warn("Invalid address value for channel type SERCQ: {}", addressValue);
-            return false;
-        }
-        return true;
-    }
 
 
 }
