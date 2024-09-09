@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.services;
 
+import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.mapper.ConsentActionDtoToConsentEntityMapper;
 import it.pagopa.pn.user.attributes.middleware.db.IConsentDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
@@ -8,11 +9,17 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
+import it.pagopa.pn.user.attributes.utils.ConsentsUtils;
+import it.pagopa.pn.user.attributes.utils.PgUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -28,11 +35,12 @@ public class ConsentsService {
         this.pnExternalRegistryClient = pnExternalRegistryClient;
     }
 
+
     /**
      * Salva un nuovo consenso
      *
-     * @param xPagopaPnUid id utente
-     * @param consentType tipo consenso
+     * @param xPagopaPnUid     id utente
+     * @param consentType      tipo consenso
      * @param consentActionDto azione consenso
      * @return nd
      */
@@ -45,29 +53,29 @@ public class ConsentsService {
      * Ritorna il consenso per tipologia.
      * Il nuovo algoritmo prevede che:
      * - recupero sempre da ext-registry l'ultima versione disponibile
-     *   - se version è NULL, cerco in DB se ho il consenso con la versione recuperata da ext-registry
-     *   - se version NON è null, cerco in DB se ho il consenso con la versione richiesta.
+     * - se version è NULL, cerco in DB se ho il consenso con la versione recuperata da ext-registry
+     * - se version NON è null, cerco in DB se ho il consenso con la versione richiesta.
      * - Poi, nel caso in cui non trovo proprio la versione, faccio una query per recuperare tutte le versioni per sapere se ce ne sono.
      * - Se la query per tutte le versioni non ne torna, genero un record fittizio, che sta a indicare che non ne ho accettata nessuna
      *
      * @param xPagopaPnUid id utente
-     * @param consentType tipologia
+     * @param consentType  tipologia
      * @return il consenso
      */
     public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
         String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
         return pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue())
-                .zipWhen(lastConsentVersion -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), StringUtils.hasText(version)?version:lastConsentVersion)
-                                                .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
-                                                .defaultIfEmpty(new ConsentEntity(uidWithCxType, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION)),
+                .zipWhen(lastConsentVersion -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), StringUtils.hasText(version) ? version : lastConsentVersion)
+                                .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
+                                .defaultIfEmpty(new ConsentEntity(uidWithCxType, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION)),
                         (lastConsentVersion, entity) -> ConsentDto.builder()
-                                .consentVersion(StringUtils.hasText(version)?version:lastConsentVersion) // è sempre quella richiesta se passata, oppure l'ultima
+                                .consentVersion(StringUtils.hasText(version) ? version : lastConsentVersion) // è sempre quella richiesta se passata, oppure l'ultima
                                 .consentType(consentType)
                                 .recipientId(uidWithCxType)
                                 .isFirstAccept(entity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))   // se l'entity letta è NONEACCEPTED, vuol dire che non ne ho trovate!
                                 // qui è un pò più tricky: metto in AND con il fatto che sia accettata il fatto che ho trovato l'entity che cercavo.
                                 // da notare che se non ho trovato entity (o se ne ho trovata una DIVERSA dalla versione che mi interessava o di DEFAULT), fallirà la seconda condizione
-                                .accepted(entity.isAccepted() && entity.getConsentVersion().equals(StringUtils.hasText(version)?version:lastConsentVersion))
+                                .accepted(entity.isAccepted() && entity.getConsentVersion().equals(StringUtils.hasText(version) ? version : lastConsentVersion))
                                 .build()
                 );
 
@@ -84,16 +92,31 @@ public class ConsentsService {
         String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
         return consentDao.getConsents(uidWithCxType)
                 .flatMap(x -> pnExternalRegistryClient.findPrivacyNoticeVersion(x.getConsentType(), xPagopaPnCxType.getValue())
-                                .map(y -> ConsentDto.builder()
-                                        .consentVersion(y)
-                                        .recipientId(uidWithCxType)
-                                        .consentType(ConsentTypeDto.fromValue(x.getConsentType()))
-                                        .isFirstAccept(x.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
-                                        .accepted(x.getConsentVersion().equals(y))
-                                        .build()));
+                        .map(y -> ConsentDto.builder()
+                                .consentVersion(y)
+                                .recipientId(uidWithCxType)
+                                .consentType(ConsentTypeDto.fromValue(x.getConsentType()))
+                                .isFirstAccept(x.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
+                                .accepted(x.getConsentVersion().equals(y))
+                                .build()));
     }
 
-    private String computeRecipientIdWithCxType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType){
+    private String computeRecipientIdWithCxType(String recipientId, CxTypeAuthFleetDto xPagopaPnCxType) {
         return xPagopaPnCxType.getValue() + "-" + recipientId;
+    }
+
+    public Mono<Void> setPgConsentAction(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, ConsentTypeDto consentType, String version, ConsentActionDto consentActionDto, List<String> xPagopaPnCxGroups) {
+        return ConsentsUtils.validateCxType(xPagopaPnCxType)
+                .then(ConsentsUtils.validateContentType(consentType.getValue()))
+                .then(ConsentsUtils.isRoleAdmin(xPagopaPnCxRole, xPagopaPnCxGroups)
+                        .flatMap(isAdmin -> {
+                            if (isAdmin) {
+                                ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(computeRecipientIdWithCxType(xPagopaPnCxId, xPagopaPnCxType), consentType, consentActionDto, version);
+                                return consentDao.consentAction(consentEntity);
+                            } else {
+                                return Mono.error(new PnForbiddenException());
+                            }
+                        })
+                ).then();
     }
 }

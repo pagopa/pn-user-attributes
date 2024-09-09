@@ -16,18 +16,22 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "x-pagopa-pn-uid";
+    private static final String CX_ID = "x-pagopa-pn-cx-id";
+    private static final String ROLE = "x-pagopa-pn-cx-role";
     private static final String PA_CX_TYPE = "x-pagopa-pn-cx-type";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
     private static final String CX_TYPE = "PF";
+    private static final String CX_TYPE_PG = "PG";
     private static final String VERSION = "VERS1";
 
     @Autowired
     WebTestClient webTestClient;
-
     @MockBean
     private ConsentsService svc;
 
@@ -45,7 +49,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new Object()));
 
         // Then
@@ -74,7 +78,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -102,7 +106,7 @@ class ConsentsControllerTest {
 
         // When
         Mockito.when(svc.getConsentByType(RECIPIENTID, CxTypeAuthFleetDto.PF, ConsentTypeDto.TOS, null))
-                .thenReturn( Mono.just(consentDto) );
+                .thenReturn(Mono.just(consentDto));
 
         // Then
         webTestClient.get()
@@ -126,7 +130,7 @@ class ConsentsControllerTest {
 
         // When
         Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
-                .thenReturn( Flux.just(consentDto) );
+                .thenReturn(Flux.just(consentDto));
 
         // Then
         webTestClient.get()
@@ -150,7 +154,7 @@ class ConsentsControllerTest {
 
         // When
         Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
-                .thenReturn( Flux.empty() );
+                .thenReturn(Flux.empty());
 
         // Then
         webTestClient.get()
@@ -160,5 +164,65 @@ class ConsentsControllerTest {
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk().expectBodyList(ConsentDto.class).hasSize(0);
+    }
+
+    @Test
+    void setPgConsentAction() {
+        // Given
+        String url = "/pg-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", CONSENTTYPE)
+                .replace("{version}", VERSION);
+
+        ConsentActionDto consentAction = new ConsentActionDto();
+        consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+
+        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE, null);
+        ce.setAccepted(true);
+
+        // When
+        Mockito.when(svc.setPgConsentAction(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        // Then
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(consentAction)
+                .header(CX_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE_PG)
+                .header(ROLE, "ADMIN")
+                .exchange()
+                .expectStatus().isOk();
+
+    }
+
+    @Test
+    void setPgConsentAction_FAIL() {
+        // Given
+        String url = "/pg-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", CONSENTTYPE)
+                .replace("{version}", VERSION);
+
+        ConsentActionDto consentAction = new ConsentActionDto();
+        consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+
+        ConsentEntity ce = new ConsentEntity(RECIPIENTID, CONSENTTYPE, null);
+        ce.setAccepted(true);
+
+        // When
+        Mockito.when(svc.setPgConsentAction(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Mono.error(new RuntimeException()));
+
+        // Then
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(consentAction)
+                .header(CX_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE_PG)
+                .header(ROLE, "ADMIN")
+                .exchange()
+                .expectStatus().is5xxServerError();
+
     }
 }
