@@ -57,6 +57,7 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 class AddressBookServiceTest {
 
+    private static final String ADDRESS_SERCQ = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
     private final Duration d = Duration.ofMillis(3000);
 
 
@@ -106,6 +107,8 @@ class AddressBookServiceTest {
     private static final String COURTESY_ADDRESS = "email@email.it";
 
 
+
+
     @BeforeEach
     void beforeEach() {
         verifiedAddressUtils = new VerifiedAddressUtils(addressBookDao);
@@ -117,19 +120,19 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBook(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBook(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
         Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
@@ -137,17 +140,43 @@ class AddressBookServiceTest {
                 .block(d);
 
         //THEN
+        assertNotNull( result );
+        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+    }
+
+    @Test
+    void saveLegalAddressBook_SERCQ() {
+        //GIVEN
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.SERCQ;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue(ADDRESS_SERCQ);
+
+        VerificationCodeEntity entity = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), null);
+        entity.setPecValid(false);
+        entity.setLastModified(Instant.now().minusSeconds(1));
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.lenient().when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
+        Mockito.lenient().when(addressBookDao.saveVerificationCode(any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(entity));
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null).block();
+
+        //THEN
         assertNotNull(result);
         assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithVerificationCode(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithVerificationCode(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
         addressVerificationDto.setVerificationCode("12345");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity("recipientId", "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), addressVerificationDto.getValue());
@@ -172,14 +201,14 @@ class AddressBookServiceTest {
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithInvalidVerificationCode(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithInvalidVerificationCode(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String senderId = null;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
         addressVerificationDto.setVerificationCode("12345");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
@@ -201,14 +230,14 @@ class AddressBookServiceTest {
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithInvalidVerificationCodeTooLate(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithInvalidVerificationCodeTooLate(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String senderId = null;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
         addressVerificationDto.setVerificationCode("12345");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity("recipientId", "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), addressVerificationDto.getValue());
@@ -274,13 +303,13 @@ class AddressBookServiceTest {
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0} with expected result: {1}")
     @MethodSource("provideLegalChannelTypesAndResults")
-    void saveLegalAddressBookWithInvalidVerificationCodePecNotValid(LegalChannelTypeDto legalChannelType, AddressBookService.SAVE_ADDRESS_RESULT expectedResult) {
+    void saveLegalAddressBookWithInvalidVerificationCodePecNotValid(LegalChannelTypeDto legalChannelType, AddressBookService.SAVE_ADDRESS_RESULT expectedResult, String address) {
         //GIVEN
 
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String senderId = null;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
         addressVerificationDto.setVerificationCode("12345");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity("recipientId", "hashed", legalChannelType.getValue());
@@ -307,14 +336,14 @@ class AddressBookServiceTest {
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithInvalidVerificationCodeTooLateLastModified(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithInvalidVerificationCodeTooLateLastModified(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String senderId = null;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
         addressVerificationDto.setVerificationCode("12345");
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity("recipientId", "hashed", legalChannelType.getValue());
@@ -341,14 +370,14 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithAlreadyVerified(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithAlreadyVerified(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String senderId = null;
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue("prova@prova.it");
+        addressVerificationDto.setValue(address);
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
@@ -1704,9 +1733,9 @@ class AddressBookServiceTest {
 
     private static Stream<Arguments> provideLegalChannelTypesAndResults() {
         return Stream.of(
-                Arguments.of(LegalChannelTypeDto.PEC,PEC_VALIDATION_REQUIRED),
-                Arguments.of(LegalChannelTypeDto.APPIO,SUCCESS),
-                Arguments.of(LegalChannelTypeDto.SERCQ,SUCCESS)
+                Arguments.of(LegalChannelTypeDto.PEC,PEC_VALIDATION_REQUIRED, LEGAL_ADDRESS),
+                Arguments.of(LegalChannelTypeDto.APPIO,SUCCESS, COURTESY_ADDRESS),
+                Arguments.of(LegalChannelTypeDto.SERCQ,SUCCESS, ADDRESS_SERCQ)
         );
     }
 
@@ -1715,6 +1744,15 @@ class AddressBookServiceTest {
                 Arguments.of(LegalChannelTypeDto.PEC,LEGAL_ADDRESS,1),
                 Arguments.of(LegalChannelTypeDto.APPIO,COURTESY_ADDRESS,1),
                 Arguments.of(LegalChannelTypeDto.SERCQ,SERCQ_ADDRESS,1)
+
+        );
+    }
+
+    public static Stream<Arguments> provideLegalChannelTypesAndAddress() {
+        return Stream.of(
+                Arguments.of(LegalChannelTypeDto.PEC,LEGAL_ADDRESS),
+                Arguments.of(LegalChannelTypeDto.APPIO,COURTESY_ADDRESS),
+                Arguments.of(LegalChannelTypeDto.SERCQ,SERCQ_ADDRESS)
 
         );
     }

@@ -110,6 +110,7 @@ public class AddressBookService {
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
                                                           CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
                 .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
     }
@@ -415,7 +416,6 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param a eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica

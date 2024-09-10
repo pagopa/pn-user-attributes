@@ -139,6 +139,30 @@ class ConsentsControllerTest {
     }
 
     @Test
+    void getConsents_SERCQ() {
+        String url = "/user-consents/v1/consents";
+
+        // Given
+        ConsentDto consentDto = new ConsentDto();
+        consentDto.setRecipientId(RECIPIENTID);
+        consentDto.setAccepted(true);
+        consentDto.setConsentType(ConsentTypeDto.TOS_SERCQ);
+
+        // When
+        Mockito.when(svc.getConsents(RECIPIENTID, CxTypeAuthFleetDto.PF))
+                .thenReturn( Flux.just(consentDto) );
+
+        // Then
+        webTestClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(PA_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
     void getConsents_NotFound() {
         String url = "/user-consents/v1/consents";
 

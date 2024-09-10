@@ -12,11 +12,13 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
+import javax.annotation.PostConstruct;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -38,6 +40,8 @@ public class VerificationCodeUtils {
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
     private final SecureRandom rnd = new SecureRandom();
+    private final String sercqAddress = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+
 
     /**
      * Valida un codice di verifica e lo anonimizza
@@ -164,16 +168,19 @@ public class VerificationCodeUtils {
                                                                                                                   LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId) {
         String hashedaddress = hashAddress(realaddress);
         String addressType = getLegalType(legalChannelType);
-        String vercode = getNewVerificationCode();
+
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
-        log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
+        String vercode = (!channelType.equals("SERCQ")) ? getNewVerificationCode() : "";
+
+
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationcodettl()).atZone(ZoneId.systemDefault()).toEpochSecond());
 
         return removePreviousVerificationCode(verificationCode)
                 .then(dao.saveVerificationCode(verificationCode))
-                .flatMap(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
+                .flatMap(r ->
+                        pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .flatMap(requestId -> {
                                     // aggiorno il requestId
                                     verificationCode.setRequestId(requestId);
@@ -246,7 +253,6 @@ public class VerificationCodeUtils {
     private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
         String process = "validating verification code request";
         log.logChecking(process);
-
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
@@ -286,6 +292,12 @@ public class VerificationCodeUtils {
                 log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
             }
+        }
+        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+                if(!sercqAddress.equals(addressVerificationDto.getValue())){
+                    log.logCheckingOutcome(process, false, "invalid address");
+                    throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
+                }
         }
 
         log.logCheckingOutcome(process, true);
