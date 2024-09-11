@@ -17,9 +17,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
 
 @WebFluxTest(controllers = {ConsentsController.class})
@@ -27,14 +24,11 @@ class ConsentsControllerTest {
     private static final String PA_ID = "x-pagopa-pn-uid";
     private static final String CX_ID = "x-pagopa-pn-cx-id";
     private static final String PA_CX_TYPE = "x-pagopa-pn-cx-type";
-    private static final String CX_ROLE = "x-pagopa-pn-cx-role";
-    private static final String CX_GROUPS = "x-pagopa-pn-cx-groups";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
     private static final String CX_TYPE = "PF";
     private static final String PG_CX_TYPE = "PG";
     private static final String VERSION = "VERS1";
-    private static final String ROLE = "ADMIN";
 
     @Autowired
     WebTestClient webTestClient;
@@ -179,8 +173,6 @@ class ConsentsControllerTest {
         .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
                 .replace("{version}", VERSION);
 
-        List<String> groupList = Collections.emptyList();
-
         // Given
         ConsentDto consentDto = new ConsentDto();
         consentDto.setRecipientId(RECIPIENTID);
@@ -191,7 +183,7 @@ class ConsentsControllerTest {
 
         // When
         Mockito.when(svc.getPgConsentByType(any(), any(), any(),
-                        any(), any(), any()))
+                        any()))
                 .thenReturn(Mono.just(consentDto));
 
         // Then
@@ -200,8 +192,6 @@ class ConsentsControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, PG_CX_TYPE)
-                .header(CX_ROLE, ROLE)
-                .header(CX_GROUPS, String.valueOf(groupList))
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -212,8 +202,6 @@ class ConsentsControllerTest {
                 .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
                 .replace("{version}", VERSION);
 
-        List<String> groupList = Collections.emptyList();
-
         // Given
         ConsentDto consentDto = new ConsentDto();
         consentDto.setRecipientId(RECIPIENTID);
@@ -224,7 +212,7 @@ class ConsentsControllerTest {
 
         // When
         Mockito.when(svc.getPgConsentByType(any(), any(), any(),
-                        any(), any(), any()))
+                        any()))
                 .thenReturn(Mono.error(new PnForbiddenException()));
 
         // Then
@@ -233,8 +221,6 @@ class ConsentsControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
-                .header(CX_ROLE, ROLE)
-                .header(CX_GROUPS, String.valueOf(groupList))
                 .exchange()
                 .expectStatus().isForbidden();
     }

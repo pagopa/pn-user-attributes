@@ -406,7 +406,6 @@ class ConsentsServiceTest {
 
     @Test
     void getPgConsentByType() {
-        List<String> groupList = new ArrayList<>();
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
 
         String recipientId = "recipientid";
@@ -431,8 +430,8 @@ class ConsentsServiceTest {
         Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PG.getValue()))
                 .thenReturn(Mono.just(vers1));
 
-        Mono<ConsentDto> result = service.getPgConsentByType(recipientId, xPagopaPnCxType, "ADMIN",
-                dto, groupList, vers1);
+        Mono<ConsentDto> result = service.getPgConsentByType(recipientId, xPagopaPnCxType,
+                dto, vers1);
 
         StepVerifier.create(result)
                 .expectNext(expected)
@@ -441,7 +440,6 @@ class ConsentsServiceTest {
 
     @Test
     void getPgConsentByType_ErrorTest() {
-        List<String> groupList = new ArrayList<>();
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PF;
 
         String recipientId = "recipientid";
@@ -460,8 +458,8 @@ class ConsentsServiceTest {
         Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue()))
                 .thenReturn(Mono.just(vers1));
 
-        Mono<ConsentDto> result = service.getPgConsentByType(recipientId, xPagopaPnCxType, "ADMIN",
-                dto, groupList, vers1);
+        Mono<ConsentDto> result = service.getPgConsentByType(recipientId, xPagopaPnCxType,
+                dto, vers1);
 
         StepVerifier.create(result)
                 .expectError();

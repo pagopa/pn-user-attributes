@@ -15,8 +15,6 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Service
 @Slf4j
 public class ConsentsService {
@@ -105,13 +103,11 @@ public class ConsentsService {
     * Verifica lo stato del tipo consenso della PG
      * @param xPagopaPnCxId Customer/Receiver Identifier
      * @param xPagopaPnCxType Customer/Receiver Type
-     * @param xPagopaPnCxRole User role
      * @param consentType A cosa sto dando il consenso
-     * @param xPagopaPnCxGroups Customer Groups
      * @param version La versione del consenso. se non presente il default è nessuna versione accettata.
     * */
-    public Mono<ConsentDto> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole,
-                                               ConsentTypeDto consentType, List<String> xPagopaPnCxGroups, String version) {
+    public Mono<ConsentDto> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType,
+                                               ConsentTypeDto consentType, String version) {
         return ConsentsUtils.validateCxType(xPagopaPnCxType)
                 .then(getConsentByType(xPagopaPnCxId, xPagopaPnCxType, consentType, version));
     }
