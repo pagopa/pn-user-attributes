@@ -104,8 +104,6 @@ paths:
     parameters:
       - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'            # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'          # NO EXTERNAL
-      - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'          # NO EXTERNAL
-      - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'        # NO EXTERNAL
       - $ref: '#/components/parameters/consentType'
     get:
       summary: Get single consent by type
@@ -142,6 +140,8 @@ paths:
       description: Accept single consent type for the recipient
       operationId: setPgConsentAction
       parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'          # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'        # NO EXTERNAL
         - $ref: '#/components/parameters/queryVersionRequired'
       tags:
         - consents

@@ -31,7 +31,6 @@ public class ConsentsService {
         this.pnExternalRegistryClient = pnExternalRegistryClient;
     }
 
-
     /**
      * Salva un nuovo consenso
      *
@@ -111,4 +110,18 @@ public class ConsentsService {
                 }))
                 .then();
     }
+
+    /**
+    * Verifica lo stato del tipo consenso della PG
+     * @param xPagopaPnCxId Customer/Receiver Identifier
+     * @param xPagopaPnCxType Customer/Receiver Type
+     * @param consentType A cosa sto dando il consenso
+     * @param version La versione del consenso. se non presente il default è nessuna versione accettata.
+    * */
+    public Mono<ConsentDto> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType,
+                                               ConsentTypeDto consentType, String version) {
+        return ConsentsUtils.validateCxType(xPagopaPnCxType)
+                .then(getConsentByType(xPagopaPnCxId, xPagopaPnCxType, consentType, version));
+    }
+
 }
