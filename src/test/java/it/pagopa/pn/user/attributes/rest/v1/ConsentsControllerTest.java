@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentActionDto;
@@ -16,13 +17,17 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+
 @WebFluxTest(controllers = {ConsentsController.class})
 class ConsentsControllerTest {
     private static final String PA_ID = "x-pagopa-pn-uid";
+    private static final String CX_ID = "x-pagopa-pn-cx-id";
     private static final String PA_CX_TYPE = "x-pagopa-pn-cx-type";
     private static final String RECIPIENTID = "123e4567-e89b-12d3-a456-426614174000";
     private static final String CONSENTTYPE = "TOS";
     private static final String CX_TYPE = "PF";
+    private static final String PG_CX_TYPE = "PG";
     private static final String VERSION = "VERS1";
 
     @Autowired
@@ -45,7 +50,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new Object()));
 
         // Then
@@ -74,7 +79,7 @@ class ConsentsControllerTest {
         ce.setAccepted(true);
 
         // When
-        Mockito.when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(svc.consentAction(Mockito.anyString(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -160,5 +165,63 @@ class ConsentsControllerTest {
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk().expectBodyList(ConsentDto.class).hasSize(0);
+    }
+
+    @Test
+    void getPgConsentType() {
+        String url = "/pg-consents/v1/consents/{consentType}?version={version}"
+        .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
+                .replace("{version}", VERSION);
+
+        // Given
+        ConsentDto consentDto = new ConsentDto();
+        consentDto.setRecipientId(RECIPIENTID);
+        consentDto.setAccepted(true);
+        consentDto.setIsFirstAccept(true);
+        consentDto.setConsentVersion(VERSION);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
+
+        // When
+        Mockito.when(svc.getPgConsentByType(any(), any(), any(),
+                        any()))
+                .thenReturn(Mono.just(consentDto));
+
+        // Then
+        webTestClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(CX_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, PG_CX_TYPE)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    void getPgConsentType_ErrorTest() {
+        String url = "/pg-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
+                .replace("{version}", VERSION);
+
+        // Given
+        ConsentDto consentDto = new ConsentDto();
+        consentDto.setRecipientId(RECIPIENTID);
+        consentDto.setAccepted(true);
+        consentDto.setIsFirstAccept(true);
+        consentDto.setConsentVersion(VERSION);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
+
+        // When
+        Mockito.when(svc.getPgConsentByType(any(), any(), any(),
+                        any()))
+                .thenReturn(Mono.error(new PnForbiddenException()));
+
+        // Then
+        webTestClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(CX_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
+                .exchange()
+                .expectStatus().isForbidden();
     }
 }

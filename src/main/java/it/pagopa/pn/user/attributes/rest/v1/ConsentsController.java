@@ -63,5 +63,26 @@ public class ConsentsController implements ConsentsApi {
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(xPagopaPnUid, xPagopaPnCxType)));
     }
+
+    /**
+     * GET /pg-consents/v1/consents/{consentType} : Get single consent by type
+     * Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+     *
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param consentType A cosa sto dando il consenso (required)
+     * @param version La versione del consenso. se non presente il default è nessuna versione accettata. (optional)
+     * @return successful operation (status code 200)
+     *         or Invalid input (status code 400)
+     *         or Forbidden (status code 403)
+     */
+    @Override
+    public Mono<ResponseEntity<ConsentDto>> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType,
+                                                               ConsentTypeDto consentType, String version, final ServerWebExchange exchange) {
+        log.info("getPgConsentByType - xPagopaPnCxId={} - xPagopaPnCxType={} - consentType={} - version={}",
+                xPagopaPnCxId, xPagopaPnCxType, consentType, version);
+        return this.consentsService.getPgConsentByType(xPagopaPnCxId, xPagopaPnCxType, consentType, version)
+                .map(ResponseEntity::ok);
+    }
 }
 
