@@ -70,20 +70,20 @@ public class ConsentsController implements ConsentsApi {
      * PUT /pg-consents/v1/consents/{consentType} : Accept a single consent type
      * Accept single consent type for the recipient
      *
-     * @param xPagopaPnCxId     Customer/Receiver Identifier (required)
-     * @param xPagopaPnCxType   Customer/Receiver Type (required)
-     * @param xPagopaPnCxRole   User role (required)
-     * @param consentType       A cosa sto dando il consenso (required)
-     * @param version           La versione del consenso, obbligatoria in fase di accettazione. (required)
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param consentType A cosa sto dando il consenso (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param version La versione del consenso, obbligatoria in fase di accettazione. (required)
      * @param consentActionDto  (required)
      * @param xPagopaPnCxGroups Customer Groups (optional)
      * @return successful operation (status code 200)
-     * or Invalid input (status code 400)
+     *         or Invalid input (status code 400)
+     *         or Forbidden (status code 403)
      */
-
     @Override
-    public Mono<ResponseEntity<Void>> setPgConsentAction(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, String xPagopaPnCxRole, ConsentTypeDto consentType, String version, Mono<ConsentActionDto> consentActionDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
-        String logMessage = String.format("consentAction - xPagopaPnCxId=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", xPagopaPnCxId, xPagopaPnCxType, consentType, version);
+    public Mono<ResponseEntity<Void>> setPgConsentAction(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String xPagopaPnCxRole, String version, Mono<ConsentActionDto> consentActionDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("pgConsentAction - xPagopaPnCxId=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", xPagopaPnCxId, xPagopaPnCxType, consentType, version);
 
         PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
         PnAuditLogEvent logEvent = auditLogBuilder
@@ -100,7 +100,6 @@ public class ConsentsController implements ConsentsApi {
                             .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
                 })
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
-
     }
 
 
