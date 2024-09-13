@@ -17,6 +17,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @Slf4j
 public class ConsentsController implements ConsentsApi {
@@ -62,6 +64,64 @@ public class ConsentsController implements ConsentsApi {
         log.info("getConsents - xPagopaPnUid={} - xPagopaPnCxType={}", xPagopaPnUid, xPagopaPnCxType);
 
         return Mono.fromSupplier(() -> ResponseEntity.ok(this.consentsService.getConsents(xPagopaPnUid, xPagopaPnCxType)));
+    }
+
+    /**
+     * PUT /pg-consents/v1/consents/{consentType} : Accept a single consent type
+     * Accept single consent type for the recipient
+     *
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param consentType A cosa sto dando il consenso (required)
+     * @param xPagopaPnCxRole User role (required)
+     * @param version La versione del consenso, obbligatoria in fase di accettazione. (required)
+     * @param consentActionDto  (required)
+     * @param xPagopaPnCxGroups Customer Groups (optional)
+     * @return successful operation (status code 200)
+     *         or Invalid input (status code 400)
+     *         or Forbidden (status code 403)
+     */
+    @Override
+    public Mono<ResponseEntity<Void>> setPgConsentAction(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String xPagopaPnCxRole, String version, Mono<ConsentActionDto> consentActionDto, List<String> xPagopaPnCxGroups, final ServerWebExchange exchange) {
+        String logMessage = String.format("pgConsentAction - xPagopaPnCxId=%s - xPagopaPnCxType=%s - consentType=%s - version=%s", xPagopaPnCxId, xPagopaPnCxType, consentType, version);
+
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
+                .build();
+        logEvent.log();
+        return consentActionDto.flatMap(dto -> {
+                    String messageAction = String.format("xPagopaPnCxId=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", xPagopaPnCxId, xPagopaPnCxType, consentType, version, dto);
+                    return this.consentsService.setPgConsentAction(xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, consentType, version, dto, xPagopaPnCxGroups)
+                            .onErrorResume(throwable -> {
+                                logEvent.generateFailure(throwable.getMessage()).log();
+                                return Mono.error(throwable);
+                            })
+                            .then(Mono.fromRunnable(() -> logEvent.generateSuccess(messageAction).log()));
+                })
+                .then(Mono.just(new ResponseEntity<>(HttpStatus.OK)));
+    }
+
+
+    /**
+     * GET /pg-consents/v1/consents/{consentType} : Get single consent by type
+     * Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+     *
+     * @param xPagopaPnCxId Customer/Receiver Identifier (required)
+     * @param xPagopaPnCxType Customer/Receiver Type (required)
+     * @param consentType A cosa sto dando il consenso (required)
+     * @param version La versione del consenso. se non presente il default è nessuna versione accettata. (optional)
+     * @return successful operation (status code 200)
+     *         or Invalid input (status code 400)
+     *         or Forbidden (status code 403)
+     */
+    @Override
+    public Mono<ResponseEntity<ConsentDto>> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType,
+                                                               ConsentTypeDto consentType, String version, final ServerWebExchange exchange) {
+        log.info("getPgConsentByType - xPagopaPnCxId={} - xPagopaPnCxType={} - consentType={} - version={}",
+                xPagopaPnCxId, xPagopaPnCxType, consentType, version);
+        return this.consentsService.getPgConsentByType(xPagopaPnCxId, xPagopaPnCxType, consentType, version)
+                .map(ResponseEntity::ok);
     }
 }
 
