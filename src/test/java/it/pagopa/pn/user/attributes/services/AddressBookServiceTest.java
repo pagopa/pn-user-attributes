@@ -572,7 +572,6 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveCourtesyAddressBook with channelType {0}")
-    //TODO SERCQ investigare fallimento, probabilmente logica esclusiva per PEC
     @MethodSource("provideLegalChannelTypes")
     void saveCourtesyAddressBookPEC_invalid(LegalChannelTypeDto legalChannelType) {
         //GIVEN
