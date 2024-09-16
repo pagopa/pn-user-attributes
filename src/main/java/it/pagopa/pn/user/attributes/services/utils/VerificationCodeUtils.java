@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import javax.annotation.PostConstruct;
@@ -107,7 +108,7 @@ public class VerificationCodeUtils {
             return this.dao.updateVerificationCodeIfExists(verificationCodeEntity)
                     .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.PEC_VALIDATION_REQUIRED));
         } else {
-            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, null);
+            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity);
         }
     }
 
@@ -116,7 +117,7 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<DeleteItemEnhancedRequest> deleteItemResponses)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<TransactDeleteItemEnhancedRequest> deleteItemResponses)
     {
         // se real address non è passato, provo a recuperlo dal pec address
         String realaddress = verificationCodeEntity.getAddress();
@@ -132,6 +133,10 @@ public class VerificationCodeUtils {
         return this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, realaddress)
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, deleteItemResponses))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
+    }
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity)
+    {
+        return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, null);
     }
 
     /**

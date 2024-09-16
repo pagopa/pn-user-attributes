@@ -151,13 +151,16 @@ class LegalAddressControllerTest {
         addressVerification.setVerificationCode("12345");
         addressVerification.setValue("+393333300666");
 
+
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
-                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
-                        .recipientId("recipientId")
-                        .consentType(ConsentTypeDto.TOS_SERCQ)
-                        .build())));
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
@@ -217,13 +220,15 @@ class LegalAddressControllerTest {
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setValue("test@email.com");
 
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
         when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
-                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
-                        .recipientId("recipientId")
-                        .consentType(ConsentTypeDto.TOS_SERCQ)
-                        .build())));
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 

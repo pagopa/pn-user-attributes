@@ -129,10 +129,10 @@ public class LegalAddressController implements LegalApi {
 
                                 if (isSercq) {
                                     boolean hasTosConsent = consentsList.stream()
-                                            .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && consent.getAccepted());
+                                            .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
 
                                     boolean hasPrivacyConsent = consentsList.stream()
-                                            .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && consent.getAccepted());
+                                            .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
 
                                     if (!(hasTosConsent && hasPrivacyConsent)) {
                                         log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
@@ -156,7 +156,7 @@ public class LegalAddressController implements LegalApi {
                                         )
                                         .flatMap(deleteResponses ->
                                                 executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, deleteResponses));
+                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, deleteResponses.isEmpty() ? null : deleteResponses));
                             });
                 })
                 .onErrorResume(e -> {

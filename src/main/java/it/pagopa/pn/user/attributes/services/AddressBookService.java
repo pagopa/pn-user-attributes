@@ -94,7 +94,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponse) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, null);
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, deleteItemResponse);
     }
 
     /**
@@ -432,7 +432,7 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, List<DeleteItemEnhancedRequest> deleteItemResponses) {
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
             String legal = verificationCodeUtils.getLegalType(legalChannelType);
@@ -464,7 +464,7 @@ public class AddressBookService {
             } else {
                 return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
-                        if (Boolean.TRUE.equals(res) || channelType.equals(LegalChannelTypeDto.SERCQ)) {
+                        if (Boolean.TRUE.equals(res) ) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
