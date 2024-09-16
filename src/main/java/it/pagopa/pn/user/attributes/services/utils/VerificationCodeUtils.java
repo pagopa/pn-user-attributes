@@ -12,16 +12,21 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
+import javax.annotation.PostConstruct;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -38,6 +43,8 @@ public class VerificationCodeUtils {
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
     private final SecureRandom rnd = new SecureRandom();
+    private final String sercqAddress = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+
 
     /**
      * Valida un codice di verifica e lo anonimizza
@@ -110,7 +117,7 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<TransactDeleteItemEnhancedRequest> deleteItemResponses)
     {
         // se real address non è passato, provo a recuperlo dal pec address
         String realaddress = verificationCodeEntity.getAddress();
@@ -124,8 +131,12 @@ public class VerificationCodeUtils {
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
         return this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, realaddress)
-                .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity))
+                .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, deleteItemResponses))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
+    }
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity)
+    {
+        return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, null);
     }
 
     /**
@@ -164,16 +175,20 @@ public class VerificationCodeUtils {
                                                                                                                   LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId) {
         String hashedaddress = hashAddress(realaddress);
         String addressType = getLegalType(legalChannelType);
-        String vercode = getNewVerificationCode();
+
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
-        log.info("saving new verificationcode and send it to ext channel uid:{} hashedaddress:{} channel:{} newvercode:{}", recipientId, hashedaddress, channelType, vercode);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
+        String vercode = getNewVerificationCode();
+
+
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationcodettl()).atZone(ZoneId.systemDefault()).toEpochSecond());
 
+        //la send non va fatta senza il codice
         return removePreviousVerificationCode(verificationCode)
                 .then(dao.saveVerificationCode(verificationCode))
-                .flatMap(r -> pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
+                .flatMap(r ->
+                        pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
                                 .flatMap(requestId -> {
                                     // aggiorno il requestId
                                     verificationCode.setRequestId(requestId);
@@ -246,7 +261,6 @@ public class VerificationCodeUtils {
     private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
         String process = "validating verification code request";
         log.logChecking(process);
-
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
@@ -286,6 +300,12 @@ public class VerificationCodeUtils {
                 log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
             }
+        }
+        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+                if(!sercqAddress.equals(addressVerificationDto.getValue())){
+                    log.logCheckingOutcome(process, false, "invalid address");
+                    throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
+                }
         }
 
         log.logCheckingOutcome(process, true);

@@ -9,11 +9,13 @@ import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeExceptio
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.LegalApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +23,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,9 +38,11 @@ import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 public class LegalAddressController implements LegalApi {
 
     private final AddressBookService addressBookService;
+    private final ConsentsService consentsService;
 
-    public LegalAddressController(AddressBookService addressBookService) {
+    public LegalAddressController(AddressBookService addressBookService, ConsentsService consentsService) {
         this.addressBookService = addressBookService;
+        this.consentsService = consentsService;
     }
 
     @Override
@@ -97,41 +105,117 @@ public class LegalAddressController implements LegalApi {
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
-                    return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
-                            .map(addressVerificationDto1 -> {
-                                // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
-                                Optional<PnAuditLogEvent> auditLogEvent;
-                                if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
-                                    auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
-                                }
-                                else {
-                                    auditLogEvent = Optional.empty();
+
+                    // Recupero della lista di indirizzi tramite recipientId e senderId
+                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId);
+
+                    // Filtro gli indirizzi in base al tipo di canale
+                    Flux<LegalDigitalAddressDto> filteredAddresses = addressesList
+                            .filter(address -> channelType == LegalChannelTypeDto.SERCQ ? address.getChannelType() == LegalChannelTypeDto.PEC
+                                    : address.getChannelType() == LegalChannelTypeDto.SERCQ);
+
+                    // Recupero dei consensi
+                    Flux<ConsentDto> consentsFlux = consentsService.getConsents(recipientId, pnCxType);
+
+                    if (consentsFlux == null) {
+                        log.warn("Consents list is null for recipientId: {}. Proceeding with empty list.", recipientId);
+                        consentsFlux = Flux.empty();
+                    }
+
+                    return consentsFlux
+                            .collectList()
+                            .flatMap(consentsList -> {
+                                boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
+
+                                if (isSercq) {
+                                    boolean hasTosConsent = consentsList.stream()
+                                            .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
+
+                                    boolean hasPrivacyConsent = consentsList.stream()
+                                            .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
+
+                                    if (!(hasTosConsent && hasPrivacyConsent)) {
+                                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                                        return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
+                                    }
                                 }
 
-                                return Tuples.of(addressVerificationDto1, auditLogEvent);
-                            })
-                            .flatMap(tupleVerCodeLogEvent ->  addressBookService.saveLegalAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
-                                    .onErrorResume(throwable -> {
-                                        if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
-                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
-                                        else
-                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
-                                        return Mono.error(throwable);
-                                    })
-                                    .map(m -> {
-                                        log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
-
-                                        if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
-                                            AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
-                                            responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
-                                            return ResponseEntity.ok(responseDto);
-                                        } else {
-                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
-                                            return ResponseEntity.noContent().build();
-                                        }
-                                    })));
+                                return filteredAddresses.collectList()
+                                        .flatMap(filteredAddressesList ->
+                                                Flux.fromIterable(filteredAddressesList)
+                                                        .flatMap(address ->
+                                                                addressBookService.deleteLegalAddressBook(address.getRecipientId(), address.getSenderId(), address.getChannelType(), pnCxType, pnCxGroups, pnCxRole, true)
+                                                                        .cast(TransactDeleteItemEnhancedRequest.class)
+                                                                        .map(deleteResponse -> deleteResponse) // risposta del dao
+                                                                        .onErrorResume(e -> {
+                                                                            log.error("Error deleting address: {}", address, e);
+                                                                            return Mono.empty();
+                                                                        })
+                                                        )
+                                                        .collectList()
+                                        )
+                                        .flatMap(deleteResponses ->
+                                                executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
+                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, deleteResponses.isEmpty() ? null : deleteResponses));
+                            });
+                })
+                .onErrorResume(e -> {
+                    // Gestione degli errori
+                    log.error("Error occurred while processing address verification", e);
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
+
+    private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,
+                                                                                              CxTypeAuthFleetDto pnCxType,
+                                                                                              String senderId,
+                                                                                              LegalChannelTypeDto channelType,
+                                                                                              AddressVerificationDto addressVerificationDtoMdc,
+                                                                                              List<String> pnCxGroups,
+                                                                                              String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
+
+        return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
+                .map(addressVerificationDto1 -> {
+                    // l'auditLog va creato solo se sto creando effettivamente (quindi o è APPIO oppure è una richiesta con codice di conferma)
+                    Optional<PnAuditLogEvent> auditLogEvent;
+                    if (StringUtils.hasText(addressVerificationDto1.getVerificationCode())) {
+                        auditLogEvent = Optional.of(getLogEvent(recipientId, pnCxType, senderId, channelType, pnCxGroups, pnCxRole));
+                    } else {
+                        auditLogEvent = Optional.empty();
+                    }
+
+                    return Tuples.of(addressVerificationDto1, auditLogEvent);
+                })
+                .flatMap(tupleVerCodeLogEvent -> addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
+                                tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole, deleteItemResponses)
+                        .onErrorResume(throwable -> {
+                            if (throwable instanceof PnInvalidVerificationCodeException ||
+                                    throwable instanceof PnExpiredVerificationCodeException ||
+                                    throwable instanceof PnRetryLimitVerificationCodeException) {
+                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent ->
+                                        pnAuditLogEvent.generateWarning("codice non valido - {}", throwable.getMessage()).log());
+                            } else {
+                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent ->
+                                        pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+                            }
+                            return Mono.error(throwable);
+                        })
+                        .map(m -> {
+                            log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}",
+                                    recipientId, senderId, channelType, m.toString());
+
+                            if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                return ResponseEntity.ok(responseDto);
+                            } else {
+                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
+                                return ResponseEntity.noContent().build();
+                            }
+                        })));
+    }
+
+
 
 
     @NotNull
