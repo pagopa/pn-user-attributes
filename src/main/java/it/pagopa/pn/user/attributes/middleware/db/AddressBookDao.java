@@ -96,6 +96,30 @@ public class AddressBookDao extends BaseDao {
                 })));
     }
 
+    public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType, boolean transactional) {
+        log.info("deleteAddressBook recipientId={} senderId={} legalType={} channelType={} transactional{}", recipientId, senderId, legal, channelType, transactional);
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
+
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":pk", AttributeValue.builder().s(addressBook.getPk()).build());
+
+        Expression exp = Expression.builder()
+                .expression(BaseEntity.COL_PK + " = :pk")
+                .expressionValues(expressionValues)
+                .build();
+
+        DeleteItemEnhancedRequest delRequest = DeleteItemEnhancedRequest.builder()
+                .key(getKeyBuild(addressBook.getPk(), addressBook.getSk()))
+                .conditionExpression(exp)
+                .build();
+
+        if (transactional) {
+            return Mono.just(delRequest);
+        } else {
+            return deleteAddressBook(recipientId, senderId, legal, channelType);
+        }
+
+    }
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
         return getAddresses(recipientId, senderId, legalType, true);
@@ -278,6 +302,31 @@ public class AddressBookDao extends BaseDao {
      *
      * @return void
      */
+    public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress, List<DeleteItemEnhancedRequest> deleteItemResponses) {
+
+        log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={} deleteItemResponses={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress(), deleteItemResponses);
+        TransactUpdateItemEnhancedRequest <AddressBookEntity> updRequest = TransactUpdateItemEnhancedRequest.builder(AddressBookEntity.class)
+                .item(addressBook)
+                .build();
+        TransactUpdateItemEnhancedRequest<VerifiedAddressEntity> updVARequest = TransactUpdateItemEnhancedRequest.builder(VerifiedAddressEntity.class)
+                .item(verifiedAddress)
+                .build();
+
+        TransactWriteItemsEnhancedRequest.Builder transactWriteItemsBuilder = TransactWriteItemsEnhancedRequest.builder()
+                .addUpdateItem(addressBookTable, updRequest)
+                .addUpdateItem(verifiedAddressTable, updVARequest);
+
+        if (!deleteItemResponses.isEmpty()) {
+                deleteItemResponses.forEach( d -> transactWriteItemsBuilder.addDeleteItem(addressBookTable, d));
+        }
+
+        TransactWriteItemsEnhancedRequest transactWriteItemsEnhancedRequest = transactWriteItemsBuilder.build();
+
+
+        return deleteVerifiedAddressIfItsLastRemained(addressBook)
+                .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)));
+    }
+
     public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress) {
 
         log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());

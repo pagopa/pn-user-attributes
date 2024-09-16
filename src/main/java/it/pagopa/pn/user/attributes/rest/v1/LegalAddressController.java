@@ -23,7 +23,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,66 +105,59 @@ public class LegalAddressController implements LegalApi {
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
-                    boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId
                     Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId);
 
-                    // Se addressesList è null, la tratto come vuota
-                    if (addressesList == null) {
-                        log.warn("Address list is null for recipientId: {} and senderId: {}. Proceeding with empty list.", recipientId, senderId);
-                        addressesList = Flux.empty();
-                    }
-
                     // Filtro gli indirizzi in base al tipo di canale
                     Flux<LegalDigitalAddressDto> filteredAddresses = addressesList
-                            .filter(address -> isSercq ? address.getChannelType() == LegalChannelTypeDto.PEC
+                            .filter(address -> channelType == LegalChannelTypeDto.SERCQ ? address.getChannelType() == LegalChannelTypeDto.PEC
                                     : address.getChannelType() == LegalChannelTypeDto.SERCQ);
 
-                    if (isSercq) {
-                        // Recupero dei consensi solo se il canale è SERCQ
-                        Flux<ConsentDto> consentsFlux = consentsService.getConsents(recipientId, pnCxType);
+                    // Recupero dei consensi
+                    Flux<ConsentDto> consentsFlux = consentsService.getConsents(recipientId, pnCxType);
 
-                        // Se consentsFlux è null, lo tratto come vuoto
-                        if (consentsFlux == null) {
-                            log.warn("Consents list is null for recipientId: {}. Proceeding with empty list.", recipientId);
-                            consentsFlux = Flux.empty();
-                        }
-
-                        return consentsFlux.collectList()
-                                .flatMap(consents ->
-                                        filteredAddresses.collectList()
-                                                .flatMap(filteredAddressesList -> {
-                                                    if (!filteredAddressesList.isEmpty()) {
-                                                        // Eseguo una delete per gli indirizzi trovati
-                                                        return Flux.fromIterable(filteredAddressesList)
-                                                                .flatMap(address -> addressBookService.deleteLegalAddressBook(recipientId, senderId, address.getChannelType(), pnCxType, pnCxGroups, pnCxRole))
-                                                                .then(Mono.defer(() -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole)));
-                                                    } else {
-                                                        // Se non ci sono indirizzi da eliminare, eseguo la logica successiva
-                                                        return executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                                addressVerificationDtoMdc, pnCxGroups, pnCxRole);
-                                                    }
-                                                })
-                                );
-                    } else {
-                        // Caso in cui il canale non è SERCQ
-                        return filteredAddresses.collectList()
-                                .flatMap(filteredAddressesList -> {
-                                    if (!filteredAddressesList.isEmpty()) {
-                                        // Eseguo una delete per gli indirizzi trovati
-                                        return Flux.fromIterable(filteredAddressesList)
-                                                .flatMap(address -> addressBookService.deleteLegalAddressBook(recipientId, senderId, address.getChannelType(), pnCxType, pnCxGroups, pnCxRole))
-                                                .then(Mono.defer(() -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole)));
-                                    } else {
-                                        // Se non ci sono indirizzi da eliminare, eseguo la logica successiva
-                                        return executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                addressVerificationDtoMdc, pnCxGroups, pnCxRole);
-                                    }
-                                });
+                    if (consentsFlux == null) {
+                        log.warn("Consents list is null for recipientId: {}. Proceeding with empty list.", recipientId);
+                        consentsFlux = Flux.empty();
                     }
+
+                    return consentsFlux
+                            .collectList()
+                            .flatMap(consentsList -> {
+                                boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
+
+                                if (isSercq) {
+                                    boolean hasTosConsent = consentsList.stream()
+                                            .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && consent.getAccepted());
+
+                                    boolean hasPrivacyConsent = consentsList.stream()
+                                            .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && consent.getAccepted());
+
+                                    if (!(hasTosConsent && hasPrivacyConsent)) {
+                                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                                        return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
+                                    }
+                                }
+
+                                return filteredAddresses.collectList()
+                                        .flatMap(filteredAddressesList ->
+                                                Flux.fromIterable(filteredAddressesList)
+                                                        .flatMap(address ->
+                                                                addressBookService.deleteLegalAddressBook(address.getRecipientId(), address.getSenderId(), address.getChannelType(), pnCxType, pnCxGroups, pnCxRole, true)
+                                                                        .cast(TransactDeleteItemEnhancedRequest.class)
+                                                                        .map(deleteResponse -> deleteResponse) // risposta del dao
+                                                                        .onErrorResume(e -> {
+                                                                            log.error("Error deleting address: {}", address, e);
+                                                                            return Mono.empty();
+                                                                        })
+                                                        )
+                                                        .collectList()
+                                        )
+                                        .flatMap(deleteResponses ->
+                                                executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
+                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, deleteResponses));
+                            });
                 })
                 .onErrorResume(e -> {
                     // Gestione degli errori
@@ -169,17 +166,13 @@ public class LegalAddressController implements LegalApi {
                 });
     }
 
-
-
-
-
     private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,
                                                                                               CxTypeAuthFleetDto pnCxType,
                                                                                               String senderId,
                                                                                               LegalChannelTypeDto channelType,
                                                                                               AddressVerificationDto addressVerificationDtoMdc,
                                                                                               List<String> pnCxGroups,
-                                                                                              String pnCxRole) {
+                                                                                              String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
 
         return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
                 .map(addressVerificationDto1 -> {
@@ -194,7 +187,7 @@ public class LegalAddressController implements LegalApi {
                     return Tuples.of(addressVerificationDto1, auditLogEvent);
                 })
                 .flatMap(tupleVerCodeLogEvent -> addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
-                                tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
+                                tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole, deleteItemResponses)
                         .onErrorResume(throwable -> {
                             if (throwable instanceof PnInvalidVerificationCodeException ||
                                     throwable instanceof PnExpiredVerificationCodeException ||

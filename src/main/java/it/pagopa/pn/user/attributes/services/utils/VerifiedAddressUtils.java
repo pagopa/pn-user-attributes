@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -29,6 +31,30 @@ public class VerifiedAddressUtils {
      * @param addressBook addressBook da salvare, COMPLETO di hashedaddress impostato
      * @return nd
      */
+    public Mono<Void> saveInDynamodb(AddressBookEntity addressBook, List<DeleteItemEnhancedRequest> deleteItemResponses){
+        log.info("saving address in db uid={} hashedaddress={} channel={} legal={}", addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType(), addressBook.getAddressType());
+
+        PnAuditLogEvent auditLogEvent = getLogEvent(addressBook);
+        VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType());
+        VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType());
+
+        return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity, deleteItemResponses)
+                .then(dao.deleteVerificationCode(verificationCodeEntity))
+                .onErrorResume(x -> {
+                    if (auditLogEvent != null)
+                        auditLogEvent.generateFailure("Error saving addressbook", x.getMessage()).log();
+                    else
+                        log.error("error saving address book", x);
+                    return Mono.error(x);
+                })
+                .doOnSuccess(x -> {
+                    if (auditLogEvent != null)
+                        auditLogEvent.generateSuccess().log();
+                    else
+                        log.info("address book saved successfully uid={} hashedaddress={} channel={} legal={}", addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType(), addressBook.getAddressType());
+                });
+    }
+
     public Mono<Void> saveInDynamodb(AddressBookEntity addressBook){
         log.info("saving address in db uid={} hashedaddress={} channel={} legal={}", addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType(), addressBook.getAddressType());
 

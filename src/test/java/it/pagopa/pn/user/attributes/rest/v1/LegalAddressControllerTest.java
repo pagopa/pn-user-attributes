@@ -158,7 +158,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -191,7 +191,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -224,7 +224,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -257,7 +257,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then
