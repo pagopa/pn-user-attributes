@@ -138,6 +138,8 @@ components:
       enum:
         - TOS
         - DATAPRIVACY
+        - TOS_SERCQ
+        - DATAPRIVACY_SERCQ
 
     ConsentAction:
       type: object

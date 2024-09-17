@@ -70,7 +70,7 @@ class AddressBookDaoTestIT {
         try {
             testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
             testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress, null).block(d);
         } catch (Exception e) {
             System.out.println("error removing");
         }
@@ -108,7 +108,7 @@ class AddressBookDaoTestIT {
         try {
             testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
             testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress, null).block(d);
         } catch (Exception e) {
             System.out.println("error removing");
         }
@@ -150,8 +150,8 @@ class AddressBookDaoTestIT {
             testDao.delete(addressBookToDelete.getPk(), addressBookToDelete.getSk());
             testDao.delete(addressBookToDelete1.getPk(), addressBookToDelete1.getSk());
             testVADao.delete(verifiedAddress.getPk(), verifiedAddress.getSk());
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress).block(d);
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete1,verifiedAddress).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete,verifiedAddress, null).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToDelete1,verifiedAddress, null).block(d);
         } catch (Exception e) {
             System.out.println("error removing");
         }
@@ -494,7 +494,7 @@ class AddressBookDaoTestIT {
             toInsert.forEach(x -> {
                 try {
                     testDao.delete(x.getPk(), x.getSk());
-                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null).block(d);
                 } catch (Exception e) {
                     System.out.println("error removing");
                 }
@@ -542,7 +542,7 @@ class AddressBookDaoTestIT {
                     toInsert.forEach(x -> {
                         try {
                             testDao.delete(x.getPk(), x.getSk());
-                            addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                            addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null ).block(d);
                         } catch (Exception e) {
                             System.out.println("error removing");
                         }
@@ -591,7 +591,7 @@ class AddressBookDaoTestIT {
             toInsert.forEach(x -> {
                 try {
                     testDao.delete(x.getPk(), x.getSk());
-                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null).block(d);
                 } catch (Exception e) {
                     System.out.println("error removing");
                 }
@@ -641,7 +641,7 @@ class AddressBookDaoTestIT {
             toInsert.forEach(x -> {
                 try {
                     testDao.delete(x.getPk(), x.getSk());
-                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null).block(d);
                 } catch (Exception e) {
                     System.out.println("error removing");
                 }
@@ -687,7 +687,7 @@ class AddressBookDaoTestIT {
                 toInsert.forEach(x -> {
                     try {
                         testDao.delete(x.getPk(), x.getSk());
-                        addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                        addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null).block(d);
                     } catch (Exception e) {
                         System.out.println("error removing");
                     }
@@ -733,7 +733,7 @@ class AddressBookDaoTestIT {
             toInsert.forEach(x -> {
                 try {
                     testDao.delete(x.getPk(), x.getSk());
-                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress ).block(d);
+                    addressBookDao.saveAddressBookAndVerifiedAddress(x,verifiedAddress, null).block(d);
                 } catch (Exception e) {
                     System.out.println("error removing");
                 }
@@ -840,7 +840,7 @@ class AddressBookDaoTestIT {
             VerifiedAddressEntity verifiedAddress = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "hashAddressgahs67323525", "SMS");
             try {
                 testDao.delete(addressBook.getPk(), addressBook.getSk());
-                addressBookDao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddress).block(d);
+                addressBookDao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddress, null).block(d);
             } catch (Exception e) {
                 System.out.println("error removing");
             }
@@ -876,7 +876,7 @@ class AddressBookDaoTestIT {
             }
 
             //When
-            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToInsert, verifiedAddressToInsert).block(d);
+            addressBookDao.saveAddressBookAndVerifiedAddress(addressBookToInsert, verifiedAddressToInsert, null).block(d);
             //Then
             try {
                 AddressBookEntity addressBookFromDb = testDao.get(addressBookToInsert.getPk(),addressBookToInsert.getSk());

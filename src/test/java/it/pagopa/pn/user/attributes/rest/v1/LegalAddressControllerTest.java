@@ -2,10 +2,8 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAndUnverifiedDigitalAddressDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalDigitalAddressDto;
+import it.pagopa.pn.user.attributes.services.ConsentsService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -17,6 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +33,9 @@ class LegalAddressControllerTest {
 
     @MockBean
     AddressBookService svc;
+
+    @MockBean
+    ConsentsService consentsService;
 
     @Autowired
     WebTestClient webTestClient;
@@ -149,9 +151,17 @@ class LegalAddressControllerTest {
         addressVerification.setVerificationCode("12345");
         addressVerification.setValue("+393333300666");
 
+
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -179,7 +189,12 @@ class LegalAddressControllerTest {
         addressVerification.setValue("00393333300666");
 
         // When
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
+                        .recipientId("recipientId")
+                        .consentType(ConsentTypeDto.TOS_SERCQ)
+                        .build())));
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -205,9 +220,16 @@ class LegalAddressControllerTest {
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setValue("test@email.com");
 
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -235,7 +257,12 @@ class LegalAddressControllerTest {
         addressVerification.setValue("value");
 
         // When
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
+                        .recipientId("recipientId")
+                        .consentType(ConsentTypeDto.TOS_SERCQ)
+                        .build())));
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then

@@ -371,11 +371,11 @@ class ConsentsServiceTest {
         //GIVEN
         String recipientId = "recipientid";
         String vers1 = "VERS1";
-        ConsentTypeDto dto = ConsentTypeDto.TOS;
+        ConsentTypeDto dto = ConsentTypeDto.TOS_SERCQ;
         ConsentDto expected = new ConsentDto();
         List<ConsentEntity> list = new ArrayList<>();
-        list.add(ConsentDaoTestIT.newConsent(true));
-        list.add(ConsentDaoTestIT.newConsent(false));
+        list.add(ConsentDaoTestIT.newConsentSercQ(true));
+        list.add(ConsentDaoTestIT.newConsentSercQ(false));
 
         Mockito.when(consentDao.getConsents(any())).thenReturn(Flux.fromIterable(list));
         Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
@@ -383,7 +383,6 @@ class ConsentsServiceTest {
 
         // WHEN
         List<ConsentDto> result = service.getConsents(recipientId, CxTypeAuthFleetDto.PF).collectList().block(d);
-
         //THEN
         assertNotNull(result);
         assertEquals(list.size(), result.size());
