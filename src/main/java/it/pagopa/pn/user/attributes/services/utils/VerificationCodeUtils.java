@@ -34,8 +34,6 @@ import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 @RequiredArgsConstructor
 public class VerificationCodeUtils {
 
-    public static final String INVALID_ADDRESS = "invalid address";
-    public static final String VALUE = "value";
     private final AddressBookDao dao;
     private final PnUserattributesConfig pnUserattributesConfig;
     private final PnDataVaultClient dataVaultClient;
@@ -258,81 +256,56 @@ public class VerificationCodeUtils {
 
 
     private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-    String process = "validating verification code request";
-    log.logChecking(process);
-
-    if (addressVerificationDto.getRequestId() != null) {
-        if (StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
-            log.logCheckingOutcome(process, true);
-            return;
-        } else {
-            log.logCheckingOutcome(process, false, "missing verification code");
-            throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, "verificationCode");
+        String process = "validating verification code request";
+        log.logChecking(process);
+        // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
+        if (addressVerificationDto.getRequestId() != null)
+        {
+            if (StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
+                log.logCheckingOutcome(process, true);
+                return;
+            }
+            else {
+                log.logCheckingOutcome(process, false, "missing verification code");
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, "verificationCode");
+            }
         }
+
+        // aggiungo il controllo dato che ora value è nullabile
+        String emailfield = "value";
+        if (!StringUtils.hasText(addressVerificationDto.getValue())) {
+            log.logCheckingOutcome(process, false, "missing address");
+            throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, emailfield);
+        }
+
+        if ((legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC))
+                || (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL)))
+        {
+            String emailaddress = addressVerificationDto.getValue();
+
+            //final Pattern emailRegex = Pattern.compile("^[\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+(?:[.-][\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+){0,10}@\\w+(?:[.-]\\w+){0,10}\\.\\w{2,10}$", Pattern.CASE_INSENSITIVE);
+            final Pattern emailRegex = Pattern.compile("(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])", Pattern.CASE_INSENSITIVE);
+            if (!emailRegex.matcher(emailaddress).matches()) {
+                log.logCheckingOutcome(process, false, "invalid address");
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+            }
+        }
+        else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
+        {
+            final Pattern phoneRegex = Pattern.compile("^(00|\\+)393\\d{8,9}$", Pattern.CASE_INSENSITIVE);
+            if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches()) {
+                log.logCheckingOutcome(process, false, "invalid address");
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
+            }
+        }
+        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ) && !SERCQ_ADDRESS.equals(addressVerificationDto.getValue())){
+                    log.logCheckingOutcome(process, false, "invalid address");
+                    throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
+                }
+
+
+        log.logCheckingOutcome(process, true);
     }
-
-    validateValueField(addressVerificationDto, process);
-
-    if (isEmailValidationRequired(legalChannelType, courtesyChannelType)) {
-        validateEmail(addressVerificationDto.getValue(), process);
-    } else if (isPhoneValidationRequired(courtesyChannelType)) {
-        validatePhone(addressVerificationDto.getValue(), process);
-    } else if (isSercqValidationRequired(legalChannelType)) {
-        validateSercqAddress(addressVerificationDto.getValue(), process);
-    }
-
-    log.logCheckingOutcome(process, true);
-}
-
-
-private void validateValueField(AddressVerificationDto addressVerificationDto, String process) {
-    if (!StringUtils.hasText(addressVerificationDto.getValue())) {
-        log.logCheckingOutcome(process, false, "missing address");
-        throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_REQUIRED, VALUE);
-    }
-}
-
-private boolean isEmailValidationRequired(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
-    return (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC)) ||
-           (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL));
-}
-
-private void validateEmail(String email, String process) {
-    final Pattern emailRegex = Pattern.compile(
-            "(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\\[(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])",
-            Pattern.CASE_INSENSITIVE);
-
-    if (!emailRegex.matcher(email).matches()) {
-        log.logCheckingOutcome(process, false, INVALID_ADDRESS);
-        throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, VALUE);
-    }
-}
-
-private boolean isPhoneValidationRequired(CourtesyChannelTypeDto courtesyChannelType) {
-    return courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS);
-}
-
-private void validatePhone(String phoneNumber, String process) {
-    final Pattern phoneRegex = Pattern.compile("^(00|\\+)393\\d{8,9}$", Pattern.CASE_INSENSITIVE);
-
-    if (!phoneRegex.matcher(phoneNumber).matches()) {
-        log.logCheckingOutcome(process, false, INVALID_ADDRESS);
-        throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, VALUE);
-    }
-}
-
-private boolean isSercqValidationRequired(LegalChannelTypeDto legalChannelType) {
-    return legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ);
-}
-
-private void validateSercqAddress(String address, String process) {
-    if (!SERCQ_ADDRESS.equals(address)) {
-        log.logCheckingOutcome(process, false, INVALID_ADDRESS);
-        throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, VALUE);
-    }
-}
-
-
 
 
     /**
