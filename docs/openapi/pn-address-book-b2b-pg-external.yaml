@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User Attributes - Address Book
+    OpenApi definition for PN User Attributes - Address Book - B2B
   version: '1.0.0'
-  title: PN User Attributes - Address Book
+  title: PN User Attributes - Address Book - B2B
   termsOfService: 'http://swagger.io/terms/'
   contact:
     email: pn@pagopa.it
@@ -19,6 +19,10 @@ tags:
     description: Receiver Digital Domicile
   - name: courtesy
     description: Receiver Digital Addresses
+  - name: legalB2B
+    description: Receiver Digital Domicile
+  - name: courtesyB2B
+    description: Receiver Digital Addresses
 
 paths:
   /address-book/v1/digital-address:
@@ -28,8 +32,10 @@ paths:
       operationId: getAddressesByRecipient
       tags:
         - all
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '200':
           description: successful operation
@@ -43,7 +49,60 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-
+  /address-book/v1/digital-address/legal/{senderId}:
+    get:
+      summary: get the legal digital addresses of the recipient to the sender
+      description: Returns a legal digital address for the recipient to the sender specified
+      operationId: getLegalAddressBySenderB2B
+      tags:
+        - legalB2B
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
+      parameters:
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalDigitalAddress'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+  /address-book/v1/digital-address/courtesy/{senderId}:
+    get:
+      summary: get the courtesy digital addresses of the recipient to the sender
+      description: Returns a courtesy digital address for the recipient to the sender specified
+      operationId: getCourtesyAddressBySenderB2B
+      tags:
+        - courtesyB2B
+      x-api-permissions:
+        - 'BASE'
+      parameters:
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
   /address-book/v1/digital-address/legal:
     get:
@@ -51,8 +110,10 @@ paths:
       operationId: getLegalAddressByRecipient
       tags:
         - legal
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '200':
           description: successful operation
@@ -75,8 +136,10 @@ paths:
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '200':
           description: successful operation
@@ -92,8 +155,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-
-
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     parameters:
       - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
@@ -108,8 +169,10 @@ paths:
       operationId: postRecipientLegalAddress
       tags:
         - legal
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       requestBody:
         required: true
         content:
@@ -148,8 +211,10 @@ paths:
       operationId: deleteRecipientLegalAddress
       tags:
         - legal
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '204':
           description: successful operation
@@ -180,8 +245,10 @@ paths:
       operationId: postRecipientCourtesyAddress
       tags:
         - courtesy
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       requestBody:
         required: true
         content:
@@ -221,8 +288,10 @@ paths:
       operationId: deleteRecipientCourtesyAddress
       tags:
         - courtesy
-      security:                                                                # ONLY EXTERNAL
-        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      x-api-permissions:
+        - 'BASE'
       responses:
         '204':
           description: successful operation
@@ -239,21 +308,6 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
-
-components:
-  parameters:
-    recipientId:
-      in: path
-      name: recipientId
-      description: recipient Id
-      required: true
-      example: 'PG-123e4567-e89b-12d3-a456-426614174000'
-      schema:
-        type: string
-        maxLength: 39
-        #ASCII printable chars
-        pattern: ^[ -~ ]*$
-    
   securitySchemes:                                      # ONLY EXTERNAL
     bearerAuth:                                         # ONLY EXTERNAL
       type: http                                        # ONLY EXTERNAL
