@@ -34,14 +34,14 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
-        - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserAddresses'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/UserAddresses'
         '400':
           description: Invalid input
           content:
@@ -58,7 +58,7 @@ paths:
         - legal                                                                                                  # NO EXTERNAL
       parameters:                                                                                                # NO EXTERNAL
         - $ref: '#/components/parameters/recipientId'                                                            # NO EXTERNAL
-        - $ref: '#/components/parameters/senderId'                                                               # NO EXTERNAL
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'                                                               # NO EXTERNAL
       responses:                                                                                                 # NO EXTERNAL
         '200':                                                                                                   # NO EXTERNAL
           description: successful operation                                                                      # NO EXTERNAL
@@ -67,7 +67,7 @@ paths:
               schema:                                                                                            # NO EXTERNAL
                 type: array                                                                                      # NO EXTERNAL
                 items:                                                                                           # NO EXTERNAL
-                  $ref: '#/components/schemas/LegalDigitalAddress'                                               # NO EXTERNAL
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalDigitalAddress'                                               # NO EXTERNAL
         '400':                                                                                                   # NO EXTERNAL
           description: Invalid input                                                                             # NO EXTERNAL
           content:                                                                                               # NO EXTERNAL
@@ -84,7 +84,7 @@ paths:
         - courtesy                                                                                               # NO EXTERNAL
       parameters:                                                                                                # NO EXTERNAL
         - $ref: '#/components/parameters/recipientId'                                                            # NO EXTERNAL
-        - $ref: '#/components/parameters/senderId'                                                               # NO EXTERNAL
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'                                                               # NO EXTERNAL
       responses:                                                                                                 # NO EXTERNAL
         '200':                                                                                                   # NO EXTERNAL
           description: successful operation                                                                      # NO EXTERNAL
@@ -93,7 +93,7 @@ paths:
               schema:                                                                                            # NO EXTERNAL
                 type: array                                                                                      # NO EXTERNAL
                 items:                                                                                           # NO EXTERNAL
-                   $ref: '#/components/schemas/CourtesyDigitalAddress'                                           # NO EXTERNAL
+                   $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'                                           # NO EXTERNAL
         '400':                                                                                                   # NO EXTERNAL
           description: Invalid input                                                                             # NO EXTERNAL
           content:                                                                                               # NO EXTERNAL
@@ -113,7 +113,7 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                          # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                                        # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'                                      # NO EXTERNAL
-        - $ref: '#/components/parameters/cxRoleAuthFleet'                                                        # NO EXTERNAL
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                                                        # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -122,7 +122,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -142,7 +142,7 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                                   # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'                                 # NO EXTERNAL
-        - $ref: '#/components/parameters/cxRoleAuthFleet'                                                   # NO EXTERNAL
+        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                                                   # NO EXTERNAL
       responses:
         '200':
           description: successful operation
@@ -151,7 +151,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CourtesyDigitalAddress'
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -165,14 +165,14 @@ paths:
       - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                     # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                                   # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'                                 # NO EXTERNAL
-      - $ref: '#/components/parameters/cxRoleAuthFleet'                                                   # NO EXTERNAL
-      - $ref: '#/components/parameters/senderId'
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                                                   # NO EXTERNAL
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       - in: path
         name: channelType
         description: Communication Channel type
         required: true
         schema:
-          $ref: '#/components/schemas/LegalChannelType'
+          $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalChannelType'
     post:
       summary: Create or update a digital address with legal value
       operationId: postRecipientLegalAddress
@@ -185,13 +185,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerification'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddressVerificationResponse'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerificationResponse'
           description: >
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
@@ -241,14 +241,14 @@ paths:
       - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
       - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
-      - $ref: '#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
-      - $ref: '#/components/parameters/senderId'
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'  # NO EXTERNAL
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       - in: path
         name: channelType
         description: Communication Channel type
         required: true
         schema:
-          $ref: '#/components/schemas/CourtesyChannelType'
+          $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyChannelType'
     post:
       summary: Create or update a digital address without legal value
       operationId: postRecipientCourtesyAddress
@@ -261,13 +261,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerification'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddressVerificationResponse'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerificationResponse'
           description: >
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
             (se il codice di verifica o se la validazione della pec)
@@ -327,6 +327,7 @@ components:
         maxLength: 39
         #ASCII printable chars
         pattern: ^[ -~ ]*$
+
     senderId:
       in: path
       name: senderId

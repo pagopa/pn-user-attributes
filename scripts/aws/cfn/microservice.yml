@@ -23,6 +23,10 @@ Parameters:
     Type: String
     Description: 'The DNS name used for IO rest API.'
 
+  ApiB2bPgDnsName:
+    Type: String
+    Description: 'The DNS name used for B2B PG rest API.'
+
   CorsAllowedDomains:
     Type: String
     Description: 'Comma separated list of domains allowed to make cross origin request'
@@ -330,6 +334,11 @@ Parameters:
     Default: 600
     Description: WEB api WAF Limit (per IP)
 
+  B2bPgWafLimit:
+    Type: Number
+    Default: 600
+    Description: B2B api WAF Limit (per IP)
+
   EnhancedWebSecurityEnabled:
     Type: String
     Default: false
@@ -533,6 +542,35 @@ Resources:
         APIGatewayARNs: !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.APIGatewayARN
         AllowedCidrs: !Ref IOBackendCidrs
 
+  # Expose PN-Delivery microservice public API with API-GW for B2B usage
+  AddressBookMicroserviceB2BPGApi:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
+      Parameters:
+        MicroServiceUniqueName: !Sub "${ProjectName}-address-book"
+        IntendedUsage: B2BPG
+        DnsName: !Ref ApiB2bPgDnsName
+        ProjectName: !Ref ProjectName
+        ServiceApiPath: 'address-book'
+        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
+        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn
+        OpenApiBucketName: !Ref MicroserviceBucketName
+        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-address-book-B2BPG-aws.yaml
+
+  AddressBookMicroserviceB2BPGApiWaf:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
+      Parameters:
+        WAFName: !Sub "${ProjectName}-address-book-b2b-pg"
+        IntendedUsage: B2BPG
+        APIGatewayARNs: !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.APIGatewayARN
+        ExcludedRule0: CrossSiteScripting_BODY,SizeRestrictions_BODY
+        Limit: !Ref B2bPgWafLimit
+
   ## Dashboard
   UserAttributesMicroserviceCloudWatchDashboard:
     Type: AWS::CloudFormation::Stack
@@ -548,20 +586,24 @@ Resources:
           - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiStageArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiStageArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiStageArn
+            - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiStageArn
         RestApiNames: !Join
           - ','
           - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiName
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiName
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
+            - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiName
         AlarmArns: !Join
           - ','
           - - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
+            - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiErrorAlarmArn
             - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
+            - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiLatencyAlarmArn
             - !Ref PecValidationExpiredDLQAlarmARN
             - !GetAtt PecValidationExpiredLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
             - !Ref UserAttributesActionsQueueAlarmARN
