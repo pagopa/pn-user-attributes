@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: CgWlyvYyhNOSZ+pluzW65KbinYVt8SBQUEfKeHhvGFY=
+  version: EcvnDoKZNIw2S59u+zar2XVkQ/wqWeiP81wgW47wlfE=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -26,7 +26,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserAddresses'
+                $ref: '#/components/schemas/schemas-UserAddresses'
         '400':
           description: Invalid input
           content:
@@ -80,7 +80,8 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
+                  $ref: >-
+                    #/components/schemas/schemas-LegalAndUnverifiedDigitalAddress
         '400':
           description: Invalid input
           content:
@@ -134,7 +135,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CourtesyDigitalAddress'
+                  $ref: '#/components/schemas/schemas-CourtesyDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -180,7 +181,7 @@ paths:
         description: Communication Channel type
         required: true
         schema:
-          $ref: '#/components/schemas/LegalChannelType'
+          $ref: '#/components/schemas/schemas-LegalChannelType'
     post:
       summary: Create or update a digital address with legal value
       operationId: postRecipientLegalAddress
@@ -193,7 +194,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: '#/components/schemas/schemas-AddressVerification'
       responses:
         '200':
           content:
@@ -323,7 +324,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: '#/components/schemas/schemas-AddressVerification'
       responses:
         '200':
           content:
@@ -614,6 +615,62 @@ components:
       maxLength: 5
       pattern: ^\d{5}$
       example: '12345'
+    schemas-LegalChannelType:
+      type: string
+      description: Communication Channel types __with__ legal value
+      enum:
+        - PEC
+        - APPIO
+    schemas-LegalAndUnverifiedDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+          properties:
+            addressType:
+              $ref: '#/components/schemas/LegalAddressType'
+            value:
+              type: string
+              x-field-extra-annotation: '@lombok.ToString.Exclude'
+              example: nome.utente@server.it
+            channelType:
+              $ref: '#/components/schemas/schemas-LegalChannelType'
+            requestId:
+              type: string
+            codeValid:
+              type: boolean
+            pecValid:
+              type: boolean
+    schemas-CourtesyDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+            - value
+          properties:
+            addressType:
+              $ref: '#/components/schemas/CourtesyAddressType'
+            value:
+              type: string
+              x-field-extra-annotation: '@lombok.ToString.Exclude'
+              example: nome.utente@server.it
+            channelType:
+              $ref: '#/components/schemas/CourtesyChannelType'
+    schemas-UserAddresses:
+      type: object
+      properties:
+        legal:
+          type: array
+          items:
+            $ref: '#/components/schemas/schemas-LegalAndUnverifiedDigitalAddress'
+        courtesy:
+          type: array
+          items:
+            $ref: '#/components/schemas/schemas-CourtesyDigitalAddress'
     ProblemError:
       properties:
         code:
@@ -680,6 +737,22 @@ components:
       required:
         - status
         - errors
+    schemas-AddressVerification:
+      type: object
+      description: richiede value oppure requestId di un indirizzo in corso di validazione
+      properties:
+        value:
+          type: string
+          x-field-extra-annotation: '@lombok.ToString.Exclude'
+          maxLength: 254
+          pattern: >-
+            ^(((00|\+)393\d{8,9})|(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])|(ENABLED)|(DISABLED)|(APPIO))$
+        requestId:
+          type: string
+          maxLength: 64
+          pattern: ^[ -~ ]*$
+        verificationCode:
+          $ref: '#/components/schemas/VerificationCode'
   responses: {}
   securitySchemes:
     pn-auth-fleet_jwtAuthorizer_openapi:

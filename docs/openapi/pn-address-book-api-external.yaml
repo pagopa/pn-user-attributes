@@ -36,7 +36,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserAddresses'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/UserAddresses'
         '400':
           description: Invalid input
           content:
@@ -61,7 +61,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -85,7 +85,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CourtesyDigitalAddress'
+                  $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'
         '400':
           description: Invalid input
           content:
@@ -96,13 +96,13 @@ paths:
 
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     parameters:
-      - $ref: '#/components/parameters/senderId'
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       - in: path
         name: channelType
         description: Communication Channel type
         required: true
         schema:
-          $ref: '#/components/schemas/LegalChannelType'
+          $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalChannelType'
     post:
       summary: Create or update a digital address with legal value
       operationId: postRecipientLegalAddress
@@ -115,13 +115,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerification'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddressVerificationResponse'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerificationResponse'
           description: >
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
@@ -168,13 +168,13 @@ paths:
 
   /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
     parameters:
-      - $ref: '#/components/parameters/senderId'
+      - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       - in: path
         name: channelType
         description: Communication Channel type
         required: true
         schema:
-          $ref: '#/components/schemas/CourtesyChannelType'
+          $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyChannelType'
     post:
       summary: Create or update a digital address without legal value
       operationId: postRecipientCourtesyAddress
@@ -187,13 +187,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddressVerification'
+              $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerification'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddressVerificationResponse'
+                $ref: 'pn-address-book-common-components.yaml#/components/schemas/AddressVerificationResponse'
           description: >
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
             (se il codice di verifica o se la validazione della pec)
@@ -253,6 +253,7 @@ components:
         maxLength: 39
         #ASCII printable chars
         pattern: ^[ -~ ]*$
+
     senderId:
       in: path
       name: senderId
