@@ -264,8 +264,8 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono_ok = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
-        assertDoesNotThrow(() -> mono_ok.block(d));
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
+        assertDoesNotThrow(() -> monoOk.block(d));
 
         //THEN
     }
@@ -328,8 +328,8 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono_ok = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
-        AddressBookService.SAVE_ADDRESS_RESULT res = mono_ok.block(d);
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
+        AddressBookService.SAVE_ADDRESS_RESULT res = monoOk.block(d);
 
         //THEN
         assertEquals(expectedResult, res);
@@ -362,8 +362,8 @@ class AddressBookServiceTest {
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
         //THEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono_ok = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
-        assertDoesNotThrow(() -> mono_ok.block(d));
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
+        assertDoesNotThrow(() -> monoOk.block(d));
 
     }
 
@@ -601,7 +601,6 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveCourtesyAddressBook with channelType {0}")
-    //TODO SERCQ investigare fallimento, probabilmente logica esclusiva per PEC
     @MethodSource("provideLegalChannelTypes")
     void saveCourtesyAddressBookPEC_invalid(LegalChannelTypeDto legalChannelType) {
         //GIVEN

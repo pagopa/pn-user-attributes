@@ -5,8 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
+import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -32,6 +31,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -602,6 +602,19 @@ public class AddressBookService {
                 });
     }
 
-
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> manageError(Optional<PnAuditLogEvent> optionalPnAuditLogEvent, Throwable throwable) {
+        if (throwable instanceof PnInvalidVerificationCodeException ||
+                throwable instanceof PnExpiredVerificationCodeException ||
+                throwable instanceof PnRetryLimitVerificationCodeException) {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateWarning("codice non valido - {}", throwable.getMessage()).log());
+        } else {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+        }
+        return Mono.error(throwable);
+    }
 
 }
+
+

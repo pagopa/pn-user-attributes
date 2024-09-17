@@ -12,15 +12,12 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
-import javax.annotation.PostConstruct;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -43,7 +40,7 @@ public class VerificationCodeUtils {
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
     private final SecureRandom rnd = new SecureRandom();
-    private final String sercqAddress = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
 
 
     /**
@@ -301,12 +298,11 @@ public class VerificationCodeUtils {
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
             }
         }
-        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
-                if(!sercqAddress.equals(addressVerificationDto.getValue())){
+        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ) && !SERCQ_ADDRESS.equals(addressVerificationDto.getValue())){
                     log.logCheckingOutcome(process, false, "invalid address");
                     throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
                 }
-        }
+
 
         log.logCheckingOutcome(process, true);
     }

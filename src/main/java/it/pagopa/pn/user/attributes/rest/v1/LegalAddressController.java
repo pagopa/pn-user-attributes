@@ -5,15 +5,13 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
-import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.LegalApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +21,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
-import software.amazon.awssdk.services.dynamodb.model.DeleteItemResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,28 +112,13 @@ public class LegalAddressController implements LegalApi {
                     // Recupero dei consensi
                     Flux<ConsentDto> consentsFlux = consentsService.getConsents(recipientId, pnCxType);
 
-                    if (consentsFlux == null) {
-                        log.warn("Consents list is null for recipientId: {}. Proceeding with empty list.", recipientId);
-                        consentsFlux = Flux.empty();
-                    }
-
                     return consentsFlux
                             .collectList()
                             .flatMap(consentsList -> {
                                 boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
 
-                                if (isSercq) {
-                                    boolean hasTosConsent = consentsList.stream()
-                                            .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
-
-                                    boolean hasPrivacyConsent = consentsList.stream()
-                                            .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
-
-                                    if (!(hasTosConsent && hasPrivacyConsent)) {
-                                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
-                                        return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
-                                    }
-                                }
+                               Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
+                                if (Boolean.FALSE.equals(hasConsents)) return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
 
                                 return filteredAddresses.collectList()
                                         .flatMap(filteredAddressesList ->
@@ -166,6 +146,23 @@ public class LegalAddressController implements LegalApi {
                 });
     }
 
+
+    private static Boolean checkConsents(String recipientId, List<ConsentDto> consentsList, boolean isSercq) {
+        if (isSercq) {
+            boolean hasTosConsent = consentsList.stream()
+                    .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
+
+            boolean hasPrivacyConsent = consentsList.stream()
+                    .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
+
+            if (!(hasTosConsent && hasPrivacyConsent)) {
+                log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                return false;
+            }
+        }
+        return true;
+    }
+
     private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,
                                                                                               CxTypeAuthFleetDto pnCxType,
                                                                                               String senderId,
@@ -188,18 +185,10 @@ public class LegalAddressController implements LegalApi {
                 })
                 .flatMap(tupleVerCodeLogEvent -> addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
                                 tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole, deleteItemResponses)
-                        .onErrorResume(throwable -> {
-                            if (throwable instanceof PnInvalidVerificationCodeException ||
-                                    throwable instanceof PnExpiredVerificationCodeException ||
-                                    throwable instanceof PnRetryLimitVerificationCodeException) {
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent ->
-                                        pnAuditLogEvent.generateWarning("codice non valido - {}", throwable.getMessage()).log());
-                            } else {
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent ->
-                                        pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
-                            }
-                            return Mono.error(throwable);
-                        })
+                                .onErrorResume(throwable ->
+                                        addressBookService.manageError(tupleVerCodeLogEvent.getT2(),throwable)
+                                )
+
                         .map(m -> {
                             log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}",
                                     recipientId, senderId, channelType, m.toString());
