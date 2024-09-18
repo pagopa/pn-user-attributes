@@ -3,13 +3,13 @@ package it.pagopa.pn.user.attributes.exceptions;
 import it.pagopa.pn.commons.exceptions.PnRuntimeException;
 import org.springframework.http.HttpStatus;
 
-import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_FORBIDDEN;
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND;
 
 public class PnForbiddenException extends PnRuntimeException {
 
     public PnForbiddenException() {
         super("Accesso negato!", "L'utente non è autorizzato ad accedere alla risorsa richiesta.",
-                HttpStatus.FORBIDDEN.value(), ERROR_CODE_USERATTRIBUTES_FORBIDDEN, null, null);
+                HttpStatus.NOT_FOUND.value(), ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND, null, null);
     }
 
 }
