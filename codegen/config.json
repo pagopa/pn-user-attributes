@@ -20,13 +20,6 @@
                 "pn-user-consents-api-internal.yaml"
             ],
             "servicePath": "user-consents"
-        },
-        {
-            "intendedUsage": "B2BPG",
-            "openapiFiles": [
-                "pn-address-book-b2b-pg-internal.yaml"
-            ],
-            "servicePath": "address-book"
         }
     ]
 }

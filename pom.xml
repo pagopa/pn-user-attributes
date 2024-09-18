@@ -23,7 +23,7 @@
     <sonar.coverage.exclusions>
       src/main/java/it/pagopa/pn/user/attributes/springbootcfg/**
     </sonar.coverage.exclusions>
-    <pagopa.codegen.version>v01.06.01</pagopa.codegen.version>
+    <pagopa.codegen.version>v01.03.01</pagopa.codegen.version>
   </properties>
 
   <dependencies>
@@ -237,37 +237,6 @@
                 <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
-                <dateLibrary>java11</dateLibrary>
-                <delegatePattern>true</delegatePattern>
-                <interfaceOnly>true</interfaceOnly>
-                <annotationLibrary>none</annotationLibrary>
-                <documentationProvider>source</documentationProvider>
-                <openApiNullable>false</openApiNullable>
-                <reactive>true</reactive>
-                <skipDefaultInterface>false</skipDefaultInterface>
-                <useTags>true</useTags>
-              </configOptions>
-            </configuration>
-          </execution>
-          <execution>
-            <id>pn-user-attributes-address-book-b2b-server</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-            <configuration>
-              <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-pg-internal.yaml</inputSpec>
-              <generatorName>spring</generatorName>
-              <library>spring-boot</library>
-              <templateDirectory>${project.build.directory}/dependency-resources/scripts/openapi/templates/5.4.0/server</templateDirectory>
-              <modelNameSuffix>Dto</modelNameSuffix>
-              <generateApiTests>false</generateApiTests>
-              <generateModelTests>false</generateModelTests>
-              <configOptions>
-                <basePackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1</basePackage>
-                <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
-                <apiPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.api</apiPackage>
-                <configPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.config</configPackage>
                 <dateLibrary>java11</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>

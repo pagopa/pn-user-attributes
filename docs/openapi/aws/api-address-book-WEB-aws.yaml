@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: DEcObIAMBnSRpeBEEcCAzKK0fKw6M42ywazyCJfF+L4=
+  version: m6qQwbhUsa6uc+ltN7O8zqK2hhdZ5YaGV302sN/9+fQ=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -43,10 +43,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -97,10 +97,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -151,10 +151,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -233,10 +233,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
@@ -277,10 +277,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
@@ -364,10 +364,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
@@ -408,10 +408,10 @@ paths:
           integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
           integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
           integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
@@ -457,7 +457,46 @@ components:
         type: string
         maxLength: 50
         pattern: ^[ -~ ]*$
+    cxRoleAuthFleet:
+      name: x-pagopa-pn-cx-role
+      in: header
+      description: Ruolo (estratto da token di Self Care)
+      required: false
+      schema:
+        type: string
+        maxLength: 64
+        pattern: ^[ -~ ]*$
   schemas:
+    AddressVerification:
+      type: object
+      description: richiede value oppure requestId di un indirizzo in corso di validazione
+      properties:
+        value:
+          type: string
+          maxLength: 254
+          pattern: >-
+            ^(((00|\+)393\d{8,9})|(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])|(ENABLED)|(DISABLED)|(APPIO))$
+        requestId:
+          type: string
+          maxLength: 64
+          pattern: ^[ -~ ]*$
+        verificationCode:
+          $ref: '#/components/schemas/VerificationCode'
+    AddressVerificationResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          description: >
+            Uno dei seguenti valori - CODE_VERIFICATION_REQUIRED: indica che è
+            richiesto il codice di verifica - PEC_VALIDATION_REQUIRED: indica
+            che il codice di verifica inserito è valido, ma che non è ancora
+            arrivata la conferma PEC (solo per la PEC)
+          enum:
+            - CODE_VERIFICATION_REQUIRED
+            - PEC_VALIDATION_REQUIRED
     BaseDigitalAddress:
       type: object
       required:
@@ -480,17 +519,33 @@ components:
           example: abc
         channelType:
           type: string
-    LegalAddressType:
-      type: string
-      description: Valore addresstype per legal
-      enum:
-        - LEGAL
     LegalChannelType:
       type: string
       description: Communication Channel types __with__ legal value
       enum:
         - PEC
         - APPIO
+    LegalAddressType:
+      type: string
+      description: Valore addresstype per legal
+      enum:
+        - LEGAL
+    LegalDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+            - value
+          properties:
+            addressType:
+              $ref: '#/components/schemas/LegalAddressType'
+            value:
+              type: string
+              example: nome.utente@server.it
+            channelType:
+              $ref: '#/components/schemas/LegalChannelType'
     LegalAndUnverifiedDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -503,7 +558,6 @@ components:
               $ref: '#/components/schemas/LegalAddressType'
             value:
               type: string
-              x-field-extra-annotation: '@lombok.ToString.Exclude'
               example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
@@ -513,11 +567,6 @@ components:
               type: boolean
             pecValid:
               type: boolean
-    CourtesyAddressType:
-      type: string
-      description: Valore addresstype per courtesy
-      enum:
-        - COURTESY
     CourtesyChannelType:
       type: string
       description: Communication Channel types __without__ legal value
@@ -525,6 +574,11 @@ components:
         - EMAIL
         - SMS
         - APPIO
+    CourtesyAddressType:
+      type: string
+      description: Valore addresstype per courtesy
+      enum:
+        - COURTESY
     CourtesyDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -538,7 +592,6 @@ components:
               $ref: '#/components/schemas/CourtesyAddressType'
             value:
               type: string
-              x-field-extra-annotation: '@lombok.ToString.Exclude'
               example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
@@ -553,6 +606,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CourtesyDigitalAddress'
+    VerificationCode:
+      type: string
+      description: Verification Code
+      minLength: 5
+      maxLength: 5
+      pattern: ^\d{5}$
+      example: '12345'
     ProblemError:
       properties:
         code:
@@ -619,44 +679,6 @@ components:
       required:
         - status
         - errors
-    VerificationCode:
-      type: string
-      description: Verification Code
-      minLength: 5
-      maxLength: 5
-      pattern: ^\d{5}$
-      example: '12345'
-    AddressVerification:
-      type: object
-      description: richiede value oppure requestId di un indirizzo in corso di validazione
-      properties:
-        value:
-          type: string
-          x-field-extra-annotation: '@lombok.ToString.Exclude'
-          maxLength: 254
-          pattern: >-
-            ^(((00|\+)393\d{8,9})|(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])|(ENABLED)|(DISABLED)|(APPIO))$
-        requestId:
-          type: string
-          maxLength: 64
-          pattern: ^[ -~ ]*$
-        verificationCode:
-          $ref: '#/components/schemas/VerificationCode'
-    AddressVerificationResponse:
-      type: object
-      required:
-        - result
-      properties:
-        result:
-          type: string
-          description: >
-            Uno dei seguenti valori - CODE_VERIFICATION_REQUIRED: indica che è
-            richiesto il codice di verifica - PEC_VALIDATION_REQUIRED: indica
-            che il codice di verifica inserito è valido, ma che non è ancora
-            arrivata la conferma PEC (solo per la PEC)
-          enum:
-            - CODE_VERIFICATION_REQUIRED
-            - PEC_VALIDATION_REQUIRED
   responses: {}
   securitySchemes:
     pn-auth-fleet_jwtAuthorizer_openapi:
