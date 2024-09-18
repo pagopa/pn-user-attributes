@@ -23,10 +23,6 @@ Parameters:
     Type: String
     Description: 'The DNS name used for IO rest API.'
 
-  ApiB2bPgDnsName:
-    Type: String
-    Description: 'The DNS name used for B2B PG rest API.'
-
   CorsAllowedDomains:
     Type: String
     Description: 'Comma separated list of domains allowed to make cross origin request'
@@ -208,7 +204,7 @@ Parameters:
 
   MountEfs:
     Type: String
-    Default: false
+    Default: "false"
     AllowedValues:
       - "true"
       - "false"
@@ -550,7 +546,7 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub "${ProjectName}-address-book"
         IntendedUsage: B2BPG
-        DnsName: !Ref ApiB2bPgDnsName
+        DnsName: !Ref ApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
