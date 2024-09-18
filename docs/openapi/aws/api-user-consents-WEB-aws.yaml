@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: FA1C+6fo7mOR+ZuN1lp/8tkodqT8UbALzNElR1Wob+g=
+  version: BngMaQehB5oi8GxKWOcMTfTo3cALac7HvbhGlbUn9Fg=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -209,6 +209,9 @@ components:
       enum:
         - TOS
         - DATAPRIVACY
+        - TOS_DEST_B2B
+        - TOS_SERCQ
+        - DATAPRIVACY_SERCQ
     ConsentAction:
       type: object
       properties:

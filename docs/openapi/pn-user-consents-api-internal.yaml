@@ -213,6 +213,8 @@ components:
         - TOS
         - DATAPRIVACY
         - TOS_DEST_B2B
+        - TOS_SERCQ
+        - DATAPRIVACY_SERCQ
 
     ConsentAction:
       type: object

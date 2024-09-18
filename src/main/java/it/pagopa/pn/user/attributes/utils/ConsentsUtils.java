@@ -14,7 +14,9 @@ import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.ser
 @Slf4j
 public class ConsentsUtils {
     public static final Set<String> ALLOWED_CONSENT_TYPE = Set.of(TOS_DEST_B2B.getValue());
-
+    private ConsentsUtils() {
+        throw new UnsupportedOperationException("Utility class");
+    }
     public static Mono<Void> validatePgConsentAction(String consentType, String cxRole, List<String> groups) {
         log.debug("validatePgConsentAction - consentType={} - cxRole={} - groups={}", consentType, cxRole, groups);
         if (!ALLOWED_CONSENT_TYPE.contains(consentType)) {

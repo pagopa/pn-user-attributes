@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: DEcObIAMBnSRpeBEEcCAzKK0fKw6M42ywazyCJfF+L4=
+  version: pmdNzWoy1eQ5SyHKKYKxyYsP4JpCn/MPcqgk0gqVC7U=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -437,16 +437,6 @@ paths:
         type: http_proxy
 components:
   parameters:
-    recipientId:
-      in: path
-      name: recipientId
-      description: recipient Id
-      required: true
-      example: PG-123e4567-e89b-12d3-a456-426614174000
-      schema:
-        type: string
-        maxLength: 39
-        pattern: ^[ -~ ]*$
     senderId:
       in: path
       name: senderId
@@ -491,6 +481,7 @@ components:
       enum:
         - PEC
         - APPIO
+        - SERCQ
     LegalAndUnverifiedDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'

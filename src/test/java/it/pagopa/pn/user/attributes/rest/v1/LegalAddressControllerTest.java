@@ -2,11 +2,11 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAndUnverifiedDigitalAddressDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalDigitalAddressDto;
-import org.junit.jupiter.api.Test;
+import it.pagopa.pn.user.attributes.services.ConsentsService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,6 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -27,21 +30,25 @@ class LegalAddressControllerTest {
     private static final String PN_CX_TYPE_PF = "PF";
     private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
-    private static final String CHANNELTYPE = "PEC";
 
     @MockBean
     AddressBookService svc;
+
+    @MockBean
+    ConsentsService consentsService;
 
     @Autowired
     WebTestClient webTestClient;
 
 
-    @Test
-    void deleteRecipientLegalAddress() {
+
+    @ParameterizedTest(name = "Test deleteRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void deleteRecipientLegalAddress(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         // When
         Mono<Object> voidReturn  = Mono.just("");
@@ -58,12 +65,13 @@ class LegalAddressControllerTest {
                 .isNoContent();
     }
 
-    @Test
-    void deleteRecipientLegalAddress_FAIL() {
+    @ParameterizedTest(name = "Test deleteRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void deleteRecipientLegalAddress_FAIL(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         // When
         when(svc.deleteLegalAddressBook(anyString(), anyString(), any(), any(), any(), any()))
@@ -79,15 +87,16 @@ class LegalAddressControllerTest {
                 .is5xxServerError();
     }
 
-    @Test
-    void getLegalAddressByRecipient() {
+    @ParameterizedTest(name = "Test getLegalAddressByRecipient with channelType = {0}")
+    @MethodSource("provideChannelTypesDto")
+    void getLegalAddressByRecipient(LegalChannelTypeDto channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal";
 
         LegalAndUnverifiedDigitalAddressDto dto = new LegalAndUnverifiedDigitalAddressDto();
         dto.setRecipientId(RECIPIENTID);
         dto.setSenderId(SENDERID);
-        dto.setChannelType(LegalChannelTypeDto.APPIO);
+        dto.setChannelType(channelType);
         Flux<LegalAndUnverifiedDigitalAddressDto> retValue = Flux.just(dto);
 
         // When
@@ -105,12 +114,13 @@ class LegalAddressControllerTest {
                 .isOk();
     }
 
-    @Test
-    void getLegalAddressBySender() {
+    @ParameterizedTest(name = "Test getLegalAddressBySender with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void getLegalAddressBySender(String channelType) {
         // Given
         String url = "/address-book-private/v1/digital-address/legal/{recipientId}/{senderId}"
                 .replace("{recipientId}", RECIPIENTID)
-                .replace("{senderId}", SENDERID);
+                .replace("{senderId}", channelType);
 
         LegalDigitalAddressDto dto = new LegalDigitalAddressDto();
         dto.setRecipientId(RECIPIENTID);
@@ -129,20 +139,29 @@ class LegalAddressControllerTest {
                 .expectStatus().isOk();
     }
 
-    @Test
-    void postRecipientLegalAddress() {
+    @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddress(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setVerificationCode("12345");
         addressVerification.setValue("+393333300666");
 
+
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -157,19 +176,25 @@ class LegalAddressControllerTest {
                 .isNoContent();
     }
 
-    @Test
-    void postRecipientLegalAddress_FAIL() {
+    @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddress_FAIL(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setVerificationCode("12345");
         addressVerification.setValue("00393333300666");
 
         // When
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
+                        .recipientId("recipientId")
+                        .consentType(ConsentTypeDto.TOS_SERCQ)
+                        .build())));
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
         // Then
@@ -184,19 +209,27 @@ class LegalAddressControllerTest {
                 .is5xxServerError();
     }
 
-    @Test
-    void postRecipientLegalAddressVerCodeNeeded() {
+    @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddressVerCodeNeeded(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setValue("test@email.com");
 
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
 
         // Then
@@ -211,19 +244,25 @@ class LegalAddressControllerTest {
                 .isOk();
     }
 
-    @Test
-    void postRecipientLegalAddressVerCodeFail() {
+    @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddressVerCodeFail(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
-                .replace("{channelType}", CHANNELTYPE);
+                .replace("{channelType}", channelType);
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setVerificationCode("verification");
         addressVerification.setValue("value");
 
         // When
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any()))
+        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
+                .thenReturn(Flux.fromIterable(List.of(ConsentDto.builder()
+                        .recipientId("recipientId")
+                        .consentType(ConsentTypeDto.TOS_SERCQ)
+                        .build())));
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then
@@ -235,5 +274,15 @@ class LegalAddressControllerTest {
                 .exchange()
                 .expectStatus().is4xxClientError();
     }
+
+    private static Stream<Arguments> provideChannelTypes(){
+        return Stream.of(Arguments.of("PEC"), Arguments.of("APPIO"), Arguments.of("SERCQ"));
+
+    }
+
+    private static Stream<Arguments> provideChannelTypesDto() {
+        return Stream.of(Arguments.of(LegalChannelTypeDto.PEC), Arguments.of(LegalChannelTypeDto.APPIO), Arguments.of(LegalChannelTypeDto.SERCQ));
+    }
+
 
 }

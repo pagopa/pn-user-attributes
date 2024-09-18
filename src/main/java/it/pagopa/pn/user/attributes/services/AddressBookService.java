@@ -5,8 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
+import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -32,9 +31,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
@@ -91,8 +93,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto);
+    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponse) {
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, deleteItemResponse);
     }
 
     /**
@@ -109,9 +111,10 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
-                                                          CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+                                                          CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
+
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
+                .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, deleteItemResponses));
     }
 
     /**
@@ -124,7 +127,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto);
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null);
     }
 
     /**
@@ -155,7 +158,11 @@ public class AddressBookService {
      * @return nd
      */
     public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType) {
-        return deleteAddressBook(recipientId, senderId, legalChannelType, null);
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null, false);
+    }
+
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, boolean transactional) {
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null, transactional);
     }
 
     /**
@@ -175,6 +182,11 @@ public class AddressBookService {
                 .flatMap(r -> deleteLegalAddressBook(recipientId, senderId, legalChannelType));
     }
 
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType,
+                                               CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, boolean transactional) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> deleteLegalAddressBook(recipientId, senderId, legalChannelType, transactional));
+    }
     /**
      * Elimina un indirizzo di tipo CORTESIA
      *
@@ -184,7 +196,7 @@ public class AddressBookService {
      * @return nd
      */
     public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
-        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
+        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType, false);
     }
 
     /**
@@ -306,6 +318,7 @@ public class AddressBookService {
                 .flatMapIterable(x -> x);
     }
 
+
     /**
      * Lista indirizzi in base al recipient
      *
@@ -370,6 +383,7 @@ public class AddressBookService {
         dto.setCourtesy(new ArrayList<>());
         dto.setLegal(new ArrayList<>());
 
+
         return getCourtesyAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>())
                 .zipWith(getLegalAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>()))
                 .map(tuple -> {
@@ -413,13 +427,12 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param a eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
             String legal = verificationCodeUtils.getLegalType(legalChannelType);
@@ -451,14 +464,14 @@ public class AddressBookService {
             } else {
                 return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
-                        if (Boolean.TRUE.equals(res)) {
+                        if (Boolean.TRUE.equals(res) ) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                 channelType, checkedSenderId, legal, addressVerificationDto.getValue());
-                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
+                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemResponses);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -513,7 +526,7 @@ public class AddressBookService {
      * @param courtesyChannelType eventuale canale cortesia
      * @return nd
      */
-    private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
+    private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, boolean transactional) {
         log.info("deleteAddressBook recipientId={} senderId={} legalChannelType={} courtesyChannelType={}", recipientId, senderId, legalChannelType, courtesyChannelType);
         String legal = verificationCodeUtils.getLegalType(legalChannelType);
         String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
@@ -541,7 +554,7 @@ public class AddressBookService {
         }
         else {
             return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType, transactional));
         }
     }
 
@@ -589,5 +602,19 @@ public class AddressBookService {
                 });
     }
 
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> manageError(Optional<PnAuditLogEvent> optionalPnAuditLogEvent, Throwable throwable) {
+        if (throwable instanceof PnInvalidVerificationCodeException ||
+                throwable instanceof PnExpiredVerificationCodeException ||
+                throwable instanceof PnRetryLimitVerificationCodeException) {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateWarning("codice non valido - {}", throwable.getMessage()).log());
+        } else {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+        }
+        return Mono.error(throwable);
+    }
 
 }
+
+

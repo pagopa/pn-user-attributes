@@ -119,14 +119,11 @@ public class CourtesyAddressController implements CourtesyApi {
 
                                 return Tuples.of(addressVerificationDto1, auditLogEvent);
                             })
+
                             .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
-                                    .onErrorResume(throwable -> {
-                                        if (throwable instanceof PnInvalidVerificationCodeException || throwable instanceof PnExpiredVerificationCodeException || throwable instanceof PnRetryLimitVerificationCodeException)
-                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateWarning("codice non valido - {}",throwable.getMessage()).log());
-                                        else
-                                            tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
-                                        return Mono.error(throwable);
-                                    })
+                                    .onErrorResume(throwable ->
+                                        addressBookService.manageError(tupleVerCodeLogEvent.getT2(),throwable)
+                                    )
                                     .map(m -> {
                                         log.info("postRecipientCourtesyAddress done - recipientId={} - senderId={} - channelType={} res={}", recipientId, senderId, channelType, m.toString());
                                         if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {

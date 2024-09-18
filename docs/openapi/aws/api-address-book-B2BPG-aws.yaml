@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: Tq6Wg/ZAIWjPKiVTpTAbVcs+KsEHpAe58TNzrySSQPo=
+  version: 8FSS9Aws5pMWjAuHEeg7oXvbbB7p3V0wFLaupCucOLA=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -619,6 +619,7 @@ components:
       enum:
         - PEC
         - APPIO
+        - SERCQ
     LegalAndUnverifiedDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'

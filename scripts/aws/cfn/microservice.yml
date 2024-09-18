@@ -23,7 +23,7 @@ Parameters:
     Type: String
     Description: 'The DNS name used for IO rest API.'
 
-  ApiB2bPgDnsName:
+  DestApiDnsName:
     Type: String
     Description: 'The DNS name used for B2B PG rest API.'
 
@@ -160,6 +160,9 @@ Parameters:
     Type: String
     Description: 'Key per dynamodb'
 
+  SercqAddress:
+    Type: String
+    Description: 'String that represents the default address for the SERCQ channel type'
 
   PecValidationExpiredLambdaName:
     Type: String
@@ -205,7 +208,7 @@ Parameters:
 
   MountEfs:
     Type: String
-    Default: false
+    Default: "false"
     AllowedValues:
       - "true"
       - "false"
@@ -396,6 +399,7 @@ Resources:
         ContainerEnvEntry16: !Sub 'PN_USER_ATTRIBUTES_AOOUOSENDERID=${AooUoSenderID}'
         ContainerEnvEntry17: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
         ContainerEnvEntry18: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
+        ContainerEnvEntry19: !Sub 'PN_USER_ATTRIBUTES_SERCQ_ADDRESS=${SercqAddress}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
@@ -546,7 +550,7 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub "${ProjectName}-address-book"
         IntendedUsage: B2BPG
-        DnsName: !Ref ApiB2bPgDnsName
+        DnsName: !Ref DestApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
