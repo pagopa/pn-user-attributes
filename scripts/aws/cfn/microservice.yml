@@ -23,6 +23,11 @@ Parameters:
     Type: String
     Description: 'The DNS name used for IO rest API.'
 
+  DestApiDnsName:
+    Type: String
+    Description: 'The DNS name used for B2B PG rest API.'
+    Default: "destapi.dev.pn.pagopa.it"
+
   CorsAllowedDomains:
     Type: String
     Description: 'Comma separated list of domains allowed to make cross origin request'
@@ -546,7 +551,7 @@ Resources:
       Parameters:
         MicroServiceUniqueName: !Sub "${ProjectName}-address-book"
         IntendedUsage: B2BPG
-        DnsName: !Ref ApiDnsName
+        DnsName: !Ref DestApiDnsName
         ProjectName: !Ref ProjectName
         ServiceApiPath: 'address-book'
         NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
