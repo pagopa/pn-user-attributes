@@ -400,7 +400,7 @@ Resources:
         ContainerEnvEntry17: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
         ContainerEnvEntry18: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry19: !Sub 'PN_USER_ATTRIBUTES_SERCQ_ADDRESS=${SercqAddress}'
-        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*'
+        MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*,/pg-consents/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
         VpcId: !Ref VpcId
