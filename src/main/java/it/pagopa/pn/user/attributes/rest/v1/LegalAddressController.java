@@ -116,7 +116,7 @@ public class LegalAddressController implements LegalApi {
                             .collectList()
                             .flatMap(consentsList -> {
                                 boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
-
+                                log.info("consentsList {}", consentsList);
                                Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
                                 if (Boolean.FALSE.equals(hasConsents)) return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
 
@@ -151,10 +151,12 @@ public class LegalAddressController implements LegalApi {
         if (isSercq) {
             boolean hasTosConsent = consentsList.stream()
                     .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
+            log.info("hasTosConsent {}", hasTosConsent ? "true" : "false");
 
             boolean hasPrivacyConsent = consentsList.stream()
                     .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
 
+            log.info("hasPrivacyConsent {}", hasPrivacyConsent ? "true" : "false");
             if (!(hasTosConsent && hasPrivacyConsent)) {
                 log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
                 return false;
@@ -162,6 +164,7 @@ public class LegalAddressController implements LegalApi {
         }
         return true;
     }
+
 
     private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,
                                                                                               CxTypeAuthFleetDto pnCxType,
