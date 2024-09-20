@@ -258,6 +258,11 @@ public class VerificationCodeUtils {
     private void validateAddress(LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
         String process = "validating verification code request";
         log.logChecking(process);
+
+        if(legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+           log.logCheckingOutcome(process, true);
+           return;
+       }
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
