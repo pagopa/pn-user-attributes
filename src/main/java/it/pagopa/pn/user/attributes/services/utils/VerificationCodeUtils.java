@@ -260,7 +260,7 @@ public class VerificationCodeUtils {
         log.logChecking(process);
 
         if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)){
-            if (!SERCQ_ADDRESS.equals(addressVerificationDto.getValue())) {
+            if (StringUtils.hasText(addressVerificationDto.getValue()) && !SERCQ_ADDRESS.equals(addressVerificationDto.getValue())) {
                 log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
             }

@@ -272,7 +272,7 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypesWithVerificationCode")
+    @MethodSource("provideLegalChannelTypes")
     void saveLegalAddressBookWithVerificationCodeRequestId(LegalChannelTypeDto legalChannelType) {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
