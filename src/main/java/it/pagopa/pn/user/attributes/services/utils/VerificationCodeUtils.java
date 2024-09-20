@@ -259,10 +259,12 @@ public class VerificationCodeUtils {
         String process = "validating verification code request";
         log.logChecking(process);
 
-        if(legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
-           log.logCheckingOutcome(process, true);
-           return;
-       }
+        if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)){
+            if (!SERCQ_ADDRESS.equals(addressVerificationDto.getValue())) {
+                log.logCheckingOutcome(process, false, "invalid address");
+                throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
+            }
+        }
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
@@ -303,10 +305,7 @@ public class VerificationCodeUtils {
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
             }
         }
-        else if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ) && !SERCQ_ADDRESS.equals(addressVerificationDto.getValue())){
-                    log.logCheckingOutcome(process, false, "invalid address");
-                    throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
-                }
+
 
 
         log.logCheckingOutcome(process, true);
