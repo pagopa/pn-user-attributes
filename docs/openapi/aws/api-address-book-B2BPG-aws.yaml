@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: Xdh/GWH0DqCwWrhSCn5x0bEYhsU6RP9I7OtdH6L6dgw=
+  version: tZdkqynLkPd5WiyN98vdsorqhpqgPPqSHg3iogGgz8U=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -303,17 +303,17 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
   /v1/digital-address/legal/{senderId}/{channelType}:
-    parameters:
-      - $ref: '#/components/parameters/senderId'
-      - in: path
-        name: channelType
-        description: Communication Channel type
-        required: true
-        schema:
-          $ref: '#/components/schemas/LegalChannelType'
     post:
       summary: Create or update a digital address with legal value
       operationId: postRecipientLegalAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Communication Channel type
+          required: true
+          schema:
+            $ref: '#/components/schemas/LegalChannelType'
       tags:
         - legal
       x-api-permissions:
@@ -375,11 +375,18 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address with legal value
       operationId: deleteRecipientLegalAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Communication Channel type
+          required: true
+          schema:
+            $ref: '#/components/schemas/LegalChannelType'
       tags:
         - legal
       x-api-permissions:
@@ -421,7 +428,6 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     options:
       operationId: Options for /v1/digital-address/legal/{senderId}/{channelType} API CORS
       x-amazon-apigateway-integration:
@@ -437,17 +443,17 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
   /v1/digital-address/courtesy/{senderId}/{channelType}:
-    parameters:
-      - $ref: '#/components/parameters/senderId'
-      - in: path
-        name: channelType
-        description: Communication Channel type
-        required: true
-        schema:
-          $ref: '#/components/schemas/CourtesyChannelType'
     post:
       summary: Create or update a digital address without legal value
       operationId: postRecipientCourtesyAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Communication Channel type
+          required: true
+          schema:
+            $ref: '#/components/schemas/CourtesyChannelType'
       tags:
         - courtesy
       x-api-permissions:
@@ -510,11 +516,18 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     delete:
       summary: Delete Digital Address
       description: Delete a single Digital Address without legal value
       operationId: deleteRecipientCourtesyAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Communication Channel type
+          required: true
+          schema:
+            $ref: '#/components/schemas/CourtesyChannelType'
       tags:
         - courtesy
       x-api-permissions:
@@ -556,7 +569,6 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     options:
       operationId: >-
         Options for /v1/digital-address/courtesy/{senderId}/{channelType} API
