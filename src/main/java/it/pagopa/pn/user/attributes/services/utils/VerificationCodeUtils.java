@@ -266,6 +266,7 @@ public class VerificationCodeUtils {
             }
             return;
         }
+
         // se è specificato il requestId, non mi interessa il value. Deve però essere presente il verification code
         if (addressVerificationDto.getRequestId() != null)
         {
