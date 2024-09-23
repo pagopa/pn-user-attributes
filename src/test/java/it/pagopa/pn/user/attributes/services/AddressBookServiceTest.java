@@ -1730,6 +1730,13 @@ class AddressBookServiceTest {
         );
     }
 
+    private static Stream<Arguments> provideLegalChannelTypesWithVerificationCode() {
+        return Stream.of(
+                Arguments.of(LegalChannelTypeDto.PEC),
+                Arguments.of(LegalChannelTypeDto.APPIO)
+        );
+    }
+
     private static Stream<Arguments> provideLegalChannelTypesAndResults() {
         return Stream.of(
                 Arguments.of(LegalChannelTypeDto.PEC,PEC_VALIDATION_REQUIRED, LEGAL_ADDRESS),
