@@ -110,7 +110,7 @@ public class LegalAddressController implements LegalApi {
                                     : address.getChannelType() == LegalChannelTypeDto.SERCQ);
 
                     // Recupero dei consensi
-                    Flux<ConsentDto> consentsFlux = consentsService.getConsents(recipientId, pnCxType);
+                    Flux<ConsentDto> consentsFlux = consentsService.getConsents(removeRecipientIdPrefix(recipientId), pnCxType);
 
                     return consentsFlux
                             .collectList()
@@ -207,7 +207,13 @@ public class LegalAddressController implements LegalApi {
                         })));
     }
 
-
+    public String removeRecipientIdPrefix(String recipientId) {
+        if (recipientId.charAt(2) == '-') {
+            return recipientId.substring(3);
+        } else {
+            return recipientId;
+        }
+    }
 
 
     @NotNull
