@@ -233,6 +233,7 @@ public class AddressBookService {
 
     @NotNull
     private Mono<List<AddressBookEntity>> getAddressList(String recipientId, String senderId,  String type) {
+        log.info("getAddressList - recipientId={} - senderId={} - type={}", recipientId, senderId, type);
         Tuple2<Mono<String>, Boolean> tuple = resolveSenderId(senderId);
 
         return tuple.mapT1(newSenderId->
@@ -313,6 +314,7 @@ public class AddressBookService {
      * @return lista indirizzi
      */
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
+        log.info("getLegalAddressByRecipientAndSender - recipientId={} - senderId={}", recipientId, senderId);
         return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
                 .flatMapIterable(x -> x);
@@ -587,6 +589,7 @@ public class AddressBookService {
 
     private Mono<List<LegalDigitalAddressDto>> deanonimizeLegal(String recipientId, List<AddressBookEntity> list)
     {
+        log.info("deanonimizeLegal - recipientId={}", recipientId);
         return dataVaultClient.getRecipientAddressesByInternalId(recipientId)
                 .map(addresses -> {
                     List<LegalDigitalAddressDto> res = new ArrayList<>();
@@ -598,6 +601,7 @@ public class AddressBookService {
                         res.add(add);
                     });
 
+                    log.info("Finish deanonimizeLegal - recipientId={}", recipientId);
                     return res;
                 });
     }

@@ -96,13 +96,16 @@ public class LegalAddressController implements LegalApi {
                                                                                           List<String> pnCxGroups,
                                                                                           String pnCxRole,
                                                                                           ServerWebExchange exchange) {
+        log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
+                recipientId, pnCxType, senderId, channelType, addressVerificationDto.toString(), pnCxGroups, pnCxRole);
 
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId
-                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId);
+                        Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
+                                .doOnNext(address -> log.info("getLegalAddressByRecipientAndSender address={}", address));
 
                     // Filtro gli indirizzi in base al tipo di canale
                     Flux<LegalDigitalAddressDto> filteredAddresses = addressesList
@@ -173,6 +176,7 @@ public class LegalAddressController implements LegalApi {
                                                                                               AddressVerificationDto addressVerificationDtoMdc,
                                                                                               List<String> pnCxGroups,
                                                                                               String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
+        log.info("Start executePostLegalAddressLogic - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}", recipientId, pnCxType, senderId, channelType, addressVerificationDtoMdc.getValue(), pnCxGroups, pnCxRole);
 
         return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
                 .map(addressVerificationDto1 -> {
