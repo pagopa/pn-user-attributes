@@ -40,7 +40,7 @@ public class VerificationCodeUtils {
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
     private final SecureRandom rnd = new SecureRandom();
-    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:send-self:notification-already-delivered";
 
 
     /**

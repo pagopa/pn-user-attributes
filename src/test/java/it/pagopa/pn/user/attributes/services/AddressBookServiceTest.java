@@ -57,7 +57,7 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 class AddressBookServiceTest {
 
-    private static final String ADDRESS_SERCQ = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+    private static final String ADDRESS_SERCQ = "x-pagopa-pn-sercq:send-self:notification-already-delivered";
     private final Duration d = Duration.ofMillis(3000);
 
 
@@ -102,7 +102,8 @@ class AddressBookServiceTest {
     @Mock
     AddressBookEntityToLegalDigitalAddressDtoMapper legalDigitalAddressToDto;
 
-    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
+
+    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:send-self:notification-already-delivered";
     private static final String LEGAL_ADDRESS = "email@pec.it";
     private static final String COURTESY_ADDRESS = "email@email.it";
 
@@ -119,7 +120,7 @@ class AddressBookServiceTest {
     }
 
 
-    @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
+    @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0} and address {1}")
     @MethodSource("provideLegalChannelTypesAndAddress")
     void saveLegalAddressBook(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
@@ -130,10 +131,13 @@ class AddressBookServiceTest {
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
 
-        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
-        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
+        Mockito.lenient().when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.lenient().when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(pnExternalChannelClient.sendVerificationCode(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.lenient().when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
+        Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null)
@@ -141,33 +145,11 @@ class AddressBookServiceTest {
 
         //THEN
         assertNotNull( result );
-        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
-    }
-
-    @Test
-    void saveLegalAddressBook_SERCQ() {
-        //GIVEN
-        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
-        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.SERCQ;
-        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
-        addressVerificationDto.setValue(ADDRESS_SERCQ);
-
-        VerificationCodeEntity entity = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), null);
-        entity.setPecValid(false);
-        entity.setLastModified(Instant.now().minusSeconds(1));
-
-        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.lenient().when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
-        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(LegalAddressTypeDto.LEGAL.getValue()))).thenReturn(Flux.empty());
-        Mockito.lenient().when(addressBookDao.saveVerificationCode(any())).thenReturn(Mono.empty());
-        Mockito.lenient().when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(entity));
-
-        // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null).block();
-
-        //THEN
-        assertNotNull(result);
-        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+        if(!legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+            assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+        } else {
+            assertEquals(SUCCESS, result);
+        }
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
@@ -185,11 +167,11 @@ class AddressBookServiceTest {
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, null)
@@ -201,7 +183,7 @@ class AddressBookServiceTest {
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypesAndAddress")
+    @MethodSource("provideLegalChannelTypesAndAddressForVerificationCode")
     void saveLegalAddressBookWithInvalidVerificationCode(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
@@ -215,11 +197,12 @@ class AddressBookServiceTest {
         verificationCode.setVerificationCode("55555");
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
-        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
-        Mockito.when(pnUserattributesConfig.getValidationcodemaxattempts()).thenReturn(3);
-        Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.lenient().when(pnUserattributesConfig.getValidationcodemaxattempts()).thenReturn(3);
+        Mockito.lenient().when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), anyList())).thenReturn(Mono.empty());
 
         // WHEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
@@ -230,7 +213,7 @@ class AddressBookServiceTest {
     }
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypesAndAddress")
+    @MethodSource("provideLegalChannelTypesAndAddressForVerificationCode")
     void saveLegalAddressBookWithInvalidVerificationCodeTooLate(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
 
@@ -247,7 +230,7 @@ class AddressBookServiceTest {
         verificationCode.setCreated(Instant.now().minus(1000, ChronoUnit.MINUTES));
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
@@ -272,25 +255,29 @@ class AddressBookServiceTest {
 
 
     @ParameterizedTest(name = "Test saveLegalAddressBook with channelType {0}")
-    @MethodSource("provideLegalChannelTypes")
-    void saveLegalAddressBookWithVerificationCodeRequestId(LegalChannelTypeDto legalChannelType) {
+    @MethodSource("provideLegalChannelTypesAndAddress")
+    void saveLegalAddressBookWithVerificationCodeRequestId(LegalChannelTypeDto legalChannelType, String address) {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
         String uuid = UUID.randomUUID().toString();
         AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
         addressVerificationDto.setRequestId(uuid);
-        addressVerificationDto.setVerificationCode("12345");
-
+        if(!legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+            addressVerificationDto.setVerificationCode("12345");
+        }
+        addressVerificationDto.setValue(address);
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
         verificationCode.setVerificationCode("12345");
         verificationCode.setPecValid(true);
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
-        Mockito.when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+
+            Mockito.lenient().when(addressBookDao.getVerificationCodeByRequestId(Mockito.any())).thenReturn(Mono.just(verificationCode));
+            Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+            Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+            Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
+            Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+            Mockito.lenient().when(addressBookDao.validateHashedAddress(anyString(), anyString(), anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, null)
@@ -319,11 +306,11 @@ class AddressBookServiceTest {
         verificationCode.setAddress("prova@prova.it");
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+            Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+           Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
         Mockito.lenient().when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(100));
         Mockito.lenient().when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
@@ -354,8 +341,8 @@ class AddressBookServiceTest {
 
         // WHEN
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
-        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
         Mockito.lenient().when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
@@ -689,7 +676,9 @@ class AddressBookServiceTest {
         //THEN
     }
 
-    @Test
+
+    @ParameterizedTest(name = "Test getAddressesByRecipient with legalChannelType {0} and address {1}, expected results: {2}")
+    @MethodSource("provideLegalChannelTypesAndAddress")
     void saveCourtesyAddressBookWithVerificationCode() {
         //GIVEN
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
@@ -1730,12 +1719,6 @@ class AddressBookServiceTest {
         );
     }
 
-    private static Stream<Arguments> provideLegalChannelTypesWithVerificationCode() {
-        return Stream.of(
-                Arguments.of(LegalChannelTypeDto.PEC),
-                Arguments.of(LegalChannelTypeDto.APPIO)
-        );
-    }
 
     private static Stream<Arguments> provideLegalChannelTypesAndResults() {
         return Stream.of(
@@ -1759,6 +1742,13 @@ class AddressBookServiceTest {
                 Arguments.of(LegalChannelTypeDto.PEC,LEGAL_ADDRESS),
                 Arguments.of(LegalChannelTypeDto.APPIO,COURTESY_ADDRESS),
                 Arguments.of(LegalChannelTypeDto.SERCQ,SERCQ_ADDRESS)
+
+        );
+    }
+    public static Stream<Arguments> provideLegalChannelTypesAndAddressForVerificationCode() {
+        return Stream.of(
+                Arguments.of(LegalChannelTypeDto.PEC,LEGAL_ADDRESS),
+                Arguments.of(LegalChannelTypeDto.APPIO,COURTESY_ADDRESS)
 
         );
     }
