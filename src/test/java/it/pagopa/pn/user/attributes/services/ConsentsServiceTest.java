@@ -372,7 +372,6 @@ class ConsentsServiceTest {
         String recipientId = "recipientid";
         String vers1 = "VERS1";
         ConsentTypeDto dto = ConsentTypeDto.TOS_SERCQ;
-        ConsentDto expected = new ConsentDto();
         List<ConsentEntity> list = new ArrayList<>();
         list.add(ConsentDaoTestIT.newConsentSercQ(true));
         list.add(ConsentDaoTestIT.newConsentSercQ(false));
@@ -409,17 +408,17 @@ class ConsentsServiceTest {
     void getPgConsentByType() {
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
 
-        String recipientId = "recipientid";
+        String recipientId = "PG-recipientid";
         ConsentTypeDto dto = ConsentTypeDto.TOS_DEST_B2B;
         String vers1 = "VERS1";
         ConsentDto expected = new ConsentDto();
         expected.setAccepted(true);
-        expected.recipientId(CxTypeAuthFleetDto.PG.getValue() + "-" + recipientId);
+        expected.recipientId(recipientId);
         expected.setConsentType(dto);
         expected.setConsentVersion(vers1);
         expected.isFirstAccept(false);
 
-        ConsentEntity consentEntity = new ConsentEntity(CxTypeAuthFleetDto.PG.getValue() + "-" + recipientId, dto.getValue(), vers1);
+        ConsentEntity consentEntity = new ConsentEntity(recipientId, dto.getValue(), vers1);
         consentEntity.setAccepted(true);
 
         Mockito.when(consentDao.getConsentByType(any(), any(), any()))

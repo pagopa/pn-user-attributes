@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import it.pagopa.pn.user.attributes.utils.ConsentsUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -59,6 +60,11 @@ public class ConsentsService {
      */
     public Mono<ConsentDto> getConsentByType(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version) {
         String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
+        return retrieveConsents(xPagopaPnCxType, consentType, version, uidWithCxType);
+    }
+
+    @NotNull
+    private Mono<ConsentDto> retrieveConsents(CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version, String uidWithCxType) {
         return pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue())
                 .zipWhen(lastConsentVersion -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), StringUtils.hasText(version) ? version : lastConsentVersion)
                                 .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
@@ -73,7 +79,6 @@ public class ConsentsService {
                                 .accepted(entity.isAccepted() && entity.getConsentVersion().equals(StringUtils.hasText(version) ? version : lastConsentVersion))
                                 .build()
                 );
-
     }
 
 
@@ -104,7 +109,7 @@ public class ConsentsService {
         return ConsentsUtils.validateCxType(xPagopaPnCxType)
                 .then(ConsentsUtils.validatePgConsentAction(consentType.getValue(), xPagopaPnCxRole, xPagopaPnCxGroups))
                 .then(Mono.defer(() -> {
-                    ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(computeRecipientIdWithCxType(xPagopaPnCxId, xPagopaPnCxType), consentType, consentActionDto, version);
+                    ConsentEntity consentEntity = dtosToConsentEntityMapper.toEntity(xPagopaPnCxId, consentType, consentActionDto, version);
                     log.debug("Created consentEntity = {}", consentEntity);
                     return consentDao.consentAction(consentEntity);
                 }))
@@ -121,7 +126,7 @@ public class ConsentsService {
     public Mono<ConsentDto> getPgConsentByType(String xPagopaPnCxId, CxTypeAuthFleetDto xPagopaPnCxType,
                                                ConsentTypeDto consentType, String version) {
         return ConsentsUtils.validateCxType(xPagopaPnCxType)
-                .then(getConsentByType(xPagopaPnCxId, xPagopaPnCxType, consentType, version));
+                .then(retrieveConsents(xPagopaPnCxType, consentType, version, xPagopaPnCxId));
     }
 
 }
