@@ -138,6 +138,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null)
@@ -172,6 +173,7 @@ class AddressBookServiceTest {
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, null)
@@ -278,6 +280,8 @@ class AddressBookServiceTest {
             Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
             Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
             Mockito.lenient().when(addressBookDao.validateHashedAddress(anyString(), anyString(), anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED));
+            Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
+
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, null)
@@ -306,12 +310,13 @@ class AddressBookServiceTest {
         verificationCode.setAddress("prova@prova.it");
 
         Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
-            Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.lenient().when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-           Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+        Mockito.lenient().when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
         Mockito.lenient().when(pnUserattributesConfig.getVerificationcodelegalttl()).thenReturn(Duration.ofSeconds(100));
+        Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
         Mockito.lenient().when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
@@ -347,6 +352,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         //THEN
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null);
@@ -373,6 +379,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.lenient().when(pnUserattributesConfig.getSercqAddress()).thenReturn(SERCQ_ADDRESS);
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, null).block(d);
