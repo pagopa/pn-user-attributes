@@ -40,7 +40,6 @@ public class VerificationCodeUtils {
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
     private final SecureRandom rnd = new SecureRandom();
-    private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:SEND-self:notification-already-delivered";
 
 
     /**
@@ -260,7 +259,7 @@ public class VerificationCodeUtils {
         log.logChecking(process);
 
         if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)){
-            if (StringUtils.hasText(addressVerificationDto.getValue()) && !SERCQ_ADDRESS.equals(addressVerificationDto.getValue())) {
+            if (StringUtils.hasText(addressVerificationDto.getValue()) && !pnUserattributesConfig.getSercqAddress().equals(addressVerificationDto.getValue())) {
                 log.logCheckingOutcome(process, false, "invalid address");
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, "value");
             }
@@ -290,6 +289,7 @@ public class VerificationCodeUtils {
         if ((legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.PEC))
                 || (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.EMAIL)))
         {
+            log.info("user config {}", pnUserattributesConfig.getVerificationcodelegalttl());
             String emailaddress = addressVerificationDto.getValue();
 
             //final Pattern emailRegex = Pattern.compile("^[\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+(?:[.-][\\p{L}0-9!#\\$%*/?\\|\\^\\{\\}`~&'+\\-=_]+){0,10}@\\w+(?:[.-]\\w+){0,10}\\.\\w{2,10}$", Pattern.CASE_INSENSITIVE);

@@ -466,7 +466,7 @@ public class AddressBookService {
             } else {
                 return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
-                        if (Boolean.TRUE.equals(res) ) {
+                        if (Boolean.TRUE.equals(res) || (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ))) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
