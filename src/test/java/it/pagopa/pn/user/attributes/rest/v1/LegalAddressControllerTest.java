@@ -18,8 +18,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(controllers = {LegalAddressController.class})
@@ -262,7 +261,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), anyList(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then

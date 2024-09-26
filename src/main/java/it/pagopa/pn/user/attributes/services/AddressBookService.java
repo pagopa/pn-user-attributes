@@ -93,8 +93,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponse) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, deleteItemResponse);
+    public Mono<SAVE_ADDRESS_RESULT> saveAddressBookLegal(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole);
     }
 
     /**
@@ -111,10 +111,10 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
-                                                          CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
+                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
 
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto, deleteItemResponses));
+                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole ));
     }
 
     /**
@@ -127,7 +127,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null);
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, null, null, null);
     }
 
     /**
@@ -434,7 +434,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto
+                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
             String legal = verificationCodeUtils.getLegalType(legalChannelType);
@@ -473,7 +474,14 @@ public class AddressBookService {
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                 channelType, checkedSenderId, legal, addressVerificationDto.getValue());
-                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemResponses);
+                                if (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ)) {
+                                    return prepareAndDeleteAddresses(pnCxGroups, pnCxRole, pnCxType, filteredAddressList)
+                                            .flatMap(deleteItemRequests ->
+                                                    verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemRequests));
+
+                                } else {
+                                    return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null);
+                                }
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -497,6 +505,30 @@ public class AddressBookService {
             Mono.error(new PnAddressNotFoundException())
         );
 
+    }
+
+    private Mono<List<TransactDeleteItemEnhancedRequest>> prepareAndDeleteAddresses(List<String> pnCxGroups, String pnCxRole,
+                                                                                    CxTypeAuthFleetDto pnCxType,
+                                                                                    List<LegalDigitalAddressDto> filteredAddresses) {
+        if (filteredAddresses==null || filteredAddresses.isEmpty()) {
+            return Mono.empty();
+        }
+        return Flux.fromIterable(filteredAddresses)
+                .flatMap(address ->
+                        deleteLegalAddressBook(address.getRecipientId(),
+                                address.getSenderId(),
+                                address.getChannelType(),
+                                pnCxType,
+                                pnCxGroups,
+                                pnCxRole,
+                                true)
+                                .cast(TransactDeleteItemEnhancedRequest.class) // Assicurati che la risposta sia del tipo giusto
+                                .onErrorResume(e -> {
+                                    log.error("Error deleting address: {}", address, e);
+                                    return Mono.empty();
+                                })
+                )
+                .collectList();
     }
 
     private Mono<String> filterNotRootSender(final String senderId){
