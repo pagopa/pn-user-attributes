@@ -104,8 +104,8 @@ public class LegalAddressController implements LegalApi {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId
-                        Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
-                                .doOnNext(address -> log.info("getLegalAddressByRecipientAndSender address={}", address));
+                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
+                            .doOnNext(address -> log.info("getLegalAddressByRecipientAndSender address={}", address));
 
                     // Filtro gli indirizzi in base al tipo di canale
                     Flux<LegalDigitalAddressDto> filteredAddresses = addressesList
@@ -120,26 +120,13 @@ public class LegalAddressController implements LegalApi {
                             .flatMap(consentsList -> {
                                 boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
                                 log.info("consentsList {}", consentsList);
-                               Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
+                                Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
                                 if (Boolean.FALSE.equals(hasConsents)) return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
 
                                 return filteredAddresses.collectList()
                                         .flatMap(filteredAddressesList ->
-                                                Flux.fromIterable(filteredAddressesList)
-                                                        .flatMap(address ->
-                                                                addressBookService.deleteLegalAddressBook(address.getRecipientId(), address.getSenderId(), address.getChannelType(), pnCxType, pnCxGroups, pnCxRole, true)
-                                                                        .cast(TransactDeleteItemEnhancedRequest.class)
-                                                                        .map(deleteResponse -> deleteResponse) // risposta del dao
-                                                                        .onErrorResume(e -> {
-                                                                            log.error("Error deleting address: {}", address, e);
-                                                                            return Mono.empty();
-                                                                        })
-                                                        )
-                                                        .collectList()
-                                        )
-                                        .flatMap(deleteResponses ->
                                                 executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, deleteResponses.isEmpty() ? null : deleteResponses));
+                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, filteredAddressesList));
                             });
                 })
                 .onErrorResume(e -> {
@@ -148,6 +135,7 @@ public class LegalAddressController implements LegalApi {
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
                 });
     }
+
 
 
     private static Boolean checkConsents(String recipientId, List<ConsentDto> consentsList, boolean isSercq) {
@@ -168,15 +156,15 @@ public class LegalAddressController implements LegalApi {
         return true;
     }
 
-
     private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,
                                                                                               CxTypeAuthFleetDto pnCxType,
                                                                                               String senderId,
                                                                                               LegalChannelTypeDto channelType,
                                                                                               AddressVerificationDto addressVerificationDtoMdc,
                                                                                               List<String> pnCxGroups,
-                                                                                              String pnCxRole, List<TransactDeleteItemEnhancedRequest> deleteItemResponses) {
-        log.info("Start executePostLegalAddressLogic - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}", recipientId, pnCxType, senderId, channelType, addressVerificationDtoMdc.getValue(), pnCxGroups, pnCxRole);
+                                                                                              String pnCxRole, List<LegalDigitalAddressDto> filteredAddressesList) {
+        log.info("Start executePostLegalAddressLogic - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
+                recipientId, pnCxType, senderId, channelType, addressVerificationDtoMdc.getValue(), pnCxGroups, pnCxRole);
 
         return MDCUtils.addMDCToContextAndExecute(Mono.just(addressVerificationDtoMdc)
                 .map(addressVerificationDto1 -> {
@@ -190,25 +178,25 @@ public class LegalAddressController implements LegalApi {
 
                     return Tuples.of(addressVerificationDto1, auditLogEvent);
                 })
-                .flatMap(tupleVerCodeLogEvent -> addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
-                                tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole, deleteItemResponses)
-                                .onErrorResume(throwable ->
-                                        addressBookService.manageError(tupleVerCodeLogEvent.getT2(),throwable)
-                                )
+                .flatMap(tupleVerCodeLogEvent -> {
+                    // Chiamata al metodo di salvataggio, passando la lista degli indirizzi filtrati
+                    return addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
+                                    tupleVerCodeLogEvent.getT1(), pnCxType, filteredAddressesList, pnCxGroups, pnCxRole)
+                            .onErrorResume(throwable -> addressBookService.manageError(tupleVerCodeLogEvent.getT2(), throwable))
+                            .map(m -> {
+                                log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}",
+                                        recipientId, senderId, channelType, m.toString());
 
-                        .map(m -> {
-                            log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}",
-                                    recipientId, senderId, channelType, m.toString());
-
-                            if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
-                                AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
-                                responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
-                                return ResponseEntity.ok(responseDto);
-                            } else {
-                                tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
-                                return ResponseEntity.noContent().build();
-                            }
-                        })));
+                                if (m != AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS) {
+                                    AddressVerificationResponseDto responseDto = new AddressVerificationResponseDto();
+                                    responseDto.result(AddressVerificationResponseDto.ResultEnum.fromValue(m.toString()));
+                                    return ResponseEntity.ok(responseDto);
+                                } else {
+                                    tupleVerCodeLogEvent.getT2().ifPresent(pnAuditLogEvent -> pnAuditLogEvent.generateSuccess().log());
+                                    return ResponseEntity.noContent().build();
+                                }
+                            });
+                }));
     }
 
     public String removeRecipientIdPrefix(String recipientId) {
