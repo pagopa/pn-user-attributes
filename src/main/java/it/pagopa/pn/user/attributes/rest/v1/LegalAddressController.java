@@ -104,22 +104,22 @@ public class LegalAddressController implements LegalApi {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId
-                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
-                            .doOnNext(address -> log.info("getLegalAddressByRecipientAndSender address={}", address));
+                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId);
+                    log.info("getLegalAddressByRecipientAndSender list={}", addressesList);
 
                     // Filtro gli indirizzi in base al tipo di canale
                     Flux<LegalDigitalAddressDto> filteredAddresses = addressesList
                             .filter(address -> channelType == LegalChannelTypeDto.SERCQ ? address.getChannelType() == LegalChannelTypeDto.PEC
                                     : address.getChannelType() == LegalChannelTypeDto.SERCQ);
 
-                    // Recupero dei consensi
+                    // Recupero dei consensi -> modificare la get dei consensi per pg e pf
                     Flux<ConsentDto> consentsFlux = consentsService.getConsents(removeRecipientIdPrefix(recipientId), pnCxType);
 
                     return consentsFlux
                             .collectList()
                             .flatMap(consentsList -> {
                                 boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
-                                log.info("consentsList {}", consentsList);
+                                log.info("postRecipientLegalAddress consentsList {}", consentsList);
                                 Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
                                 if (Boolean.FALSE.equals(hasConsents)) return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
 
