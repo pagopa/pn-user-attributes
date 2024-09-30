@@ -30,7 +30,7 @@ public class ConsentsUtils {
     }
 
     public static boolean isRoleAdmin(String xRole, List<String> groups) {
-        return "ADMIN".equals(xRole) && (groups == null || groups.isEmpty());
+        return "ADMIN".equalsIgnoreCase(xRole) && (groups == null || groups.isEmpty());
     }
 
     public static Mono<Void> validateCxType(CxTypeAuthFleetDto xPagopaPnCxType) {
