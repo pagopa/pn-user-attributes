@@ -127,7 +127,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, null, null, null);
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null);
     }
 
     /**
@@ -488,7 +488,8 @@ public class AddressBookService {
                                     checkedSenderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
-                                return verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType);
+                                return prepareAndDeleteAddresses(pnCxGroups, pnCxRole, pnCxType, filteredAddressList)
+                                        .flatMap(deleteItemRequests -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, deleteItemRequests));
                             }
 
                         }
@@ -524,9 +525,6 @@ public class AddressBookService {
                                                                                     CxTypeAuthFleetDto pnCxType,
                                                                                     List<LegalDigitalAddressDto> filteredAddresses) {
         log.info("prepareAndDeleteAddresses pnCxGroups={} - pnCxRole={} - pnCxType={} - filteredAddresses.isEmpty={}", pnCxGroups, pnCxRole, pnCxType, filteredAddresses.isEmpty() ? "true" : "false");
-        if (filteredAddresses == null || filteredAddresses.isEmpty()) {
-            return Mono.empty();
-        }
         return Flux.fromIterable(filteredAddresses)
                 .flatMap(address ->
                         deleteLegalAddressBook(address.getRecipientId(),

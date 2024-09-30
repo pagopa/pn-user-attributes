@@ -11,9 +11,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.MDC;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +19,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -112,48 +109,40 @@ public class LegalAddressController implements LegalApi {
                             .filter(address -> channelType == LegalChannelTypeDto.SERCQ ? address.getChannelType() == LegalChannelTypeDto.PEC
                                     : address.getChannelType() == LegalChannelTypeDto.SERCQ);
 
-                    // Recupero dei consensi -> modificare la get dei consensi per pg e pf
-                    Flux<ConsentDto> consentsFlux = consentsService.getConsents(removeRecipientIdPrefix(recipientId), pnCxType);
-
-                    return consentsFlux
-                            .collectList()
-                            .flatMap(consentsList -> {
-                                boolean isSercq = channelType == LegalChannelTypeDto.SERCQ;
-                                log.info("postRecipientLegalAddress consentsList {}", consentsList);
-                                Boolean hasConsents = checkConsents(recipientId, consentsList, isSercq);
-                                if (Boolean.FALSE.equals(hasConsents)) return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
-
-                                return filteredAddresses.collectList()
-                                        .flatMap(filteredAddressesList ->
-                                                executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                                        addressVerificationDtoMdc, pnCxGroups, pnCxRole, filteredAddressesList));
+                    return checkConsents(recipientId, pnCxType, channelType)
+                            .flatMap(hasConsents -> Boolean.TRUE.equals(hasConsents) ? Mono.empty() : Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto())))
+                            .then(filteredAddresses.collectList())
+                            .flatMap(filteredAddressesList ->
+                                    executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
+                                            addressVerificationDtoMdc, pnCxGroups, pnCxRole, filteredAddressesList));
                             });
-                })
-                .onErrorResume(e -> {
-                    // Gestione degli errori
-                    log.error("Error occurred while processing address verification", e);
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-                });
     }
 
 
+    private Mono<Boolean> checkConsents(String recipientId, CxTypeAuthFleetDto pnCxType, LegalChannelTypeDto channelType) {
+        log.info("Start checkConsents - recipientId={} - pnCxType={} - channelType={}", recipientId, pnCxType, channelType);
+        if (channelType.equals(LegalChannelTypeDto.SERCQ)) {
+            return checkSercqConsents(recipientId, pnCxType);
+        } else return Mono.just(true);
+    }
 
-    private static Boolean checkConsents(String recipientId, List<ConsentDto> consentsList, boolean isSercq) {
-        if (isSercq) {
-            boolean hasTosConsent = consentsList.stream()
-                    .anyMatch(consent -> ConsentTypeDto.TOS_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
-            log.info("hasTosConsent {}", hasTosConsent ? "true" : "false");
-
-            boolean hasPrivacyConsent = consentsList.stream()
-                    .anyMatch(consent -> ConsentTypeDto.DATAPRIVACY_SERCQ.equals(consent.getConsentType()) && Boolean.TRUE.equals(consent.getAccepted()));
-
-            log.info("hasPrivacyConsent {}", hasPrivacyConsent ? "true" : "false");
-            if (!(hasTosConsent && hasPrivacyConsent)) {
-                log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
-                return false;
-            }
-        }
-        return true;
+    private Mono<Boolean> checkSercqConsents(String recipientId, CxTypeAuthFleetDto pnCxType) {
+        return Mono.defer(() -> {
+                    String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
+                    // Caso PG (Persona giuridica)
+                    if (pnCxType.equals(CxTypeAuthFleetDto.PG)) {
+                        return Mono.zip(consentsService.getPgConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getPgConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                    }
+                    // Caso PF (Persona Fisica) o altro
+                    else
+                        return Mono.zip(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                })
+                .map(tuple -> tuple.getT1().getAccepted() && tuple.getT2().getAccepted())
+                .doOnNext(hasConsents -> {
+                    if (Boolean.FALSE.equals(hasConsents)) {
+                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                    }
+                });
     }
 
     private Mono<ResponseEntity<AddressVerificationResponseDto>> executePostLegalAddressLogic(String recipientId,

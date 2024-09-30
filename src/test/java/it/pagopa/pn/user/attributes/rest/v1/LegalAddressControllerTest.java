@@ -157,8 +157,10 @@ class LegalAddressControllerTest {
                 .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
-                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
@@ -225,8 +227,10 @@ class LegalAddressControllerTest {
                 .accepted(true).build();
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
-        when(consentsService.getConsents(anyString(), any(CxTypeAuthFleetDto.class)))
-                .thenReturn(Flux.fromIterable(List.of(consentDto, consentDto1)));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
