@@ -95,7 +95,7 @@ public class LegalAddressController implements LegalApi {
                                                                                           ServerWebExchange exchange) {
         log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
                 recipientId, pnCxType, senderId, channelType, addressVerificationDto.toString(), pnCxGroups, pnCxRole);
-
+        log.debug("postRecipientLegalAddress - request headers: {}", exchange.getRequest().getHeaders());
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
