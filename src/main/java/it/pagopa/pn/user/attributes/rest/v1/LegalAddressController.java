@@ -128,14 +128,15 @@ public class LegalAddressController implements LegalApi {
 
     private Mono<Boolean> checkSercqConsents(String recipientId, CxTypeAuthFleetDto pnCxType) {
         return Mono.defer(() -> {
-                    String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
                     // Caso PG (Persona giuridica)
                     if (pnCxType.equals(CxTypeAuthFleetDto.PG)) {
-                        return Mono.zip(consentsService.getPgConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getPgConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                        return Mono.zip(consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
                     }
                     // Caso PF (Persona Fisica) o altro
-                    else
+                    else {
+                        String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
                         return Mono.zip(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                    }
                 })
                 .map(tuple -> tuple.getT1().getAccepted() && tuple.getT2().getAccepted())
                 .doOnNext(hasConsents -> {
