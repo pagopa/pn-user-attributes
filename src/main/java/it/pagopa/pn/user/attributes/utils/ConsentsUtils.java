@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto.TOS_DEST_B2B;
+import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentTypeDto.*;
 
 @Slf4j
 public class ConsentsUtils {
-    public static final Set<String> ALLOWED_CONSENT_TYPE = Set.of(TOS_DEST_B2B.getValue());
+    public static final Set<String> ALLOWED_CONSENT_TYPE = Set.of(TOS_DEST_B2B.getValue(), TOS_SERCQ.getValue(), DATAPRIVACY_SERCQ.getValue());
     private ConsentsUtils() {
         throw new UnsupportedOperationException("Utility class");
     }
