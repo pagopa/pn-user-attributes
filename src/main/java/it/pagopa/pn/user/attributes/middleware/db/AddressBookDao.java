@@ -51,11 +51,13 @@ public class AddressBookDao extends BaseDao {
 
     public AddressBookDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                           DynamoDbAsyncClient dynamoDbAsyncClient,
-                          PnUserattributesConfig pnUserattributesConfig
+                          PnUserattributesConfig pnUserattributesConfig,
+                          PnDataVaultClient pnDataVaultClient
                           ) {
         this.dynamoDbAsyncClient = dynamoDbAsyncClient;
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.table = pnUserattributesConfig.getDynamodbTableName();
+        this.pnDataVaultClient = pnDataVaultClient;
         this.addressBookTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(AddressBookEntity.class));
         this.verificationCodeTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerificationCodeEntity.class));
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
