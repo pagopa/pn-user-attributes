@@ -308,7 +308,7 @@ public class AddressBookDao extends BaseDao {
         if (addressesToDelete != null && !addressesToDelete.isEmpty()) {
             addressesToDelete.forEach(d -> {
                 Map<String, AttributeValue> expressionValues = new HashMap<>();
-                expressionValues.put(":pk", AttributeValue.builder().s(addressBook.getPk()).build());
+                expressionValues.put(":pk", AttributeValue.builder().s(d.getPk()).build());
 
                 Expression exp = Expression.builder()
                         .expression(BaseEntity.COL_PK + " = :pk")
@@ -316,7 +316,7 @@ public class AddressBookDao extends BaseDao {
                         .build();
 
                 TransactDeleteItemEnhancedRequest delRequest = TransactDeleteItemEnhancedRequest.builder()
-                        .key(getKeyBuild(addressBook.getPk(), addressBook.getSk()))
+                        .key(getKeyBuild(d.getPk(), d.getSk()))
                         .conditionExpression(exp)
                         .build();
 
