@@ -490,7 +490,7 @@ public class AddressBookService {
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return prepareAndDeleteAddresses(filteredAddressList)
-                                        .flatMap(deleteItemRequests -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, deleteItemRequests));
+                                        .flatMap(addressesToDelete -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, addressesToDelete));
                             }
 
                         }
@@ -522,7 +522,7 @@ public class AddressBookService {
         }
     }
 
-    public Mono<List<TransactDeleteItemEnhancedRequest>> prepareAndDeleteAddresses(List<LegalDigitalAddressDto> filteredAddresses) {
+    public Mono<List<AddressBookEntity>> prepareAndDeleteAddresses(List<LegalDigitalAddressDto> filteredAddresses) {
         log.info("prepareAndDeleteAddresses  filteredAddresses.isEmpty={}", filteredAddresses.isEmpty() ? "true" : "false");
         return Flux.fromIterable(filteredAddresses)
                 .flatMap(address ->
@@ -530,7 +530,7 @@ public class AddressBookService {
                                 address.getSenderId(),
                                 address.getChannelType(),
                                 true)
-                                .cast(TransactDeleteItemEnhancedRequest.class)
+                                .cast(AddressBookEntity.class)
                                 .onErrorResume(e -> {
                                     log.error("Error deleting address: {}", address, e);
                                     return Mono.empty();
@@ -595,8 +595,12 @@ public class AddressBookService {
                     });
         }
         else {
-            return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType, transactional));
+            // Se l'operazione di delete è transazionale, l'eliminazione degli indirizzi da datavault viene effettuata dopo.
+            if (!transactional) {
+                return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
+                        .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+            } else return dao.deleteAddressBook(recipientId, senderId, legal, channelType, true);
+
         }
     }
 

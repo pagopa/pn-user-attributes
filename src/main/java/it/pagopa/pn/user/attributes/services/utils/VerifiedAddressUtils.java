@@ -32,14 +32,14 @@ public class VerifiedAddressUtils {
      * @param addressBook addressBook da salvare, COMPLETO di hashedaddress impostato
      * @return nd
      */
-    public Mono<Void> saveInDynamodb(AddressBookEntity addressBook, List<TransactDeleteItemEnhancedRequest> deleteItemResponses){
+    public Mono<Void> saveInDynamodb(AddressBookEntity addressBook, List<AddressBookEntity> addressesToDelete){
         log.info("saving address in db uid={} hashedaddress={} channel={} legal={}", addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType(), addressBook.getAddressType());
 
         PnAuditLogEvent auditLogEvent = getLogEvent(addressBook);
         VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType());
         VerifiedAddressEntity verifiedAddressEntity = new VerifiedAddressEntity(addressBook.getRecipientId(), addressBook.getAddresshash(), addressBook.getChannelType());
 
-        return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity, deleteItemResponses)
+        return this.dao.saveAddressBookAndVerifiedAddress(addressBook, verifiedAddressEntity, addressesToDelete)
                 .then(dao.deleteVerificationCode(verificationCodeEntity))
                 .onErrorResume(x -> {
                     if (auditLogEvent != null)

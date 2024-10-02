@@ -909,7 +909,7 @@ class AddressBookServiceTest {
         String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
 
 
-        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(), anyBoolean())).thenReturn(Mono.just(new Object()));
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
         Mockito.when(pnDatavaultClient.deleteRecipientAddressByInternalId(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
 
@@ -927,7 +927,7 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.EMAIL;
 
 
-        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(), anyBoolean())).thenReturn(Mono.just(new Object()));
+        Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
         Mockito.when(pnDatavaultClient.deleteRecipientAddressByInternalId(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
 
 

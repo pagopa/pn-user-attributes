@@ -53,7 +53,7 @@ public class VerificationCodeUtils {
      */
     public Mono<AddressBookService.SAVE_ADDRESS_RESULT> validateVerificationCodeAndSendToDataVault(String recipientId, AddressVerificationDto verificationCode,
                                                                                                    LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType,
-                                                                                                   List<TransactDeleteItemEnhancedRequest> deleteItemRequests) {
+                                                                                                   List<AddressBookEntity> addressesToDelete) {
         String legal = getLegalType(legalChannelType);
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
 
@@ -62,7 +62,7 @@ public class VerificationCodeUtils {
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()))
                 .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
                 .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r==null?"NULL":r.getHashedAddress(), channelType, legal))
-                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, deleteItemRequests))
+                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, addressesToDelete))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
     }
 
@@ -93,7 +93,7 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, List<TransactDeleteItemEnhancedRequest> deleteItemRequests)
+    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, List<AddressBookEntity> addressesToDelete)
     {
         verificationCodeEntity.setCodeValid(true);
         if (legalChannelType == LegalChannelTypeDto.PEC && !verificationCodeEntity.isPecValid()) {
@@ -105,7 +105,7 @@ public class VerificationCodeUtils {
             return this.dao.updateVerificationCodeIfExists(verificationCodeEntity)
                     .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.PEC_VALIDATION_REQUIRED));
         } else {
-            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, deleteItemRequests);
+            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, addressesToDelete);
         }
     }
 
@@ -114,7 +114,7 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<TransactDeleteItemEnhancedRequest> deleteItemResponses)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<AddressBookEntity> addressesToDelete)
     {
         // se real address non è passato, provo a recuperlo dal pec address
         String realaddress = verificationCodeEntity.getAddress();
@@ -128,7 +128,7 @@ public class VerificationCodeUtils {
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
         return this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, realaddress)
-                .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, deleteItemResponses))
+                .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, addressesToDelete))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
     }
 
