@@ -111,6 +111,7 @@ public class LegalAddressController implements LegalApi {
                     return checkConsents(recipientId, pnCxType, channelType)
                             .flatMap(hasConsents -> Boolean.TRUE.equals(hasConsents) ? Mono.empty() : Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto())))
                             .then(filteredAddresses.collectList())
+                            .doOnNext(filteredAddressesList -> log.debug("filteredAddressesList={}", filteredAddressesList))
                             .flatMap(filteredAddressesList ->
                                     executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
                                             addressVerificationDtoMdc, pnCxGroups, pnCxRole, filteredAddressesList));

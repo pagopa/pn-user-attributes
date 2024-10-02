@@ -131,10 +131,6 @@ public class VerificationCodeUtils {
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, deleteItemResponses))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
     }
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity)
-    {
-        return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, null);
-    }
 
     /**
      * Imposta come pecValida
