@@ -100,7 +100,11 @@ public class LegalAddressController implements LegalApi {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId
-                    Flux<LegalDigitalAddressDto> addressesList = addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId);
+                    Flux<LegalDigitalAddressDto> addressesList = addressBookService
+                            .getLegalAddressByRecipientAndSender(recipientId, senderId)
+                            //Filtro sul senderId, perchè per logiche applicative la chiamata precedente potrebbe restituire anche gli indirizzi di default.
+                            .filter(address -> address.getSenderId().equals(senderId));
+
                     log.info("getLegalAddressByRecipientAndSender list={}", addressesList);
 
                     // Filtro gli indirizzi in base al tipo di canale

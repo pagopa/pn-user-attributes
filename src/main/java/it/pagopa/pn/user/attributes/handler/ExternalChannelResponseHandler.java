@@ -78,6 +78,8 @@ public class ExternalChannelResponseHandler {
                         // se il codice di verifica è valido posso procedere con il salvare l'indirizzo PEC
                         // gestisco la cancellazione dell'indirizzo SERCQ, se presente.
                         return addressBookService.getLegalAddressByRecipientAndSender(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getSenderId())
+                                //Filtro sul senderId, perchè per logiche applicative la chiamata precedente potrebbe restituire anche gli indirizzi di default.
+                                .filter(address -> address.getSenderId().equals(verificationCodeEntity.getSenderId()))
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
                                 .collectList()
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
