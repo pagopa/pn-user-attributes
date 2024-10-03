@@ -6,9 +6,11 @@ import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
+import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import reactor.core.publisher.Mono;
 public class ExternalChannelResponseHandler {
 
     private final PnUserattributesConfig pnUserattributesConfig;
+    private final AddressBookService addressBookService;
     private final AddressBookDao addressBookDao;
     private final VerificationCodeUtils verificationCodeUtils;
     private final PnExternalChannelClient externalChannelClient;
@@ -73,7 +76,14 @@ public class ExternalChannelResponseHandler {
 
                     if (verificationCodeEntity.isCodeValid()) {
                         // se il codice di verifica è valido posso procedere con il salvare l'indirizzo PEC
-                        return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity)
+                        // gestisco la cancellazione dell'indirizzo SERCQ, se presente.
+                        return addressBookService.getLegalAddressByRecipientAndSender(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getSenderId())
+                                //Filtro sul senderId, perchè per logiche applicative la chiamata precedente potrebbe restituire anche gli indirizzi di default.
+                                .filter(address -> address.getSenderId().equals(verificationCodeEntity.getSenderId()))
+                                .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
+                                .collectList()
+                                .flatMap(addressBookService::prepareAndDeleteAddresses)
+                                .flatMap(deleteItemEnhancedRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, deleteItemEnhancedRequests))
                                 .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");

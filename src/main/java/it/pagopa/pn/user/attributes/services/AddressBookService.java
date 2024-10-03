@@ -243,7 +243,8 @@ public class AddressBookService {
                         getRoot(senderId).flatMapMany (retryId -> dao.getAddresses(recipientId, retryId, type, true))
                         :Flux.empty()
                 ))
-            .collectList()).getT1();
+            .collectList()).getT1()
+            .doOnNext(list -> log.debug("Retrieved address list: {}", list));
     }
 
     //Tiny call
@@ -488,8 +489,8 @@ public class AddressBookService {
                                     checkedSenderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
-                                return prepareAndDeleteAddresses(pnCxGroups, pnCxRole, pnCxType, filteredAddressList)
-                                        .flatMap(deleteItemRequests -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, deleteItemRequests));
+                                return prepareAndDeleteAddresses(filteredAddressList)
+                                        .flatMap(addressesToDelete -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, addressesToDelete));
                             }
 
                         }
@@ -508,7 +509,7 @@ public class AddressBookService {
 
         if ( legalChannelType!= null && (legalChannelType.equals(LegalChannelTypeDto.SERCQ) || legalChannelType.equals(LegalChannelTypeDto.PEC))) {
             if (!filteredAddressList.isEmpty()) {
-                return prepareAndDeleteAddresses(pnCxGroups, pnCxRole, pnCxType, filteredAddressList)
+                return prepareAndDeleteAddresses(filteredAddressList)
                         .flatMap(deleteItemRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemRequests))
                         .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
             } else {
@@ -521,20 +522,15 @@ public class AddressBookService {
         }
     }
 
-    private Mono<List<TransactDeleteItemEnhancedRequest>> prepareAndDeleteAddresses(List<String> pnCxGroups, String pnCxRole,
-                                                                                    CxTypeAuthFleetDto pnCxType,
-                                                                                    List<LegalDigitalAddressDto> filteredAddresses) {
-        log.info("prepareAndDeleteAddresses pnCxGroups={} - pnCxRole={} - pnCxType={} - filteredAddresses.isEmpty={}", pnCxGroups, pnCxRole, pnCxType, filteredAddresses.isEmpty() ? "true" : "false");
+    public Mono<List<AddressBookEntity>> prepareAndDeleteAddresses(List<LegalDigitalAddressDto> filteredAddresses) {
+        log.info("prepareAndDeleteAddresses  filteredAddresses.isEmpty={}", filteredAddresses.isEmpty() ? "true" : "false");
         return Flux.fromIterable(filteredAddresses)
                 .flatMap(address ->
                         deleteLegalAddressBook(address.getRecipientId(),
                                 address.getSenderId(),
                                 address.getChannelType(),
-                                pnCxType,
-                                pnCxGroups,
-                                pnCxRole,
                                 true)
-                                .cast(TransactDeleteItemEnhancedRequest.class)
+                                .cast(AddressBookEntity.class)
                                 .onErrorResume(e -> {
                                     log.error("Error deleting address: {}", address, e);
                                     return Mono.empty();
@@ -599,8 +595,12 @@ public class AddressBookService {
                     });
         }
         else {
-            return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType, transactional));
+            // Se l'operazione di delete è transazionale, l'eliminazione degli indirizzi da datavault viene effettuata dopo.
+            if (!transactional) {
+                return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
+                        .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+            } else return dao.deleteAddressBook(recipientId, senderId, legal, channelType, true);
+
         }
     }
 
@@ -638,6 +638,7 @@ public class AddressBookService {
                 .map(addresses -> {
                     List<LegalDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
+                        log.debug("Deanonimizing addressId={}", ent.getAddressId());
                         String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
 
                         LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
