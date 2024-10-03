@@ -307,6 +307,7 @@ public class AddressBookDao extends BaseDao {
                 .addUpdateItem(addressBookTable, updRequest)
                 .addUpdateItem(verifiedAddressTable, updVARequest);
 
+        List<AddressBookEntity> vaToDelete = new ArrayList<>();
         if (addressesToDelete != null && !addressesToDelete.isEmpty()) {
             addressesToDelete.forEach(d -> {
                 Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -323,13 +324,19 @@ public class AddressBookDao extends BaseDao {
                         .build();
 
                 transactWriteItemsBuilder.addDeleteItem(addressBookTable, delRequest);
+                //Se siamo nel passaggio PEC -> SERCQ o viceversa, devo eliminare i verified address associati
+                //agli indirizzi che sto cancellando
+                vaToDelete.add(d);
             });
         }
+        //Caso PEC -> PEC oppure SERCQ -> SERCQ
+        else vaToDelete.add(addressBook);
 
         TransactWriteItemsEnhancedRequest transactWriteItemsEnhancedRequest = transactWriteItemsBuilder.build();
 
 
-        return deleteVerifiedAddressIfItsLastRemained(addressBook)
+        return Flux.fromIterable(vaToDelete)
+                .flatMap(this::deleteVerifiedAddressIfItsLastRemained)
                 .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)))
                 // Elimino gli indirizzi da datavault.
                 .then(Mono.defer(() -> {
