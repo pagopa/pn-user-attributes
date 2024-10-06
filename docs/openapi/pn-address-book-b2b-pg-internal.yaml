@@ -1,9 +1,27 @@
 openapi: 3.0.0
 info:
   description: |
-    OpenApi definition for PN User Attributes - Address Book - B2B
+    ## Abstract
+      API utilizzate dalle persone giuridiche per avere avere e impostare gli indirizzi digitali (sia legali che di cortesia).
+      L'impostazione di un indirizzo digitale ha le caratteristiche:
+      <ul>
+        <li>di avvenire in due fasi nella prima si imposta e nella seconda si conferma con un codice di verifica</li>
+        <li>di poter essere impostato per ente mittente</li>
+        <li>di poter essere impostato per tutte le notifiche da un mittente per cui non è stato impostato un indirizzo specifico</li>
+     </ul>
+    ### Esempio di gestione recapiti digitali:
+    <img src="https://raw.githubusercontent.com/pagopa/pn-user-attributes/refs/heads/feature/openApi_doc/docs/images/pg_address_management.svg">
+
+    #### Descrizione delle operazioni:
+
+    <ul>
+      <li>1) Richiesta di creazione di una delega a favore della PG con dati della PG e del delegante/li>
+      <li>3) Accettazione della notifica fornendo il mandateId ricevuto in fase di richiesta di creazione e il verification code fornito dal delegante</li>
+    </ul>
+
+
   version: '1.0.0'
-  title: PN User Attributes - Address Book - B2B
+  title: PN User Attributes - Address Book - B2B for PG
   termsOfService: 'http://swagger.io/terms/'
   contact:
     email: pn@pagopa.it
@@ -11,24 +29,29 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: 'https://webapi.pn.pagopa.it/v1'
+  - url: https://da-definire/
+    description: Ambiente di produzione
+  - url: https://da-definire/
+    description: Ambiente di test
+  - url: https://api.dev.notifichedigitali.it/
+    description: Ambiente di sviluppo
 tags:
   - name: all
-    description: Receiver Digital Address and Digital Domicile
+    description: Indirizzo Digitale e Domicilio Digitale del Destinatario
   - name: legal
-    description: Receiver Digital Domicile
+    description: Domicilio Digitale del Destinatario
   - name: courtesy
-    description: Receiver Digital Addresses
+    description: Indirizzo Digitale  del Destinatario
   - name: legalB2B
-    description: Receiver Digital Domicile
+    description: Domicilio Digitale del Destinatario
   - name: courtesyB2B
-    description: Receiver Digital Addresses
+    description: Indirizzo Digitale  del Destinatario
 
 paths:
   /address-book/v1/digital-address:
     get:
-      summary: Get all digital addressed
-      description: Returns all digital address for the recipient
+      summary: Tutti gli indirizzi digitali
+      description: La lista degli indirizzi digitali per un destinatario (il richiedente)
       operationId: getAddressesByRecipient
       tags:
         - all
@@ -43,21 +66,21 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
                 $ref: 'pn-address-book-common-components.yaml#/components/schemas/UserAddresses'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
   /address-book/v1/digital-address/legal/{senderId}:
     get:
-      summary: get the legal digital addresses of the recipient to the sender
-      description: Returns a legal digital address for the recipient to the sender specified
+      summary: Restituisce l'indirizzo per un mittente
+      description: Restituisce l'indirizzo legale che il destinatario ha associato ad uno specifico destinatario
       operationId: getLegalAddressBySenderB2B
       tags:
         - legalB2B
@@ -73,7 +96,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -81,15 +104,15 @@ paths:
                 items:
                   $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
   /address-book/v1/digital-address/courtesy/{senderId}:
     get:
-      summary: get the courtesy digital addresses of the recipient to the sender
-      description: Returns a courtesy digital address for the recipient to the sender specified
+      summary:  Restituisce l'indirizzo di cortesia che il destinatario ha associato ad uno specifico destinatario
+      description:  Restituisce l'indirizzo legale che il destinatario ha associato ad uno specifico destinatario
       operationId: getCourtesyAddressBySenderB2B
       tags:
         - courtesyB2B
@@ -103,7 +126,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -111,7 +134,7 @@ paths:
                 items:
                   $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -119,7 +142,7 @@ paths:
 
   /address-book/v1/digital-address/legal:
     get:
-      summary: get digital addresses with legal value
+      summary:  Restituisce l'indirizzo legale di un destinatario
       operationId: getLegalAddressByRecipient
       tags:
         - legal
@@ -134,7 +157,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                             # NO EXTERNAL
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -142,7 +165,7 @@ paths:
                 items:
                   $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -150,7 +173,7 @@ paths:
 
   /address-book/v1/digital-address/courtesy:
     get:
-      summary: get digital addresses without legal value
+      summary:  Restituisce l'indirizzo di cortesia del destinatario
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
@@ -165,7 +188,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -173,14 +196,14 @@ paths:
                 items:
                   $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
   /address-book/v1/digital-address/legal/{senderId}/{channelType}:
     post:
-      summary: Create or update a digital address with legal value
+      summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'             # NO EXTERNAL
@@ -190,7 +213,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: tipo di canale di comunicazione (APPIO, SERCQ, PEC)
           required: true
           schema:
             $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalChannelType'
@@ -215,26 +238,26 @@ paths:
           description: >
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events:
-            * Verification code failure: error.detail equals to PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
-            * Verification code max attempt reached: error.detail equals to PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
-            * Verification code expired/notfound: error.detail equals to PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
+            Errore causato da uno di questi eventi:
+            * Fallimento del codice di verifica: error.detail paria a PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
+            * Numero di tentativi di inserimento del codice di verifica massimi superato: error.detail pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
+            * Codice di verifica scaduto o non trovato: error.detail pari a PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address with legal value
+      summary: Cancella Digital Address
+      description: Eliminazione di un indirizzo a valore legale
       operationId: deleteRecipientLegalAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'             # NO EXTERNAL
@@ -244,7 +267,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: tipo di canale di comunicazione a valore legale
           required: true
           schema:
             $ref: 'pn-address-book-common-components.yaml#/components/schemas/LegalChannelType'
@@ -256,9 +279,9 @@ paths:
         - 'BASE'
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -272,7 +295,7 @@ paths:
 
   /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
     post:
-      summary: Create or update a digital address without legal value
+      summary: Crea o aggiorna un indirizzo senza valore legale per un determinato canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'       # NO EXTERNAL
@@ -308,26 +331,26 @@ paths:
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
             (se il codice di verifica o se la validazione della pec)
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events:
-            * Verification code failure: error.detail equals to PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
-            * Verification code max attempt reached: error.detail equals to PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
-            * Verification code expired/notfound: error.detail equals to PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
+            Errore causato da uno di questi eventi:
+            * Fallimento del codice di verifica: error.detail paria a PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE
+            * Numero di tentativi di inserimento del codice di verifica massimi superato: error.detail pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE
+            * Codice di verifica scaduto o non trovato: error.detail pari a PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address without legal value
+      summary: Cancella un indirizzo digitale senza valore legale
+      description: Cancella un indirizzo digitale senza valore legale
       operationId: deleteRecipientCourtesyAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'       # NO EXTERNAL
@@ -337,7 +360,7 @@ paths:
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: Canale di comunicazione senza valore legale (EMAIL, SMS, APPIO)
           required: true
           schema:
             $ref: 'pn-address-book-common-components.yaml#/components/schemas/CourtesyChannelType'
@@ -349,15 +372,15 @@ paths:
         - 'BASE'
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
         '404':
-          description: Digital Address not found
+          description: Indirizzo digitale non trovato
           content:
             application/problem+json:
               schema:
