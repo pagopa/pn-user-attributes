@@ -9,14 +9,19 @@ info:
         <li>di poter essere impostato per ente mittente</li>
         <li>di poter essere impostato per tutte le notifiche da un mittente per cui non è stato impostato un indirizzo specifico</li>
      </ul>
+     
     ### Esempio di gestione recapiti digitali:
     <img src="https://raw.githubusercontent.com/pagopa/pn-user-attributes/refs/heads/feature/openApi_doc/docs/images/pg_address_management.svg">
 
     #### Descrizione delle operazioni:
 
     <ul>
-      <li>1) Richiesta di creazione di una delega a favore della PG con dati della PG e del delegante/li>
-      <li>3) Accettazione della notifica fornendo il mandateId ricevuto in fase di richiesta di creazione e il verification code fornito dal delegante</li>
+      <li>1) Richiesta di creazione di recapito a valore legale PEC (address_1) per tutti gli enti mittenti/li>
+      <li>3) Invio del codice di verifica ricevuto per abilitare il recapito</li>
+      <li>5) Richiesta di creazione di recapito di cortesia SMS (address_2) per l'ente mittente senderId_1</li>
+      <li>7) Invio del codice di verifica ricevuto per abilitare il recapito di cortesia</li>
+      <li>9) chiedo la lista dei recapiti di default (legali e di cortesia)</li>
+      <li>11) chiedo il recapito di cortesia scelto per senderId_1</li>
     </ul>
 
 
