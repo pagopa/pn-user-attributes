@@ -34,11 +34,13 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: https://da-definire/
+  - url: https://api.prod.notifichedigitali.it
     description: Ambiente di produzione
-  - url: https://da-definire/
+  - url: https://api.uat.notifichedigitali.it
+    description: Ambiente di UAT
+  - url: https://api.test.notifichedigitali.it
     description: Ambiente di test
-  - url: https://api.dev.notifichedigitali.it/
+  - url: https://api.dev.notifichedigitali.it
     description: Ambiente di sviluppo
 tags:
   - name: all

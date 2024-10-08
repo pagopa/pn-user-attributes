@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: tZdkqynLkPd5WiyN98vdsorqhpqgPPqSHg3iogGgz8U=
+  version: LrOGeUujaeVBic/TeXW75H6QF/U6qob/AlmsP1M+8IM=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -13,8 +13,8 @@ servers:
 paths:
   /v1/digital-address:
     get:
-      summary: Get all digital addressed
-      description: Returns all digital address for the recipient
+      summary: Tutti gli indirizzi digitali
+      description: La lista degli indirizzi digitali per un destinatario (il richiedente)
       operationId: getAddressesByRecipient
       tags:
         - all
@@ -22,13 +22,13 @@ paths:
         - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAddresses'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -68,10 +68,10 @@ paths:
         type: http_proxy
   /v1/digital-address/legal/{senderId}:
     get:
-      summary: get the legal digital addresses of the recipient to the sender
+      summary: Restituisce l'indirizzo per un mittente
       description: >-
-        Returns a legal digital address for the recipient to the sender
-        specified
+        Restituisce l'indirizzo legale che il destinatario ha associato ad uno
+        specifico destinatario
       operationId: getLegalAddressBySenderB2B
       tags:
         - legalB2B
@@ -81,7 +81,7 @@ paths:
         - $ref: '#/components/parameters/senderId'
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -89,7 +89,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/LegalDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -130,10 +130,12 @@ paths:
         type: http_proxy
   /v1/digital-address/courtesy/{senderId}:
     get:
-      summary: get the courtesy digital addresses of the recipient to the sender
+      summary: >-
+        Restituisce l'indirizzo di cortesia che il destinatario ha associato ad
+        uno specifico destinatario
       description: >-
-        Returns a courtesy digital address for the recipient to the sender
-        specified
+        Restituisce l'indirizzo legale che il destinatario ha associato ad uno
+        specifico destinatario
       operationId: getCourtesyAddressBySenderB2B
       tags:
         - courtesyB2B
@@ -143,7 +145,7 @@ paths:
         - $ref: '#/components/parameters/senderId'
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -151,7 +153,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/CourtesyDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -192,7 +194,7 @@ paths:
         type: http_proxy
   /v1/digital-address/legal:
     get:
-      summary: get digital addresses with legal value
+      summary: Restituisce l'indirizzo legale di un destinatario
       operationId: getLegalAddressByRecipient
       tags:
         - legal
@@ -200,7 +202,7 @@ paths:
         - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -208,7 +210,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -248,7 +250,7 @@ paths:
         type: http_proxy
   /v1/digital-address/courtesy:
     get:
-      summary: get digital addresses without legal value
+      summary: Restituisce l'indirizzo di cortesia del destinatario
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
@@ -256,7 +258,7 @@ paths:
         - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -264,7 +266,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/CourtesyDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -304,13 +306,13 @@ paths:
         type: http_proxy
   /v1/digital-address/legal/{senderId}/{channelType}:
     post:
-      summary: Create or update a digital address with legal value
+      summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
         - $ref: '#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: tipo di canale di comunicazione (APPIO, SERCQ, PEC)
           required: true
           schema:
             $ref: '#/components/schemas/LegalChannelType'
@@ -333,21 +335,21 @@ paths:
           description: |
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events: * Verification code
-            failure: error.detail equals to
-            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
-            attempt reached: error.detail equals to
-            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
-            expired/notfound: error.detail equals to
+            Errore causato da uno di questi eventi: * Fallimento del codice di
+            verifica: error.detail paria a
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Numero di tentativi di
+            inserimento del codice di verifica massimi superato: error.detail
+            pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Codice di
+            verifica scaduto o non trovato: error.detail pari a
             PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
@@ -376,14 +378,14 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address with legal value
+      summary: Cancella Digital Address
+      description: Eliminazione di un indirizzo a valore legale
       operationId: deleteRecipientLegalAddress
       parameters:
         - $ref: '#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: tipo di canale di comunicazione a valore legale
           required: true
           schema:
             $ref: '#/components/schemas/LegalChannelType'
@@ -393,9 +395,9 @@ paths:
         - BASE
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -444,7 +446,9 @@ paths:
         type: http_proxy
   /v1/digital-address/courtesy/{senderId}/{channelType}:
     post:
-      summary: Create or update a digital address without legal value
+      summary: >-
+        Crea o aggiorna un indirizzo senza valore legale per un determinato
+        canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
         - $ref: '#/components/parameters/senderId'
@@ -474,21 +478,21 @@ paths:
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
             (se il codice di verifica o se la validazione della pec)
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events: * Verification code
-            failure: error.detail equals to
-            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
-            attempt reached: error.detail equals to
-            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
-            expired/notfound: error.detail equals to
+            Errore causato da uno di questi eventi: * Fallimento del codice di
+            verifica: error.detail paria a
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Numero di tentativi di
+            inserimento del codice di verifica massimi superato: error.detail
+            pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Codice di
+            verifica scaduto o non trovato: error.detail pari a
             PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
@@ -517,14 +521,14 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address without legal value
+      summary: Cancella un indirizzo digitale senza valore legale
+      description: Cancella un indirizzo digitale senza valore legale
       operationId: deleteRecipientCourtesyAddress
       parameters:
         - $ref: '#/components/parameters/senderId'
         - in: path
           name: channelType
-          description: Communication Channel type
+          description: Canale di comunicazione senza valore legale (EMAIL, SMS, APPIO)
           required: true
           schema:
             $ref: '#/components/schemas/CourtesyChannelType'
@@ -534,15 +538,15 @@ paths:
         - BASE
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Digital Address not found
+          description: Indirizzo digitale non trovato
           content:
             application/problem+json:
               schema:
@@ -590,7 +594,7 @@ components:
     senderId:
       in: path
       name: senderId
-      description: sender Id or 'default' for general addresses not associated to a sender
+      description: sender Id o 'default' per indirizzi generali non associati a un mittente
       example: default
       required: true
       schema:
@@ -612,11 +616,11 @@ components:
           example: 123e4567-e89b-12d3-a456-426614174000
         senderId:
           type: string
-          description: senderId or 'default'
+          description: senderId o 'default'
           example: cmbo
         senderName:
           type: string
-          description: name of the sender
+          description: nome del mittente
           example: abc
         channelType:
           type: string
@@ -627,7 +631,7 @@ components:
         - LEGAL
     LegalChannelType:
       type: string
-      description: Communication Channel types __with__ legal value
+      description: Canali di comunicazione con valore legale
       enum:
         - PEC
         - APPIO
@@ -661,7 +665,7 @@ components:
         - COURTESY
     CourtesyChannelType:
       type: string
-      description: Communication Channel types __without__ legal value
+      description: Canale di comunicazione SENZA valore legale
       enum:
         - EMAIL
         - SMS
@@ -830,15 +834,15 @@ components:
         type: request
 tags:
   - name: all
-    description: Receiver Digital Address and Digital Domicile
+    description: Indirizzo Digitale e Domicilio Digitale del Destinatario
   - name: legal
-    description: Receiver Digital Domicile
+    description: Domicilio Digitale del Destinatario
   - name: courtesy
-    description: Receiver Digital Addresses
+    description: Indirizzo Digitale  del Destinatario
   - name: legalB2B
-    description: Receiver Digital Domicile
+    description: Domicilio Digitale del Destinatario
   - name: courtesyB2B
-    description: Receiver Digital Addresses
+    description: Indirizzo Digitale  del Destinatario
 x-amazon-apigateway-gateway-responses:
   DEFAULT_5XX:
     responseParameters:
