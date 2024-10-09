@@ -1,0 +1,15 @@
+sequenceDiagram
+    autonumber
+    PG->>SeND:  POST /address-book/v1/digital-address/legal/default/PEC (con parametro address_1)
+    SeND-->>PG: CODE_VERIFICATION_REQUIRED
+    PG->>SeND:  POST /address-book/v1/digital-address/legal/default/PEC 
+    SeND-->>PG: HTTP 204
+    PG->>SeND:  POST /address-book/v1/digital-address/courtesy/{senderId_1}/SMS (con parametro address_2)
+    SeND-->>PG: CODE_VERIFICATION_REQUIRED
+    PG->>SeND:  POST /address-book/v1/digital-address/courtesy/{senderId_1}/SMS 
+    SeND-->>PG: HTTP 204    
+    PG->>SeND:  GET /address-book/v1/digital-address
+    SeND-->>PG: Legal:[address1]  Courtesy:[]
+    PG->>SeND:  GET /address-book/v1/digital-address/courtesy/{senderId_1}
+    SeND-->>PG:  Courtesy:["SMS", address_2]
+

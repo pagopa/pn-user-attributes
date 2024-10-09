@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: ScfaXwOuCSYSxmaawat4eae9W+/gt8Ll9MIB5jk7UNA=
+  version: b1bZS0XhM1+XVP0OXsBCqAiJZebo/z8b+G85GHxTYss=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -440,7 +440,7 @@ components:
     senderId:
       in: path
       name: senderId
-      description: sender Id or 'default' for general addresses not associated to a sender
+      description: sender Id o 'default' per indirizzi generali non associati a un mittente
       example: default
       required: true
       schema:
@@ -462,11 +462,11 @@ components:
           example: 123e4567-e89b-12d3-a456-426614174000
         senderId:
           type: string
-          description: senderId or 'default'
+          description: senderId o 'default'
           example: cmbo
         senderName:
           type: string
-          description: name of the sender
+          description: nome del mittente
           example: abc
         channelType:
           type: string
@@ -477,7 +477,7 @@ components:
         - LEGAL
     LegalChannelType:
       type: string
-      description: Communication Channel types __with__ legal value
+      description: Canali di comunicazione con valore legale
       enum:
         - PEC
         - APPIO
@@ -511,7 +511,7 @@ components:
         - COURTESY
     CourtesyChannelType:
       type: string
-      description: Communication Channel types __without__ legal value
+      description: Canale di comunicazione SENZA valore legale
       enum:
         - EMAIL
         - SMS
