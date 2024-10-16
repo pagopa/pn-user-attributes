@@ -17,6 +17,7 @@
     "PecValidationExpiredLambdaBatchSize": "60",
     "PnCronAnalyzer": "* */1 * * * *",
     "WireTapLogActivation": "false",
-    "MountEfs": "false"
+    "MountEfs": "false",
+    "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered"
   }
 }

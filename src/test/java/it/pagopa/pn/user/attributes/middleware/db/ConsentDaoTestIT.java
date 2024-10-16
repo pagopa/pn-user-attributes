@@ -88,6 +88,13 @@ public class ConsentDaoTestIT {
         c.setLastModified(Instant.now());
         return c;
     }
+    public static ConsentEntity newConsentSercQ(boolean accepted) {
+        ConsentEntity c = new ConsentEntity("PF-123e4567-e89b-12d3-a456-426614174111", ConsentTypeDto.TOS_SERCQ.getValue(), null);
+        c.setAccepted(accepted);
+        c.setCreated(Instant.now());
+        c.setLastModified(Instant.now());
+        return c;
+    }
 
     @Test
     void getConsentByType() {
@@ -132,9 +139,9 @@ public class ConsentDaoTestIT {
         ConsentEntity consentToInsert = newConsent(false);
         consentToInsert.setSk("DATAPRIVACY");
         toInsert.add(consentToInsert);
-        consentToInsert = newConsent(true);
-        consentToInsert.setSk("TOS");
-        toInsert.add(consentToInsert);
+        ConsentEntity consentToInsert2 = newConsent(true);
+        consentToInsert2.setSk("TOS");
+        toInsert.add(consentToInsert2);
 
         try {
             toInsert.forEach(x -> {
@@ -153,6 +160,51 @@ public class ConsentDaoTestIT {
         //WHEN
         List<ConsentEntity> results = consentDao.getConsents(consentToInsert.getRecipientId()).collectList().block(d);
 
+        //THEN
+        try {
+            Assertions.assertNotNull(results);
+            Assertions.assertEquals(2, results.size());
+            Assertions.assertTrue(toInsert.contains(results.get(0)));
+            Assertions.assertTrue(toInsert.contains(results.get(1)));
+        } catch (Exception e) {
+            throw new RuntimeException();
+        } finally {
+            try {
+                testDao.delete(consentToInsert.getPk(), consentToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
+
+    @Test
+    void getConsents_SERCQ() {
+        //devo verificare che per ogni recipientId ci siano due consensi (privacy e tos)
+        //Given
+        List<ConsentEntity> toInsert = new ArrayList<>();
+        ConsentEntity consentToInsert = newConsentSercQ(false);
+        consentToInsert.setSk("DATAPRIVACY_SERCQ");
+        toInsert.add(consentToInsert);
+        ConsentEntity consentToInsert2 = newConsentSercQ(true);
+        consentToInsert2.setSk("TOS_SERCQ");
+        toInsert.add(consentToInsert2);
+
+        try {
+            toInsert.forEach(x -> {
+                try {
+                    testDao.delete(x.getPk(), x.getSk());
+                    consentDao.consentAction(x).block(d);
+                } catch (Exception e) {
+                    System.out.println("error removing");
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Nothing to remove");
+        }
+
+
+        //WHEN
+        List<ConsentEntity> results = consentDao.getConsents(consentToInsert.getRecipientId()).collectList().block(d);
         //THEN
         try {
             Assertions.assertNotNull(results);
