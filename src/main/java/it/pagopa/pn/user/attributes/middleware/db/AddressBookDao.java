@@ -7,6 +7,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.BaseEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerifiedAddressEntity;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -40,6 +41,7 @@ public class AddressBookDao extends BaseDao {
     DynamoDbAsyncTable<VerifiedAddressEntity> verifiedAddressTable;
     DynamoDbAsyncClient dynamoDbAsyncClient;
     DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient;
+    PnDataVaultClient pnDataVaultClient;
     String table;
 
     public enum CHECK_RESULT {
@@ -49,11 +51,13 @@ public class AddressBookDao extends BaseDao {
 
     public AddressBookDao(DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient,
                           DynamoDbAsyncClient dynamoDbAsyncClient,
-                          PnUserattributesConfig pnUserattributesConfig
+                          PnUserattributesConfig pnUserattributesConfig,
+                          PnDataVaultClient pnDataVaultClient
                           ) {
         this.dynamoDbAsyncClient = dynamoDbAsyncClient;
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.table = pnUserattributesConfig.getDynamodbTableName();
+        this.pnDataVaultClient = pnDataVaultClient;
         this.addressBookTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(AddressBookEntity.class));
         this.verificationCodeTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerificationCodeEntity.class));
         this.verifiedAddressTable = dynamoDbEnhancedAsyncClient.table(table, TableSchema.fromBean(VerifiedAddressEntity.class));
@@ -96,6 +100,17 @@ public class AddressBookDao extends BaseDao {
                 })));
     }
 
+    public Mono<Object> deleteAddressBook(String recipientId, String senderId, String legal, String channelType, boolean transactional) {
+        log.info("deleteAddressBook recipientId={} senderId={} legalType={} channelType={} transactional{}", recipientId, senderId, legal, channelType, transactional);
+        AddressBookEntity addressBook = new AddressBookEntity(recipientId, legal, senderId, channelType);
+
+        if (transactional) {
+            return Mono.just(addressBook);
+        } else {
+            return deleteAddressBook(recipientId, senderId, legal, channelType);
+        }
+
+    }
 
     public Flux<AddressBookEntity> getAddresses(String recipientId, String senderId, String legalType) {
         return getAddresses(recipientId, senderId, legalType, true);
@@ -278,9 +293,9 @@ public class AddressBookDao extends BaseDao {
      *
      * @return void
      */
-    public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress) {
+    public Mono<Void> saveAddressBookAndVerifiedAddress(AddressBookEntity addressBook, VerifiedAddressEntity verifiedAddress, List<AddressBookEntity> addressesToDelete) {
 
-        log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress());
+        log.debug("saveAddressBookAndVerifiedAddress recipientId={} channeltype={} senderId={} hashedaddress={} addressesToDelete={}",addressBook.getRecipientId(),addressBook.getChannelType(), addressBook.getSenderId(), verifiedAddress.getHashedAddress(), addressesToDelete);
         TransactUpdateItemEnhancedRequest <AddressBookEntity> updRequest = TransactUpdateItemEnhancedRequest.builder(AddressBookEntity.class)
                 .item(addressBook)
                 .build();
@@ -288,14 +303,51 @@ public class AddressBookDao extends BaseDao {
                 .item(verifiedAddress)
                 .build();
 
-        TransactWriteItemsEnhancedRequest transactWriteItemsEnhancedRequest = TransactWriteItemsEnhancedRequest.builder()
+        TransactWriteItemsEnhancedRequest.Builder transactWriteItemsBuilder = TransactWriteItemsEnhancedRequest.builder()
                 .addUpdateItem(addressBookTable, updRequest)
-                .addUpdateItem(verifiedAddressTable, updVARequest)
-                .build();
+                .addUpdateItem(verifiedAddressTable, updVARequest);
 
-        return deleteVerifiedAddressIfItsLastRemained(addressBook)
-                .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)));
+        List<AddressBookEntity> vaToDelete = new ArrayList<>();
+        if (addressesToDelete != null && !addressesToDelete.isEmpty()) {
+            addressesToDelete.forEach(d -> {
+                Map<String, AttributeValue> expressionValues = new HashMap<>();
+                expressionValues.put(":pk", AttributeValue.builder().s(d.getPk()).build());
+
+                Expression exp = Expression.builder()
+                        .expression(BaseEntity.COL_PK + " = :pk")
+                        .expressionValues(expressionValues)
+                        .build();
+
+                TransactDeleteItemEnhancedRequest delRequest = TransactDeleteItemEnhancedRequest.builder()
+                        .key(getKeyBuild(d.getPk(), d.getSk()))
+                        .conditionExpression(exp)
+                        .build();
+
+                transactWriteItemsBuilder.addDeleteItem(addressBookTable, delRequest);
+                //Se siamo nel passaggio PEC -> SERCQ o viceversa, devo eliminare i verified address associati
+                //agli indirizzi che sto cancellando
+                vaToDelete.add(d);
+            });
+        }
+        //Caso PEC -> PEC oppure SERCQ -> SERCQ
+        else vaToDelete.add(addressBook);
+
+        TransactWriteItemsEnhancedRequest transactWriteItemsEnhancedRequest = transactWriteItemsBuilder.build();
+
+
+        return Flux.fromIterable(vaToDelete)
+                .flatMap(this::deleteVerifiedAddressIfItsLastRemained)
+                .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)))
+                // Elimino gli indirizzi da datavault.
+                .then(Mono.defer(() -> {
+                    if (addressesToDelete != null && !addressesToDelete.isEmpty()) {
+                        return Flux.fromIterable(addressesToDelete)
+                                .flatMap(addressBookEntity -> pnDataVaultClient.deleteRecipientAddressByInternalId(addressBookEntity.getRecipientId(), addressBookEntity.getAddressId()))
+                                .then();
+                    } else return Mono.empty();
+                }));
     }
+
 
     /**
      * Elimina l'eventuale verified address se è l'ultimo rimasto e viene rimosso (o modificato) l'addressbook

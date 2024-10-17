@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: b1bZS0XhM1+XVP0OXsBCqAiJZebo/z8b+G85GHxTYss=
+  version: LrOGeUujaeVBic/TeXW75H6QF/U6qob/AlmsP1M+8IM=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -13,26 +13,28 @@ servers:
 paths:
   /v1/digital-address:
     get:
-      summary: Get all digital addressed
-      description: Returns all digital address for the recipient
+      summary: Tutti gli indirizzi digitali
+      description: La lista degli indirizzi digitali per un destinatario (il richiedente)
       operationId: getAddressesByRecipient
       tags:
         - all
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAddresses'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address
@@ -46,7 +48,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -64,17 +66,143 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
+  /v1/digital-address/legal/{senderId}:
+    get:
+      summary: Restituisce l'indirizzo per un mittente
+      description: >-
+        Restituisce l'indirizzo legale che il destinatario ha associato ad uno
+        specifico destinatario
+      operationId: getLegalAddressBySenderB2B
+      tags:
+        - legalB2B
+      x-api-permissions:
+        - BASE
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+      responses:
+        '200':
+          description: Richiesta riuscita
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LegalDigitalAddress'
+        '400':
+          description: Input non valido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
+      x-amazon-apigateway-integration:
+        uri: >-
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}
+        connectionId: ${stageVariables.NetworkLoadBalancerLink}
+        httpMethod: ANY
+        requestParameters:
+          integration.request.header.x-pagopa-pn-cx-id: context.authorizer.cx_id
+          integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
+          integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
+          integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
+          integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
+          integration.request.path.senderId: method.request.path.senderId
+        passthroughBehavior: when_no_match
+        connectionType: VPC_LINK
+        timeoutInMillis: 29000
+        type: http_proxy
+    options:
+      operationId: Options for /v1/digital-address/legal/{senderId} API CORS
+      x-amazon-apigateway-integration:
+        uri: >-
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}
+        connectionId: ${stageVariables.NetworkLoadBalancerLink}
+        httpMethod: ANY
+        requestParameters:
+          integration.request.path.senderId: method.request.path.senderId
+        passthroughBehavior: when_no_match
+        connectionType: VPC_LINK
+        timeoutInMillis: 29000
+        type: http_proxy
+  /v1/digital-address/courtesy/{senderId}:
+    get:
+      summary: >-
+        Restituisce l'indirizzo di cortesia che il destinatario ha associato ad
+        uno specifico destinatario
+      description: >-
+        Restituisce l'indirizzo legale che il destinatario ha associato ad uno
+        specifico destinatario
+      operationId: getCourtesyAddressBySenderB2B
+      tags:
+        - courtesyB2B
+      x-api-permissions:
+        - BASE
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+      responses:
+        '200':
+          description: Richiesta riuscita
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourtesyDigitalAddress'
+        '400':
+          description: Input non valido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
+      x-amazon-apigateway-integration:
+        uri: >-
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}
+        connectionId: ${stageVariables.NetworkLoadBalancerLink}
+        httpMethod: ANY
+        requestParameters:
+          integration.request.header.x-pagopa-pn-cx-id: context.authorizer.cx_id
+          integration.request.header.x-pagopa-pn-cx-role: context.authorizer.cx_role
+          integration.request.header.x-pagopa-pn-uid: context.authorizer.uid
+          integration.request.header.x-pagopa-pn-jti: context.authorizer.cx_jti
+          integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
+          integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
+          integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
+          integration.request.path.senderId: method.request.path.senderId
+        passthroughBehavior: when_no_match
+        connectionType: VPC_LINK
+        timeoutInMillis: 29000
+        type: http_proxy
+    options:
+      operationId: Options for /v1/digital-address/courtesy/{senderId} API CORS
+      x-amazon-apigateway-integration:
+        uri: >-
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}
+        connectionId: ${stageVariables.NetworkLoadBalancerLink}
+        httpMethod: ANY
+        requestParameters:
+          integration.request.path.senderId: method.request.path.senderId
+        passthroughBehavior: when_no_match
+        connectionType: VPC_LINK
+        timeoutInMillis: 29000
+        type: http_proxy
   /v1/digital-address/legal:
     get:
-      summary: get digital addresses with legal value
+      summary: Restituisce l'indirizzo legale di un destinatario
       operationId: getLegalAddressByRecipient
       tags:
         - legal
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -82,11 +210,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/LegalAndUnverifiedDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal
@@ -100,7 +230,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -120,15 +250,15 @@ paths:
         type: http_proxy
   /v1/digital-address/courtesy:
     get:
-      summary: get digital addresses without legal value
+      summary: Restituisce l'indirizzo di cortesia del destinatario
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       responses:
         '200':
-          description: successful operation
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
@@ -136,11 +266,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/CourtesyDigitalAddress'
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy
@@ -154,7 +286,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -173,21 +305,21 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
   /v1/digital-address/legal/{senderId}/{channelType}:
-    parameters:
-      - $ref: '#/components/parameters/senderId'
-      - in: path
-        name: channelType
-        description: Communication Channel type
-        required: true
-        schema:
-          $ref: '#/components/schemas/LegalChannelType'
     post:
-      summary: Create or update a digital address with legal value
+      summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: tipo di canale di comunicazione (APPIO, SERCQ, PEC)
+          required: true
+          schema:
+            $ref: '#/components/schemas/LegalChannelType'
       tags:
         - legal
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       requestBody:
         required: true
         content:
@@ -203,26 +335,28 @@ paths:
           description: |
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events: * Verification code
-            failure: error.detail equals to
-            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
-            attempt reached: error.detail equals to
-            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
-            expired/notfound: error.detail equals to
+            Errore causato da uno di questi eventi: * Fallimento del codice di
+            verifica: error.detail paria a
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Numero di tentativi di
+            inserimento del codice di verifica massimi superato: error.detail
+            pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Codice di
+            verifica scaduto o non trovato: error.detail pari a
             PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}/{channelType}
@@ -236,27 +370,34 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address with legal value
+      summary: Cancella Digital Address
+      description: Eliminazione di un indirizzo a valore legale
       operationId: deleteRecipientLegalAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: tipo di canale di comunicazione a valore legale
+          required: true
+          schema:
+            $ref: '#/components/schemas/LegalChannelType'
       tags:
         - legal
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
@@ -267,6 +408,8 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}/{channelType}
@@ -280,14 +423,13 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     options:
       operationId: Options for /v1/digital-address/legal/{senderId}/{channelType} API CORS
       x-amazon-apigateway-integration:
@@ -303,21 +445,23 @@ paths:
         timeoutInMillis: 29000
         type: http_proxy
   /v1/digital-address/courtesy/{senderId}/{channelType}:
-    parameters:
-      - $ref: '#/components/parameters/senderId'
-      - in: path
-        name: channelType
-        description: Communication Channel type
-        required: true
-        schema:
-          $ref: '#/components/schemas/CourtesyChannelType'
     post:
-      summary: Create or update a digital address without legal value
+      summary: >-
+        Crea o aggiorna un indirizzo senza valore legale per un determinato
+        canale e mittente
       operationId: postRecipientCourtesyAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Communication Channel type
+          required: true
+          schema:
+            $ref: '#/components/schemas/CourtesyChannelType'
       tags:
         - courtesy
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       requestBody:
         required: true
         content:
@@ -334,26 +478,28 @@ paths:
             Nell'oggetto c'è la motivazione di quanto richiesto per procedere
             (se il codice di verifica o se la validazione della pec)
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
           description: >
-            This error is caused by one of this events: * Verification code
-            failure: error.detail equals to
-            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Verification code max
-            attempt reached: error.detail equals to
-            PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Verification code
-            expired/notfound: error.detail equals to
+            Errore causato da uno di questi eventi: * Fallimento del codice di
+            verifica: error.detail paria a
+            PN_USERATTRIBUTES_INVALIDVERIFICATIONCODE * Numero di tentativi di
+            inserimento del codice di verifica massimi superato: error.detail
+            pari a PN_USERATTRIBUTES_RETRYLIMITVERIFICATIONCODE * Codice di
+            verifica scaduto o non trovato: error.detail pari a
             PN_USERATTRIBUTES_EXPIREDVERIFICATIONCODE
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}/{channelType}
@@ -367,37 +513,46 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     delete:
-      summary: Delete Digital Address
-      description: Delete a single Digital Address without legal value
+      summary: Cancella un indirizzo digitale senza valore legale
+      description: Cancella un indirizzo digitale senza valore legale
       operationId: deleteRecipientCourtesyAddress
+      parameters:
+        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: channelType
+          description: Canale di comunicazione senza valore legale (EMAIL, SMS, APPIO)
+          required: true
+          schema:
+            $ref: '#/components/schemas/CourtesyChannelType'
       tags:
         - courtesy
-      security:
-        - pn-auth-fleet_jwtAuthorizer_openapi: []
+      x-api-permissions:
+        - BASE
       responses:
         '204':
-          description: successful operation
+          description: Richiesta riuscita
         '400':
-          description: Invalid input
+          description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '404':
-          description: Digital Address not found
+          description: Indirizzo digitale non trovato
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+      security:
+        - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
           http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}/{channelType}
@@ -411,14 +566,13 @@ paths:
           integration.request.header.x-pagopa-pn-cx-type: context.authorizer.cx_type
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
-          integration.request.header.x-pagopa-pn-src-ch: '''WEB'''
+          integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
           integration.request.path.senderId: method.request.path.senderId
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-      parameters: []
     options:
       operationId: >-
         Options for /v1/digital-address/courtesy/{senderId}/{channelType} API
@@ -610,6 +764,23 @@ components:
       required:
         - status
         - errors
+    LegalDigitalAddress:
+      allOf:
+        - $ref: '#/components/schemas/BaseDigitalAddress'
+        - type: object
+          required:
+            - addressType
+            - channelType
+            - value
+          properties:
+            addressType:
+              $ref: '#/components/schemas/LegalAddressType'
+            value:
+              type: string
+              x-field-extra-annotation: '@lombok.ToString.Exclude'
+              example: nome.utente@server.it
+            channelType:
+              $ref: '#/components/schemas/LegalChannelType'
     VerificationCode:
       type: string
       description: Verification Code
@@ -650,24 +821,28 @@ components:
             - PEC_VALIDATION_REQUIRED
   responses: {}
   securitySchemes:
-    pn-auth-fleet_jwtAuthorizer_openapi:
+    pn-auth-fleet_b2bAuthorizer_openapi:
       type: apiKey
       name: Authorization
       in: header
       x-amazon-apigateway-authtype: custom
       x-amazon-apigateway-authorizer:
         authorizerUri: >-
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-jwtAuthorizerLambda/invocations
-        authorizerResultTtlInSeconds: 300
-        identityValidationExpression: ^Bearer\s([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_\-]+)$
-        type: token
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:pn-b2bAuthorizerLambda/invocations
+        authorizerResultTtlInSeconds: 60
+        identitySource: method.request.header.Authorization
+        type: request
 tags:
   - name: all
-    description: Receiver Digital Address and Digital Domicile
+    description: Indirizzo Digitale e Domicilio Digitale del Destinatario
   - name: legal
-    description: Receiver Digital Domicile
+    description: Domicilio Digitale del Destinatario
   - name: courtesy
-    description: Receiver Digital Addresses
+    description: Indirizzo Digitale  del Destinatario
+  - name: legalB2B
+    description: Domicilio Digitale del Destinatario
+  - name: courtesyB2B
+    description: Indirizzo Digitale  del Destinatario
 x-amazon-apigateway-gateway-responses:
   DEFAULT_5XX:
     responseParameters:

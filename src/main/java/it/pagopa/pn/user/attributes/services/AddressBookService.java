@@ -5,8 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
-import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidInputException;
+import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToCourtesyDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.AddressBookEntityToLegalDigitalAddressDtoMapper;
 import it.pagopa.pn.user.attributes.mapper.LegalDigitalAddressDtoToLegalAndUnverifiedDigitalAddressDtoMapper;
@@ -32,9 +31,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
@@ -91,8 +93,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto);
+    public Mono<SAVE_ADDRESS_RESULT> saveAddressBookLegal(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole);
     }
 
     /**
@@ -109,9 +111,10 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
-                                                          CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveLegalAddressBook(recipientId, senderId, legalChannelType, addressVerificationDto));
+                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole ));
     }
 
     /**
@@ -124,7 +127,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto);
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null);
     }
 
     /**
@@ -155,7 +158,11 @@ public class AddressBookService {
      * @return nd
      */
     public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType) {
-        return deleteAddressBook(recipientId, senderId, legalChannelType, null);
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null, false);
+    }
+
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, boolean transactional) {
+        return deleteAddressBook(recipientId, senderId, legalChannelType, null, transactional);
     }
 
     /**
@@ -175,6 +182,11 @@ public class AddressBookService {
                 .flatMap(r -> deleteLegalAddressBook(recipientId, senderId, legalChannelType));
     }
 
+    public Mono<Object> deleteLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType,
+                                               CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, boolean transactional) {
+        return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
+                .flatMap(r -> deleteLegalAddressBook(recipientId, senderId, legalChannelType, transactional));
+    }
     /**
      * Elimina un indirizzo di tipo CORTESIA
      *
@@ -184,7 +196,7 @@ public class AddressBookService {
      * @return nd
      */
     public Mono<Object> deleteCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
-        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType);
+        return deleteAddressBook(recipientId, senderId, null, courtesyChannelType, false);
     }
 
     /**
@@ -221,6 +233,7 @@ public class AddressBookService {
 
     @NotNull
     private Mono<List<AddressBookEntity>> getAddressList(String recipientId, String senderId,  String type) {
+        log.info("getAddressList - recipientId={} - senderId={} - type={}", recipientId, senderId, type);
         Tuple2<Mono<String>, Boolean> tuple = resolveSenderId(senderId);
 
         return tuple.mapT1(newSenderId->
@@ -230,7 +243,8 @@ public class AddressBookService {
                         getRoot(senderId).flatMapMany (retryId -> dao.getAddresses(recipientId, retryId, type, true))
                         :Flux.empty()
                 ))
-            .collectList()).getT1();
+            .collectList()).getT1()
+            .doOnNext(list -> log.debug("Retrieved address list: {}", list));
     }
 
     //Tiny call
@@ -301,10 +315,12 @@ public class AddressBookService {
      * @return lista indirizzi
      */
     public Flux<LegalDigitalAddressDto> getLegalAddressByRecipientAndSender(String recipientId, String senderId) {
+        log.info("getLegalAddressByRecipientAndSender - recipientId={} - senderId={}", recipientId, senderId);
         return getAddressList(recipientId, senderId, LegalAddressTypeDto.LEGAL.getValue())
                 .flatMap(list ->  deanonimizeLegal(recipientId, list))
                 .flatMapIterable(x -> x);
     }
+
 
     /**
      * Lista indirizzi in base al recipient
@@ -370,6 +386,7 @@ public class AddressBookService {
         dto.setCourtesy(new ArrayList<>());
         dto.setLegal(new ArrayList<>());
 
+
         return getCourtesyAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>())
                 .zipWith(getLegalAddressByRecipient(recipientId).collectList().defaultIfEmpty(new ArrayList<>()))
                 .map(tuple -> {
@@ -413,13 +430,14 @@ public class AddressBookService {
      *    - Se valido, invoco il datavault per anonimizzarlo e salvare il valore anonimizzato in DB.
      *
      * @param recipientId id utente
-     * @param a eventuale id PA
      * @param legalChannelType tipologia canale legale
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
+    private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto
+                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+        log.info("Start saveAddressBook recipientId={} - firstSenderId={} - legalChannelType={} - courtesyChannelType={} - addressVerificationDto={} - pnCxType={} - pnCxGroups={} - pnCxRole={}", recipientId, firstSenderId, legalChannelType, courtesyChannelType, addressVerificationDto.toString(), pnCxType, pnCxGroups, pnCxRole);
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
             String legal = verificationCodeUtils.getLegalType(legalChannelType);
@@ -451,14 +469,14 @@ public class AddressBookService {
             } else {
                 return verificationCodeUtils.validateHashedAddress(recipientId, legalChannelType, courtesyChannelType, addressVerificationDto)
                     .flatMap(res -> {
-                        if (Boolean.TRUE.equals(res)) {
+                        if (Boolean.TRUE.equals(res) || (legalChannelType != null && legalChannelType.equals(LegalChannelTypeDto.SERCQ))) {
                             // l'indirizzo risulta già verificato precedentemente, posso procedere con il salvataggio in data-vault,
                             // senza dover passare per la creazione di un VC
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                 channelType, checkedSenderId, legal, addressVerificationDto.getValue());
-                            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode);
+                            return handleVerifiedAddress(legalChannelType, verificationCode, pnCxType, filteredAddressList, pnCxGroups, pnCxRole);
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -471,7 +489,8 @@ public class AddressBookService {
                                     checkedSenderId);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
-                                return verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType);
+                                return prepareAndDeleteAddresses(filteredAddressList)
+                                        .flatMap(addressesToDelete -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, addressesToDelete));
                             }
 
                         }
@@ -482,6 +501,42 @@ public class AddressBookService {
             Mono.error(new PnAddressNotFoundException())
         );
 
+    }
+
+    private Mono<SAVE_ADDRESS_RESULT> handleVerifiedAddress(LegalChannelTypeDto legalChannelType,
+                                                            VerificationCodeEntity verificationCode, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList,
+                                                            List<String> pnCxGroups, String pnCxRole) {
+
+        if ( legalChannelType!= null && (legalChannelType.equals(LegalChannelTypeDto.SERCQ) || legalChannelType.equals(LegalChannelTypeDto.PEC))) {
+            if (!filteredAddressList.isEmpty()) {
+                return prepareAndDeleteAddresses(filteredAddressList)
+                        .flatMap(deleteItemRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemRequests))
+                        .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+            } else {
+                return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null)
+                        .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+            }
+        } else {
+            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null)
+                    .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
+        }
+    }
+
+    public Mono<List<AddressBookEntity>> prepareAndDeleteAddresses(List<LegalDigitalAddressDto> filteredAddresses) {
+        log.info("prepareAndDeleteAddresses  filteredAddresses.isEmpty={}", filteredAddresses.isEmpty() ? "true" : "false");
+        return Flux.fromIterable(filteredAddresses)
+                .flatMap(address ->
+                        deleteLegalAddressBook(address.getRecipientId(),
+                                address.getSenderId(),
+                                address.getChannelType(),
+                                true)
+                                .cast(AddressBookEntity.class)
+                                .onErrorResume(e -> {
+                                    log.error("Error deleting address: {}", address, e);
+                                    return Mono.empty();
+                                })
+                )
+                .collectList();
     }
 
     private Mono<String> filterNotRootSender(final String senderId){
@@ -513,7 +568,7 @@ public class AddressBookService {
      * @param courtesyChannelType eventuale canale cortesia
      * @return nd
      */
-    private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType) {
+    private Mono<Object> deleteAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, boolean transactional) {
         log.info("deleteAddressBook recipientId={} senderId={} legalChannelType={} courtesyChannelType={}", recipientId, senderId, legalChannelType, courtesyChannelType);
         String legal = verificationCodeUtils.getLegalType(legalChannelType);
         String channelType = verificationCodeUtils.getChannelType(legalChannelType, courtesyChannelType);
@@ -540,8 +595,12 @@ public class AddressBookService {
                     });
         }
         else {
-            return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
-                    .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+            // Se l'operazione di delete è transazionale, l'eliminazione degli indirizzi da datavault viene effettuata dopo.
+            if (!transactional) {
+                return dataVaultClient.deleteRecipientAddressByInternalId(recipientId, addressBookEntity.getAddressId())
+                        .then(dao.deleteAddressBook(recipientId, senderId, legal, channelType));
+            } else return dao.deleteAddressBook(recipientId, senderId, legal, channelType, true);
+
         }
     }
 
@@ -574,10 +633,12 @@ public class AddressBookService {
 
     private Mono<List<LegalDigitalAddressDto>> deanonimizeLegal(String recipientId, List<AddressBookEntity> list)
     {
+        log.info("deanonimizeLegal - recipientId={}", recipientId);
         return dataVaultClient.getRecipientAddressesByInternalId(recipientId)
                 .map(addresses -> {
                     List<LegalDigitalAddressDto> res = new ArrayList<>();
                     list.forEach(ent -> {
+                        log.debug("Deanonimizing addressId={}", ent.getAddressId());
                         String realaddress = addresses.getAddresses().get(ent.getAddressId()).getValue();  // mi aspetto che ci sia sempre, ce l'ho messo io
 
                         LegalDigitalAddressDto add = legalDigitalAddressToDto.toDto(ent);
@@ -585,9 +646,24 @@ public class AddressBookService {
                         res.add(add);
                     });
 
+                    log.info("Finish deanonimizeLegal - recipientId={}", recipientId);
                     return res;
                 });
     }
 
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> manageError(Optional<PnAuditLogEvent> optionalPnAuditLogEvent, Throwable throwable) {
+        if (throwable instanceof PnInvalidVerificationCodeException ||
+                throwable instanceof PnExpiredVerificationCodeException ||
+                throwable instanceof PnRetryLimitVerificationCodeException) {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateWarning("codice non valido - {}", throwable.getMessage()).log());
+        } else {
+            optionalPnAuditLogEvent.ifPresent(pnAuditLogEvent ->
+                    pnAuditLogEvent.generateFailure(throwable.getMessage()).log());
+        }
+        return Mono.error(throwable);
+    }
 
 }
+
+

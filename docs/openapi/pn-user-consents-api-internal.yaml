@@ -100,6 +100,75 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
+  /pg-consents/v1/consents/{consentType}:
+    parameters:
+      - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'            # NO EXTERNAL
+      - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'          # NO EXTERNAL
+      - $ref: '#/components/parameters/consentType'
+    get:
+      summary: Get single consent by type
+      description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+      operationId: getPgConsentByType
+      parameters:
+        - $ref: '#/components/parameters/queryVersion'
+      tags:
+        - consents
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+    put:
+      summary: Accept a single consent type
+      description: Accept single consent type for the recipient
+      operationId: setPgConsentAction
+      parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'          # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'        # NO EXTERNAL
+        - $ref: '#/components/parameters/queryVersionRequired'
+      tags:
+        - consents
+      #      security:                                                                # ONLY EXTERNAL
+      #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentAction'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid input
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
 components:
   
   parameters:
@@ -143,6 +212,9 @@ components:
       enum:
         - TOS
         - DATAPRIVACY
+        - TOS_DEST_B2B
+        - TOS_SERCQ
+        - DATAPRIVACY_SERCQ
 
     ConsentAction:
       type: object

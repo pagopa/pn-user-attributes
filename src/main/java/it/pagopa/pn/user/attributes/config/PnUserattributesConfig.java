@@ -57,6 +57,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECConfirm;
     private String verificationCodeMessagePECConfirmSubject;
     private String verificationCodeMessagePECRejectSubject;
+    private String sercqAddress;
 
     private int ioactivationSendolderthandays;
 
