@@ -11,12 +11,12 @@ info:
      </ul>
      
     ### Esempio di gestione recapiti digitali:
-    <img src="https://raw.githubusercontent.com/pagopa/pn-user-attributes/refs/heads/feature/openApi_doc/docs/images/pg_address_management.svg">
+    <img src="https://raw.githubusercontent.com/pagopa/pn-user-attributes/refs/heads/feature/docs_openapi_update/docs/images/pg_address_management.svg">
 
     #### Descrizione delle operazioni:
 
     <ul>
-      <li>1) Richiesta di creazione di recapito a valore legale PEC (address_1) per tutti gli enti mittenti/li>
+      <li>1) Richiesta di creazione di recapito a valore legale PEC (address_1) per tutti gli enti mittenti</li>
       <li>3) Invio del codice di verifica ricevuto per abilitare il recapito</li>
       <li>5) Richiesta di creazione di recapito di cortesia SMS (address_2) per l'ente mittente senderId_1</li>
       <li>7) Invio del codice di verifica ricevuto per abilitare il recapito di cortesia</li>
