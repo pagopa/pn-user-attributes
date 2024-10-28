@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: LrOGeUujaeVBic/TeXW75H6QF/U6qob/AlmsP1M+8IM=
+  version: DUQGx8xZsZ6QlQuJsvG4jPQhC6BIP7E6FNQroZ1/5oY=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -22,11 +22,13 @@ paths:
         - BASE
       responses:
         '200':
-          description: Richiesta riuscita
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAddresses'
+          description: >
+            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
+            (se il codice di verifica o se la validazione della pec)
         '400':
           description: Input non valido
           content:
@@ -66,19 +68,25 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-  /v1/digital-address/legal/{senderId}:
+  /v1/digital-address/legal/{senderIdParam}:
     get:
-      summary: Restituisce l'indirizzo per un mittente
+      summary: >-
+        Restituisce il domicilio digitale di piattaforma per un mittente scelto
+        dal destinatario
       description: >-
-        Restituisce l'indirizzo legale che il destinatario ha associato ad uno
-        specifico destinatario
+        Restituisce il domicilio digitale di piattaforma per un mittente scelto
+        dal destinatario
       operationId: getLegalAddressBySenderB2B
       tags:
         - legalB2B
       x-api-permissions:
         - BASE
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
       responses:
         '200':
           description: Richiesta riuscita
@@ -98,7 +106,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderIdParam}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -110,39 +118,43 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
     options:
-      operationId: Options for /v1/digital-address/legal/{senderId} API CORS
+      operationId: Options for /v1/digital-address/legal/{senderIdParam} API CORS
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderIdParam}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-  /v1/digital-address/courtesy/{senderId}:
+  /v1/digital-address/courtesy/{senderIdParam}:
     get:
       summary: >-
         Restituisce l'indirizzo di cortesia che il destinatario ha associato ad
-        uno specifico destinatario
+        uno specifico mittente
       description: >-
         Restituisce l'indirizzo legale che il destinatario ha associato ad uno
-        specifico destinatario
+        specifico mittente
       operationId: getCourtesyAddressBySenderB2B
       tags:
         - courtesyB2B
       x-api-permissions:
         - BASE
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
       responses:
         '200':
           description: Richiesta riuscita
@@ -162,7 +174,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderIdParam}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -174,20 +186,20 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
     options:
-      operationId: Options for /v1/digital-address/courtesy/{senderId} API CORS
+      operationId: Options for /v1/digital-address/courtesy/{senderIdParam} API CORS
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderIdParam}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
@@ -195,6 +207,7 @@ paths:
   /v1/digital-address/legal:
     get:
       summary: Restituisce l'indirizzo legale di un destinatario
+      description: Restituisce l'indirizzo legale di un destinatario
       operationId: getLegalAddressByRecipient
       tags:
         - legal
@@ -251,6 +264,7 @@ paths:
   /v1/digital-address/courtesy:
     get:
       summary: Restituisce l'indirizzo di cortesia del destinatario
+      description: Restituisce l'indirizzo di cortesia del destinatario
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
@@ -304,12 +318,17 @@ paths:
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-  /v1/digital-address/legal/{senderId}/{channelType}:
+  /v1/digital-address/legal/{senderIdParam}/{channelType}:
     post:
       summary: Crea o aggiorna un indirizzo digitale con valore legale
+      description: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
         - in: path
           name: channelType
           description: tipo di canale di comunicazione (APPIO, SERCQ, PEC)
@@ -359,7 +378,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -371,7 +390,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
@@ -382,7 +401,11 @@ paths:
       description: Eliminazione di un indirizzo a valore legale
       operationId: deleteRecipientLegalAddress
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
         - in: path
           name: channelType
           description: tipo di canale di comunicazione a valore legale
@@ -412,7 +435,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -424,34 +447,43 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
     options:
-      operationId: Options for /v1/digital-address/legal/{senderId}/{channelType} API CORS
+      operationId: >-
+        Options for /v1/digital-address/legal/{senderIdParam}/{channelType} API
+        CORS
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/legal/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
-  /v1/digital-address/courtesy/{senderId}/{channelType}:
+  /v1/digital-address/courtesy/{senderIdParam}/{channelType}:
     post:
       summary: >-
         Crea o aggiorna un indirizzo senza valore legale per un determinato
         canale e mittente
+      description: >-
+        Crea o aggiorna un indirizzo senza valore legale per un determinato
+        canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
         - in: path
           name: channelType
           description: Communication Channel type
@@ -502,7 +534,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -514,7 +546,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
@@ -525,7 +557,11 @@ paths:
       description: Cancella un indirizzo digitale senza valore legale
       operationId: deleteRecipientCourtesyAddress
       parameters:
-        - $ref: '#/components/parameters/senderId'
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: '#/components/schemas/senderId'
+          required: true
         - in: path
           name: channelType
           description: Canale di comunicazione senza valore legale (EMAIL, SMS, APPIO)
@@ -555,7 +591,7 @@ paths:
         - pn-auth-fleet_b2bAuthorizer_openapi: []
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
@@ -567,7 +603,7 @@ paths:
           integration.request.header.x-pagopa-pn-cx-groups: context.authorizer.cx_groups
           integration.request.header.x-pagopa-pn-src-ch-details: context.authorizer.sourceChannelDetails
           integration.request.header.x-pagopa-pn-src-ch: context.authorizer.sourceChannel
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
@@ -575,32 +611,22 @@ paths:
         type: http_proxy
     options:
       operationId: >-
-        Options for /v1/digital-address/courtesy/{senderId}/{channelType} API
-        CORS
+        Options for /v1/digital-address/courtesy/{senderIdParam}/{channelType}
+        API CORS
       x-amazon-apigateway-integration:
         uri: >-
-          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderId}/{channelType}
+          http://${stageVariables.ApplicationLoadBalancerDomain}:8080/${stageVariables.ServiceApiPath}/v1/digital-address/courtesy/{senderIdParam}/{channelType}
         connectionId: ${stageVariables.NetworkLoadBalancerLink}
         httpMethod: ANY
         requestParameters:
-          integration.request.path.senderId: method.request.path.senderId
+          integration.request.path.senderIdParam: method.request.path.senderIdParam
           integration.request.path.channelType: method.request.path.channelType
         passthroughBehavior: when_no_match
         connectionType: VPC_LINK
         timeoutInMillis: 29000
         type: http_proxy
 components:
-  parameters:
-    senderId:
-      in: path
-      name: senderId
-      description: sender Id o 'default' per indirizzi generali non associati a un mittente
-      example: default
-      required: true
-      schema:
-        type: string
-        maxLength: 50
-        pattern: ^[ -~ ]*$
+  parameters: {}
   schemas:
     BaseDigitalAddress:
       type: object
@@ -764,6 +790,16 @@ components:
       required:
         - status
         - errors
+    senderId:
+      in: path
+      name: senderId
+      description: sender Id o 'default' per indirizzi generali non associati a un mittente
+      example: default
+      required: true
+      schema:
+        type: string
+        maxLength: 50
+        pattern: ^[ -~ ]*$
     LegalDigitalAddress:
       allOf:
         - $ref: '#/components/schemas/BaseDigitalAddress'
@@ -833,6 +869,8 @@ components:
         identitySource: method.request.header.Authorization
         type: request
 tags:
+  - name: HealthCheck
+    description: Monitora lo stato del microservizio
   - name: all
     description: Indirizzo Digitale e Domicilio Digitale del Destinatario
   - name: legal

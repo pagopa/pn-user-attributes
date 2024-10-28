@@ -43,6 +43,8 @@ servers:
   - url: https://api.dev.notifichedigitali.it
     description: Ambiente di sviluppo
 tags:
+  - name: HealthCheck
+    description: Monitora lo stato del microservizio
   - name: all
     description: Indirizzo Digitale e Domicilio Digitale del Destinatario
   - name: legal
@@ -55,6 +57,22 @@ tags:
     description: Indirizzo Digitale  del Destinatario
 
 paths:
+  /status:
+    get:
+      summary: healthCheck path
+      description: >-
+        HealthCheck path per verificare lo stato del microservizio
+      tags:
+        - HealthCheck
+      operationId: status
+      x-api-permissions:
+        - 'BASE'
+      responses:
+        '200':
+          description: Ok
+        '500':
+          description: Internal Server Error
+
   /address-book/v1/digital-address:
     get:
       summary: Tutti gli indirizzi digitali
@@ -70,7 +88,7 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'      # NO EXTERNAL
       responses:
         '200':
           description: Richiesta riuscita
@@ -78,16 +96,20 @@ paths:
             application/json:
               schema:
                 $ref: 'pn-address-book-common-components.yaml#/components/schemas/UserAddresses'
+          description: >
+            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
+            (se il codice di verifica o se la validazione della pec)
+
         '400':
           description: Input non valido
           content:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-  /address-book/v1/digital-address/legal/{senderId}:
+  /address-book/v1/digital-address/legal/{senderIdParam}:
     get:
-      summary: Restituisce l'indirizzo per un mittente
-      description: Restituisce l'indirizzo legale che il destinatario ha associato ad uno specifico destinatario
+      summary: Restituisce il domicilio digitale di piattaforma per un mittente scelto dal destinatario
+      description: Restituisce il domicilio digitale di piattaforma per un mittente scelto dal destinatario
       operationId: getLegalAddressBySenderB2B
       tags:
         - legalB2B
@@ -99,8 +121,12 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'             # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'           # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                             # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'            # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
       responses:
         '200':
           description: Richiesta riuscita
@@ -116,10 +142,10 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-  /address-book/v1/digital-address/courtesy/{senderId}:
+  /address-book/v1/digital-address/courtesy/{senderIdParam}:
     get:
-      summary:  Restituisce l'indirizzo di cortesia che il destinatario ha associato ad uno specifico destinatario
-      description:  Restituisce l'indirizzo legale che il destinatario ha associato ad uno specifico destinatario
+      summary:  Restituisce l'indirizzo di cortesia che il destinatario ha associato ad uno specifico mittente
+      description:  Restituisce l'indirizzo legale che il destinatario ha associato ad uno specifico mittente
       operationId: getCourtesyAddressBySenderB2B
       tags:
         - courtesyB2B
@@ -129,8 +155,12 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'                   # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'                 # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'               # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                                 # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'                # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
       responses:
         '200':
           description: Richiesta riuscita
@@ -150,6 +180,7 @@ paths:
   /address-book/v1/digital-address/legal:
     get:
       summary:  Restituisce l'indirizzo legale di un destinatario
+      description:  Restituisce l'indirizzo legale di un destinatario
       operationId: getLegalAddressByRecipient
       tags:
         - legal
@@ -161,7 +192,7 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'               # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'             # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'           # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                             # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'            # NO EXTERNAL
       responses:
         '200':
           description: Richiesta riuscita
@@ -181,6 +212,7 @@ paths:
   /address-book/v1/digital-address/courtesy:
     get:
       summary:  Restituisce l'indirizzo di cortesia del destinatario
+      description:  Restituisce l'indirizzo di cortesia del destinatario
       operationId: getCourtesyAddressByRecipient
       tags:
         - courtesy
@@ -192,7 +224,7 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'         # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'     # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                       # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'      # NO EXTERNAL
       responses:
         '200':
           description: Richiesta riuscita
@@ -208,16 +240,21 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
-  /address-book/v1/digital-address/legal/{senderId}/{channelType}:
+  /address-book/v1/digital-address/legal/{senderIdParam}/{channelType}:
     post:
       summary: Crea o aggiorna un indirizzo digitale con valore legale
+      description: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'             # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'           # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'         # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                           # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'          # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
         - in: path
           name: channelType
           description: tipo di canale di comunicazione (APPIO, SERCQ, PEC)
@@ -270,8 +307,12 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'             # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'           # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'         # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                           # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'          # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: './pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
         - in: path
           name: channelType
           description: tipo di canale di comunicazione a valore legale
@@ -300,16 +341,21 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
-  /address-book/v1/digital-address/courtesy/{senderId}/{channelType}:
+  /address-book/v1/digital-address/courtesy/{senderIdParam}/{channelType}:
     post:
       summary: Crea o aggiorna un indirizzo senza valore legale per un determinato canale e mittente
+      description: Crea o aggiorna un indirizzo senza valore legale per un determinato canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'     # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'   # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                     # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'     # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
         - in: path
           name: channelType
           description: Communication Channel type
@@ -363,8 +409,12 @@ paths:
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'     # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'   # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/cxRoleAuthFleet'                     # NO EXTERNAL
-        - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+        - $ref: 'remote-refs.yaml#/components/parameters/cxRoleAuthFleet'     # NO EXTERNAL
+        - in: path
+          name: senderIdParam
+          schema:
+            $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
+          required: true
         - in: path
           name: channelType
           description: Canale di comunicazione senza valore legale (EMAIL, SMS, APPIO)
@@ -392,6 +442,7 @@ paths:
             application/problem+json:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
 
 #components:                                             # ONLY EXTERNAL
 #  securitySchemes:                                      # ONLY EXTERNAL
