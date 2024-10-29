@@ -19,7 +19,8 @@ public class AddressBookEntityToCourtesyDigitalAddressDtoMapper {
         dto.setChannelType(CourtesyChannelTypeDto.fromValue(entity.getChannelType()));
         dto.setAddressType(CourtesyAddressTypeDto.COURTESY);
         dto.senderId(entity.getSenderId());
-
+        dto.setCreated(entity.getCreated());
+        dto.setLastModified(entity.getLastModified());
         return  dto;
     }
 }

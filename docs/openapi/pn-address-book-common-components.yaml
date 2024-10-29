@@ -88,6 +88,16 @@ components:
           example: 'abc'
         channelType:
           type: string
+        created:                                                                                      # NO EXTERNAL
+          type: string                                                                                # NO EXTERNAL
+          format: date-time                                                                           # NO EXTERNAL
+          description: Timestamp creazione recapito in UTC                                            # NO EXTERNAL
+          example: '2024-10-29T10:00:00.000Z'                                                         # NO EXTERNAL
+        lastModified:                                                                                 # NO EXTERNAL
+          type: string                                                                                # NO EXTERNAL
+          format: date-time                                                                           # NO EXTERNAL
+          description: Timestamp ultima modifica recapito in UTC                                      # NO EXTERNAL
+          example: '2024-10-29T11:00:00.000Z'                                                         # NO EXTERNAL
 
     LegalChannelType:
       type: string
