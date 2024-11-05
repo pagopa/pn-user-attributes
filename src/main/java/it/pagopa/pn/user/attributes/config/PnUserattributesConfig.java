@@ -58,7 +58,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECConfirmSubject;
     private String verificationCodeMessagePECRejectSubject;
     private String sercqAddress;
-    private String isSercqEnabled; //TODO PN-13163 - necessary?
+    private String isSercqEnabled;
 
     private int ioactivationSendolderthandays;
 
@@ -122,7 +122,6 @@ public class PnUserattributesConfig {
     }
 
     public boolean isSercqEnabled() {
-        log.warn("isSercqEnabled: {}", isSercqEnabled); //TODO PN-13163 - remove
         return isSercqEnabled != null && isSercqEnabled.equals("true");
     }
 
