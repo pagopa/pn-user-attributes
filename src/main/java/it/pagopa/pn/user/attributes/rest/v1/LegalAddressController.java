@@ -4,7 +4,9 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.SercqDisabledException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.LegalApi;
@@ -31,10 +33,12 @@ public class LegalAddressController implements LegalApi {
 
     private final AddressBookService addressBookService;
     private final ConsentsService consentsService;
+    private final PnUserattributesConfig pnUserattributesConfig;
 
-    public LegalAddressController(AddressBookService addressBookService, ConsentsService consentsService) {
+    public LegalAddressController(AddressBookService addressBookService, ConsentsService consentsService, PnUserattributesConfig pnUserattributesConfig) {
         this.addressBookService = addressBookService;
         this.consentsService = consentsService;
+        this.pnUserattributesConfig = pnUserattributesConfig;
     }
 
     @Override
@@ -95,8 +99,11 @@ public class LegalAddressController implements LegalApi {
                                                                                           ServerWebExchange exchange) {
         log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
                 recipientId, pnCxType, senderId, channelType, addressVerificationDto.toString(), pnCxGroups, pnCxRole);
-        return addressVerificationDto
-                .flatMap(addressVerificationDtoMdc -> {
+
+        if(!pnUserattributesConfig.isSercqEnabled() && channelType == LegalChannelTypeDto.SERCQ) {
+            return Mono.error(new SercqDisabledException("SERCQ consent is disabled, cannot consent to channel type " + channelType));
+        }
+        return addressVerificationDto.flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
 
                     // Recupero della lista di indirizzi tramite recipientId e senderId

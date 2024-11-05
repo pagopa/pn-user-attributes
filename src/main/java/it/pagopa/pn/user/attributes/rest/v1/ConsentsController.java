@@ -3,6 +3,8 @@ package it.pagopa.pn.user.attributes.rest.v1;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.exceptions.SercqDisabledException;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.ConsentsApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.ConsentActionDto;
@@ -23,9 +25,11 @@ import java.util.List;
 @Slf4j
 public class ConsentsController implements ConsentsApi {
     private final ConsentsService consentsService;
+    private final PnUserattributesConfig pnUserattributesConfig;
 
-    public ConsentsController(ConsentsService consentsService) {
+    public ConsentsController(ConsentsService consentsService, PnUserattributesConfig pnUserattributesConfig) {
         this.consentsService = consentsService;
+        this.pnUserattributesConfig = pnUserattributesConfig;
     }
 
     @Override
@@ -38,6 +42,11 @@ public class ConsentsController implements ConsentsApi {
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
         logEvent.log();
+
+        if(Boolean.FALSE.equals(pnUserattributesConfig.isSercqEnabled()) && (consentType.equals(ConsentTypeDto.TOS_SERCQ) || consentType.equals(ConsentTypeDto.DATAPRIVACY_SERCQ))) {
+            return Mono.error(new SercqDisabledException("SERCQ is disabled"));
+        }
+
         return consentActionDto.flatMap(dto -> {
                     String messageAction = String.format("xPagopaPnUid=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", xPagopaPnUid, xPagopaPnCxType, consentType, version, dto.getAction().toString());
                     return this.consentsService.consentAction(xPagopaPnUid, xPagopaPnCxType,  consentType, dto, version)
@@ -90,6 +99,12 @@ public class ConsentsController implements ConsentsApi {
                 .before(PnAuditLogEventType.AUD_UC_INSUP, logMessage)
                 .build();
         logEvent.log();
+
+        if(!pnUserattributesConfig.isSercqEnabled() && (consentType.equals(ConsentTypeDto.TOS_SERCQ) || consentType.equals(ConsentTypeDto.DATAPRIVACY_SERCQ))) {
+            return Mono.error(new SercqDisabledException("SERCQ consent is disabled, cannot consent to consent type " + consentType));
+        }
+
+
         return consentActionDto.flatMap(dto -> {
                     String messageAction = String.format("xPagopaPnCxId=%s - xPagopaPnCxType=%s - consentType=%s - version=%s - consentAction=%s", xPagopaPnCxId, xPagopaPnCxType, consentType, version, dto);
                     return this.consentsService.setPgConsentAction(xPagopaPnCxId, xPagopaPnCxType, xPagopaPnCxRole, consentType, version, dto, xPagopaPnCxGroups)
