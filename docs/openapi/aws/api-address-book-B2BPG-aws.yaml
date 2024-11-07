@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: DUQGx8xZsZ6QlQuJsvG4jPQhC6BIP7E6FNQroZ1/5oY=
+  version: Bxhg5dZ4fSQWEWGuXfhl8TFtCIYyRq8Wk70iRH0C3rY=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -22,13 +22,11 @@ paths:
         - BASE
       responses:
         '200':
+          description: Richiesta riuscita
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAddresses'
-          description: >
-            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
-            (se il codice di verifica o se la validazione della pec)
         '400':
           description: Input non valido
           content:

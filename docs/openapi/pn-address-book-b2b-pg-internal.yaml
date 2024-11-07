@@ -96,10 +96,6 @@ paths:
             application/json:
               schema:
                 $ref: 'pn-address-book-common-components.yaml#/components/schemas/UserAddresses'
-          description: >
-            Nell'oggetto c'è la motivazione di quanto richiesto per procedere
-            (se il codice di verifica o se la validazione della pec)
-
         '400':
           description: Input non valido
           content:
