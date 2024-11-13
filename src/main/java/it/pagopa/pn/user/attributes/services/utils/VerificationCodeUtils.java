@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -42,6 +44,7 @@ public class VerificationCodeUtils {
     private final SecureRandom rnd = new SecureRandom();
 
 
+
     /**
      * Valida un codice di verifica e lo anonimizza
      *
@@ -62,7 +65,7 @@ public class VerificationCodeUtils {
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()))
                 .flatMap(r -> manageAttempts(r, verificationCode.getVerificationCode()))
                 .doOnSuccess(r -> log.info("Verification code validated uid:{} hashedaddress:{} channel:{} addrtype:{}", recipientId, r==null?"NULL":r.getHashedAddress(), channelType, legal))
-                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, addressesToDelete))
+                .flatMap(r -> checkValidPecAndSendToDataVaultAndSaveInDynamodb(r, legalChannelType, addressesToDelete, verificationCode.getValue()))
                 .switchIfEmpty(Mono.error(new PnExpiredVerificationCodeException()));
     }
 
@@ -93,7 +96,7 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, List<AddressBookEntity> addressesToDelete)
+    private Mono<AddressBookService.SAVE_ADDRESS_RESULT> checkValidPecAndSendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, LegalChannelTypeDto legalChannelType, List<AddressBookEntity> addressesToDelete, String realaddress)
     {
         verificationCodeEntity.setCodeValid(true);
         if (legalChannelType == LegalChannelTypeDto.PEC && !verificationCodeEntity.isPecValid()) {
@@ -105,7 +108,7 @@ public class VerificationCodeUtils {
             return this.dao.updateVerificationCodeIfExists(verificationCodeEntity)
                     .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.PEC_VALIDATION_REQUIRED));
         } else {
-            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, addressesToDelete);
+            return sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, addressesToDelete, realaddress);
         }
     }
 
@@ -114,20 +117,35 @@ public class VerificationCodeUtils {
      *
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(VerificationCodeEntity verificationCodeEntity, List<AddressBookEntity> addressesToDelete)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(
+            VerificationCodeEntity verificationCodeEntity, List<AddressBookEntity> addressesToDelete, String realaddress)
     {
-        // se real address non è passato, provo a recuperlo dal pec address
-        String realaddress = verificationCodeEntity.getAddress();
+        final String realAddressFinal = realaddress;
+        Mono<String> realAddressMono = Mono.defer(() -> {
+            if (realAddressFinal == null) {
+                return dataVaultClient.getLegalAddressByInternalIdAndSenderId(verificationCodeEntity.getRecipientId(),
+                                                                              verificationCodeEntity.getSenderId(),
+                                                                              LegalChannelTypeDto.fromValue(verificationCodeEntity.getChannelType()))
+                                      .map(AddressDtoDto::getValue);
+            }
 
-        // se ancora non c'è, è un errore.
-        if (!StringUtils.hasText(realaddress))
-            return Mono.error(new PnInternalException("Addresso to save not found", PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND));
+            return Mono.just(realAddressFinal);
+        });
 
         AddressBookEntity addressBookEntity = new AddressBookEntity(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddressType(), verificationCodeEntity.getSenderId(), verificationCodeEntity.getChannelType());
         addressBookEntity.setAddresshash(verificationCodeEntity.getHashedAddress());
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
-        return this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, realaddress)
+        return realAddressMono
+                .flatMap(r -> {
+                    if (!StringUtils.hasText(realaddress)) {
+                        return Mono.error(new PnInternalException("Addresso to save not found",
+                                                                  PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND));
+                    } else {
+                        return Mono.just(r);
+                    }
+                })
+                .flatMap(r -> this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, r))
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, addressesToDelete))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
     }
@@ -173,7 +191,6 @@ public class VerificationCodeUtils {
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
         String vercode = getNewVerificationCode();
 
-
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationcodettl()).atZone(ZoneId.systemDefault()).toEpochSecond());
 
@@ -186,6 +203,15 @@ public class VerificationCodeUtils {
                                     // aggiorno il requestId
                                     verificationCode.setRequestId(requestId);
                                     return dao.updateVerificationCodeIfExists(verificationCode);
+                                })
+                                .flatMap(r2 -> {
+                                    if ("PEC".equals(channelType) || "SERCQ".equals(channelType)) {
+                                        int hours = 48;
+                                        int secondsInHour = 3600;
+                                        BigDecimal ttl = new BigDecimal(hours * secondsInHour);
+                                        return dataVaultClient.updateRecipientAddressByInternalId(recipientId, "VC#" + hashedaddress, realaddress, ttl);
+                                    }
+                                    return Mono.empty();
                                 })
                 ).thenReturn(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
     }

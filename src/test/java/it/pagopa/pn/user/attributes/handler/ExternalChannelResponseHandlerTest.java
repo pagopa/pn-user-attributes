@@ -8,6 +8,7 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerifiedAddressUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.CourtesyMessageProgressEventDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
@@ -70,7 +71,7 @@ class ExternalChannelResponseHandlerTest {
         MockitoAnnotations.openMocks(pnDatavaultClient);
         verifiedAddressUtils = new VerifiedAddressUtils(addressBookDao);
         verificationCodeUtils = new VerificationCodeUtils(addressBookDao, pnUserattributesConfig, pnDatavaultClient, pnExternalChannelClient, verifiedAddressUtils);
-        this.externalChannelResponseHandler = new ExternalChannelResponseHandler(pnUserattributesConfig, addressBookService, addressBookDao, verificationCodeUtils, pnExternalChannelClient);
+        this.externalChannelResponseHandler = new ExternalChannelResponseHandler(pnUserattributesConfig, addressBookService, addressBookDao, verificationCodeUtils, pnExternalChannelClient, pnDatavaultClient);
     }
 
     @Test
@@ -232,6 +233,7 @@ class ExternalChannelResponseHandlerTest {
         Mockito.when(pnExternalChannelClient.sendPecConfirm(anyString(), anyString(), anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
         Mockito.when(addressBookService.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.just(new LegalDigitalAddressDto().senderId("senderId").recipientId("recipientId").channelType(LegalChannelTypeDto.PEC)));
         Mockito.when(addressBookService.prepareAndDeleteAddresses(any())).thenReturn(Mono.just(List.of()));
+        Mockito.when(pnDatavaultClient.getVerificationCodeAddressByInternalId(any(), any())).thenReturn(Mono.just(new AddressDtoDto().value("value")));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);

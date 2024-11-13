@@ -475,8 +475,8 @@ public class AddressBookService {
                             // Devo cmq creare un VA con il channelType
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
-                                channelType, checkedSenderId, legal, addressVerificationDto.getValue());
-                            return handleVerifiedAddress(legalChannelType, verificationCode, pnCxType, filteredAddressList, pnCxGroups, pnCxRole);
+                                channelType, checkedSenderId, legal, null);
+                            return handleVerifiedAddress(legalChannelType, verificationCode, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, addressVerificationDto.getValue());
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -505,19 +505,19 @@ public class AddressBookService {
 
     private Mono<SAVE_ADDRESS_RESULT> handleVerifiedAddress(LegalChannelTypeDto legalChannelType,
                                                             VerificationCodeEntity verificationCode, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList,
-                                                            List<String> pnCxGroups, String pnCxRole) {
+                                                            List<String> pnCxGroups, String pnCxRole, String realaddress) {
 
         if ( legalChannelType!= null && (legalChannelType.equals(LegalChannelTypeDto.SERCQ) || legalChannelType.equals(LegalChannelTypeDto.PEC))) {
             if (!filteredAddressList.isEmpty()) {
                 return prepareAndDeleteAddresses(filteredAddressList)
-                        .flatMap(deleteItemRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemRequests))
+                        .flatMap(deleteItemRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, deleteItemRequests, realaddress))
                         .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
             } else {
-                return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null)
+                return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null, realaddress)
                         .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
             }
         } else {
-            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null)
+            return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, null, realaddress)
                     .then(Mono.just(SAVE_ADDRESS_RESULT.SUCCESS));
         }
     }

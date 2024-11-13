@@ -5,6 +5,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
+import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
@@ -28,6 +29,7 @@ public class ExternalChannelResponseHandler {
     private final PnExternalChannelClient externalChannelClient;
 
     private static final String PEC_CONFIRM_PREFIX = "pec-confirm-";
+    private final PnDataVaultClient pnDataVaultClient;
 
 
     public Mono<Void> consumeExternalChannelResponse(SingleStatusUpdateDto singleStatusUpdateDto) {
@@ -83,8 +85,15 @@ public class ExternalChannelResponseHandler {
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
                                 .collectList()
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
-                                .flatMap(deleteItemEnhancedRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, deleteItemEnhancedRequests))
-                                .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
+                                 .flatMap(deleteItemEnhancedRequests ->
+                                     pnDataVaultClient.getVerificationCodeAddressByInternalId(
+                                             verificationCodeEntity.getRecipientId(),
+                                             verificationCodeEntity.getHashedAddress())
+                                                      .flatMap(verificationCodeAddressByInternalId ->
+                                                                       verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(
+                                                                               verificationCodeEntity, deleteItemEnhancedRequests, verificationCodeAddressByInternalId.getValue())))
+
+                                 .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
                     } else {
