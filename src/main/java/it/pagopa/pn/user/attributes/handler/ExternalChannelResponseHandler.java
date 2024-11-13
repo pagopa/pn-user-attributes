@@ -85,15 +85,8 @@ public class ExternalChannelResponseHandler {
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
                                 .collectList()
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
-                                 .flatMap(deleteItemEnhancedRequests ->
-                                     pnDataVaultClient.getVerificationCodeAddressByInternalId(
-                                             verificationCodeEntity.getRecipientId(),
-                                             verificationCodeEntity.getHashedAddress())
-                                                      .flatMap(verificationCodeAddressByInternalId ->
-                                                                       verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(
-                                                                               verificationCodeEntity, deleteItemEnhancedRequests, verificationCodeAddressByInternalId.getValue())))
-
-                                 .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
+                                .flatMap(deleteItemEnhancedRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, deleteItemEnhancedRequests, null))
+                                .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
                     } else {

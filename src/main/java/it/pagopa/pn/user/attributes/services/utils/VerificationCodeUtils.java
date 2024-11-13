@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.math.BigDecimal;
@@ -41,6 +40,8 @@ public class VerificationCodeUtils {
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
+    // 172800 = 48h in secondi. Il doppio del tempo massimo di validazione di una PEC.
+    private static final BigDecimal VC_DATAVAULT_TTL = BigDecimal.valueOf(172800);
     private final SecureRandom rnd = new SecureRandom();
 
 
@@ -120,34 +121,24 @@ public class VerificationCodeUtils {
     public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToDataVaultAndSaveInDynamodb(
             VerificationCodeEntity verificationCodeEntity, List<AddressBookEntity> addressesToDelete, String realaddress)
     {
-        final String realAddressFinal = realaddress;
-        Mono<String> realAddressMono = Mono.defer(() -> {
-            if (realAddressFinal == null) {
-                return dataVaultClient.getLegalAddressByInternalIdAndSenderId(verificationCodeEntity.getRecipientId(),
-                                                                              verificationCodeEntity.getSenderId(),
-                                                                              LegalChannelTypeDto.fromValue(verificationCodeEntity.getChannelType()))
-                                      .map(AddressDtoDto::getValue);
-            }
-
-            return Mono.just(realAddressFinal);
-        });
-
         AddressBookEntity addressBookEntity = new AddressBookEntity(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddressType(), verificationCodeEntity.getSenderId(), verificationCodeEntity.getChannelType());
         addressBookEntity.setAddresshash(verificationCodeEntity.getHashedAddress());
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
-        return realAddressMono
-                .flatMap(r -> {
-                    if (!StringUtils.hasText(realaddress)) {
-                        return Mono.error(new PnInternalException("Addresso to save not found",
-                                                                  PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND));
-                    } else {
-                        return Mono.just(r);
-                    }
-                })
-                .flatMap(r -> this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, r))
+        return fetchRealAddress(realaddress, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress())
+                .filter(StringUtils::hasText)
+                .switchIfEmpty(Mono.error(new PnInternalException("Address to save not found", PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND)))
+                .flatMap(address -> this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, address))
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, addressesToDelete))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
+    }
+
+    private Mono<String> fetchRealAddress(String realAddress, String recipientId, String hashedAddress) {
+        // Se realaddress è nullo, siamo nel caso in cui l'indirizzo è in fase di verifica. Reperisco il verified address dal datavault.
+        if (realAddress == null) {
+            return dataVaultClient.getVerificationCodeAddressByInternalId(recipientId, hashedAddress).map(AddressDtoDto::getValue);
+        }
+        return Mono.just(realAddress);
     }
 
     /**
@@ -204,12 +195,9 @@ public class VerificationCodeUtils {
                                     verificationCode.setRequestId(requestId);
                                     return dao.updateVerificationCodeIfExists(verificationCode);
                                 })
-                                .flatMap(r2 -> {
-                                    if ("PEC".equals(channelType) || "SERCQ".equals(channelType)) {
-                                        int hours = 48;
-                                        int secondsInHour = 3600;
-                                        BigDecimal ttl = new BigDecimal(hours * secondsInHour);
-                                        return dataVaultClient.updateRecipientAddressByInternalId(recipientId, "VC#" + hashedaddress, realaddress, ttl);
+                                .flatMap(unused -> {
+                                    if (legalChannelType != null) {
+                                        return dataVaultClient.updateRecipientAddressByInternalId(recipientId, composeVcAddressId(hashedaddress), realaddress, VC_DATAVAULT_TTL);
                                     }
                                     return Mono.empty();
                                 })
@@ -377,5 +365,9 @@ public class VerificationCodeUtils {
     public String getLegalType(LegalChannelTypeDto legalChannelType)
     {
         return legalChannelType!=null? LegalAddressTypeDto.LEGAL.getValue(): CourtesyAddressTypeDto.COURTESY.getValue();
+    }
+
+    public static String composeVcAddressId(String hashedAddress) {
+        return "VC#" + hashedAddress;
     }
 }

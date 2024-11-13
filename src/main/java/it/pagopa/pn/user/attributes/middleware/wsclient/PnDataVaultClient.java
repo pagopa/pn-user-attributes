@@ -16,6 +16,8 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils.composeVcAddressId;
+
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
  */
@@ -69,21 +71,19 @@ public class PnDataVaultClient {
         return addressBookApi.getRecipientAddressesByInternalId (internalId);
     }
 
-    public Mono<AddressDtoDto> getLegalAddressByInternalIdAndSenderId(String internalId, String senderId, LegalChannelTypeDto channelType)
-    {
-        Mono<RecipientAddressesDtoDto> recipientAddressesByInternalId = addressBookApi.getRecipientAddressesByInternalId(internalId);
-        return recipientAddressesByInternalId.map(RecipientAddressesDtoDto::getAddresses)
-                                                                       .mapNotNull(addresses -> addresses.get(
-                                                                               LegalAddressTypeDto.LEGAL.getValue() + "#" + senderId + "#" +
-                                                                               channelType.getValue()));
-    }
-
-    public Mono<AddressDtoDto> getVerificationCodeAddressByInternalId(String internalId, String hashedAddress)
-    {
-        Mono<RecipientAddressesDtoDto> recipientAddressesByInternalId = addressBookApi.getRecipientAddressesByInternalId(internalId);
-        return recipientAddressesByInternalId.map(RecipientAddressesDtoDto::getAddresses)
-                                             .mapNotNull(addresses -> addresses.get(
-                                                     "VC#" + hashedAddress));
+    /**
+     * Recupera un indirizzo in fase di verifica per un utente
+     *
+     * @param internalId uid dell'utente
+     * @param hashedAddress hash dell'indirizzo
+     * @return l'indirizzo
+     */
+    public Mono<AddressDtoDto> getVerificationCodeAddressByInternalId(String internalId, String hashedAddress) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Retrieving verification code address");
+        log.debug("getVerificationCodeAddressByInternalId internalId:{}, hashedAddress:{}", internalId, hashedAddress);
+        return addressBookApi.getRecipientAddressesByInternalId(internalId)
+                .map(RecipientAddressesDtoDto::getAddresses)
+                .mapNotNull(addresses -> addresses.get(composeVcAddressId(hashedAddress)));
     }
 
     /**
