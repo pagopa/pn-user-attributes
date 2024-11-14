@@ -164,6 +164,10 @@ Parameters:
     Type: String
     Description: 'String that represents the default address for the SERCQ channel type'
 
+  IsSercqEnabled:
+    Type: String
+    Description: 'Boolean that represents if the SERCQ channel is enabled'
+
   PecValidationExpiredLambdaName:
     Type: String
 
@@ -400,6 +404,7 @@ Resources:
         ContainerEnvEntry17: !Sub 'PN_CRON_ANALYZER=${PnCronAnalyzer}'
         ContainerEnvEntry18: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry19: !Sub 'PN_USER_ATTRIBUTES_SERCQ_ADDRESS=${SercqAddress}'
+        ContainerEnvEntry20: !Sub 'PN_USER_ATTRIBUTES_IS_SERCQ_ENABLED=${IsSercqEnabled}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*,/pg-consents/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds

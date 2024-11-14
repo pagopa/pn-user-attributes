@@ -58,6 +58,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECConfirmSubject;
     private String verificationCodeMessagePECRejectSubject;
     private String sercqAddress;
+    private String isSercqEnabled;
 
     private int ioactivationSendolderthandays;
 
@@ -118,6 +119,10 @@ public class PnUserattributesConfig {
 
     public boolean isDevelopment(){
         return envRuntime!=null && envRuntime.equals("DEVELOPMENT");
+    }
+
+    public boolean isSercqEnabled() {
+        return isSercqEnabled != null && isSercqEnabled.equals("true");
     }
 
 }
