@@ -18,6 +18,7 @@
     "PnCronAnalyzer": "* */1 * * * *",
     "WireTapLogActivation": "false",
     "MountEfs": "false",
-    "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered"
+    "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered",
+    "IsSercqEnabled": "false"
   }
 }
