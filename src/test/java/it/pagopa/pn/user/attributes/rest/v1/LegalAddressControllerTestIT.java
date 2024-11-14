@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -31,6 +32,8 @@ import java.util.concurrent.ExecutionException;
 import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationResponseDto.ResultEnum.CODE_VERIFICATION_REQUIRED;
 import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationResponseDto.ResultEnum.PEC_VALIDATION_REQUIRED;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @Import(LocalStackTestConfig.class)
@@ -79,6 +82,7 @@ class LegalAddressControllerTestIT {
         // When
         Map<String, AddressDtoDto> addresses = Map.of(LegalAddressTypeDto.LEGAL + "#" + "default" + "#" + "PEC", new AddressDtoDto().value(realAddress));
         when(dataVaultClient.getRecipientAddressesByInternalId(RECIPIENTID)).thenReturn(Mono.just(new RecipientAddressesDtoDto().addresses(addresses)));
+        when(dataVaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString(), any(BigDecimal.class))).thenReturn(Mono.empty());
         when(externalRegistryClient.getAooUoIdsApi(List.of(SENDERID))).thenReturn(Flux.empty());
 
         // Then

@@ -40,8 +40,6 @@ public class VerificationCodeUtils {
     private final PnDataVaultClient dataVaultClient;
     private final PnExternalChannelClient pnExternalChannelClient;
     private final VerifiedAddressUtils verifiedAddressUtils;
-    // 172800 = 48h in secondi. Il doppio del tempo massimo di validazione di una PEC.
-    private static final BigDecimal VC_DATAVAULT_TTL = BigDecimal.valueOf(172800);
     private final SecureRandom rnd = new SecureRandom();
 
 
@@ -195,13 +193,18 @@ public class VerificationCodeUtils {
                                     verificationCode.setRequestId(requestId);
                                     return dao.updateVerificationCodeIfExists(verificationCode);
                                 })
-                                .flatMap(unused -> {
-                                    if (legalChannelType != null) {
-                                        return dataVaultClient.updateRecipientAddressByInternalId(recipientId, composeVcAddressId(hashedaddress), realaddress, VC_DATAVAULT_TTL);
-                                    }
-                                    return Mono.empty();
-                                })
-                ).thenReturn(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+                )
+                .then(updateRecipientAddressIfLegalChannel(recipientId, composeVcAddressId(hashedaddress), realaddress, legalChannelType != null))
+                .thenReturn(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED);
+    }
+
+    // Metodo per aggiornare l'indirizzo se il canale legale è presente
+    private Mono<Void> updateRecipientAddressIfLegalChannel(String recipientId, String hashedaddress, String realaddress, boolean isLegal) {
+        if (isLegal) {
+            // Ttl impostato al doppio del tempo massimo di validazione di una PEC, in secondi.
+            return dataVaultClient.updateRecipientAddressByInternalId(recipientId, composeVcAddressId(hashedaddress), realaddress, BigDecimal.valueOf(pnUserattributesConfig.getDatavaultVcAddressTtl().getSeconds()));
+        }
+        return Mono.empty();
     }
 
     /**
