@@ -43,8 +43,6 @@ class LegalAddressControllerTestIT {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";
     private static final String PN_CX_TYPE_HEADER = "x-pagopa-pn-cx-type";
-    private static final String PN_CX_ROLE_HEADER = "x-pagopa-pn-cx-role";
-    private static final String PN_CX_GROUPS_HEADER = "x-pagopa-pn-cx-groups";
     private static final String PN_CX_TYPE_PF = "PF";
     private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";

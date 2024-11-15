@@ -168,7 +168,7 @@ public class VerificationCodeUtils {
         String addressType = getLegalType(legalChannelType);
 
         String channelType = getChannelType(legalChannelType, courtesyChannelType);
-        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, realaddress);
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashedaddress, channelType, senderId, addressType, null);
         String vercode = getNewVerificationCode();
 
         verificationCode.setVerificationCode(vercode);

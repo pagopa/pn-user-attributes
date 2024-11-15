@@ -43,7 +43,7 @@ class VerificationCodeUtilsTest {
     private VerifiedAddressUtils verifiedAddressUtils;
     @Mock
     private PnDataVaultClient dataVaultClient;
-    private final String RECIPIENT_ID = "PF-12345-678910-12345-678910";
+    private static final String RECIPIENT_ID = "PF-12345-678910-12345-678910";
 
     @BeforeEach
     void beforeEach() {
@@ -101,11 +101,10 @@ class VerificationCodeUtilsTest {
                 null);
 
         //WHEN
-        when(dataVaultClient.updateRecipientAddressByInternalId(eq(RECIPIENT_ID), anyString(), eq(realAddress))).thenReturn(Mono.empty());
         when(verifiedAddressUtils.saveInDynamodb(any(AddressBookEntity.class), anyList())).thenReturn(Mono.empty());
 
         //THEN
-        verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), realAddress).block();
+        StepVerifier.create(verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), realAddress)).expectError(PnInternalException.class);
     }
 
 }
