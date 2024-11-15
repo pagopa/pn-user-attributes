@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
@@ -20,10 +21,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
@@ -51,9 +55,7 @@ class PnDataVaultClientTest {
 
     @MockBean
     ExternalChannelHandler externalChannelHandler;
-   /*@MockBean
-    private PnUserattributesConfig pnUserattributesConfig;
-*/
+
     private static ClientAndServer mockServer;
     @BeforeAll
     public static void startMockServer() {
@@ -64,6 +66,11 @@ class PnDataVaultClientTest {
     @AfterAll
     public static void stopMockServer() {
         mockServer.stop();
+    }
+
+    @AfterEach
+    public void afterEach() {
+        mockServer.reset();
     }
 
 
@@ -179,6 +186,63 @@ class PnDataVaultClientTest {
         assertNotNull(result);
         assertEquals(iuid, result.get(0).getInternalId());
         assertEquals(denominazione, result.get(0).getDenomination());
+    }
+
+    @Test
+    void getVerificationCodeAddressByInternalId() throws JsonProcessingException {
+        //Given
+        String internalId = "id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String hashedAddress = "abcd-123-fghi";
+        String realAddress = "test@pec.com";
+        String path = "/datavault-private/v1/recipients/internal/{internalId}/addresses"
+                .replace("{internalId}", internalId);
+
+        RecipientAddressesDtoDto body = new RecipientAddressesDtoDto().addresses(Map.of("VC#" + hashedAddress, new AddressDtoDto().value(realAddress)));
+        ObjectMapper mapper = new ObjectMapper();
+        String respJson = mapper.writeValueAsString(body);
+
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath(path))
+                .respond(response()
+                        .withBody(respJson)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        //When
+        Mono<AddressDtoDto> result = pnDataVaultClient.getVerificationCodeAddressByInternalId(internalId, hashedAddress);
+
+        //Then
+        StepVerifier.create(result).expectNextMatches(dto -> dto.getValue().equals(realAddress)).verifyComplete();
+    }
+
+    @Test
+    void getVerificationCodeAddressByInternalId_AddressNotFound() throws JsonProcessingException {
+        //Given
+        String internalId = "id-0d69-4ed6-a39f-4ef2f01f2fd1";
+        String hashedAddress = "abcd-123-fghi";
+        String path = "/datavault-private/v1/recipients/internal/{internalId}/addresses"
+                .replace("{internalId}", internalId);
+
+        RecipientAddressesDtoDto body = new RecipientAddressesDtoDto().addresses(Map.of());
+        ObjectMapper mapper = new ObjectMapper();
+        String respJson = mapper.writeValueAsString(body);
+
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath(path))
+                .respond(response()
+                        .withBody(respJson)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        //When
+        Mono<AddressDtoDto> result = pnDataVaultClient.getVerificationCodeAddressByInternalId(internalId, hashedAddress);
+
+        //Then
+        StepVerifier.create(result).verifyComplete();
     }
 
 }

@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.handler;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -243,7 +244,41 @@ class ExternalChannelResponseHandlerTest {
         Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(anyString(), anyString(), anyString());
     }
 
+    @Test
+    void consumeExternalChannelResponse_vcAddressNotFound() {
+        //GIVEN
+        String requestId = UUID.randomUUID().toString();
+        SingleStatusUpdateDto singleStatusUpdateDto = new SingleStatusUpdateDto();
+        singleStatusUpdateDto.setDigitalLegal(new LegalMessageSentDetailsDto());
+        singleStatusUpdateDto.getDigitalLegal().setRequestId(requestId);
+        singleStatusUpdateDto.getDigitalLegal().setEventCode("C003");
 
+
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        LegalChannelTypeDto legalChannelType = LegalChannelTypeDto.PEC;
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("prova@prova.it");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
+        verificationCode.setVerificationCode("12345");
+        verificationCode.setCodeValid(true);
+        verificationCode.setLastModified(Instant.now().minusSeconds(1));
+
+        Mockito.when(addressBookDao.getVerificationCodeByRequestId(any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(any(), any(), any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookService.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.just(new LegalDigitalAddressDto().senderId("senderId").recipientId("recipientId").channelType(LegalChannelTypeDto.PEC)));
+        Mockito.when(addressBookService.prepareAndDeleteAddresses(any())).thenReturn(Mono.just(List.of()));
+        Mockito.when(pnDatavaultClient.getVerificationCodeAddressByInternalId(any(), any())).thenReturn(Mono.just(new AddressDtoDto()));
+
+        // WHEN
+        Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
+        Assertions.assertThrows(PnInternalException.class, () -> mono.block(d));
+
+        //THEN
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+    }
 
     @Test
     void consumeExternalChannelResponse_progress() {

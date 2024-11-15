@@ -10,7 +10,6 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -123,20 +122,12 @@ public class VerificationCodeUtils {
         addressBookEntity.setAddresshash(verificationCodeEntity.getHashedAddress());
         String addressId = addressBookEntity.getAddressId();   //l'addressId è l'SK!
         log.info("saving address in datavault uid:{} hashedaddress:{} channel:{} legal:{}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress(), verificationCodeEntity.getChannelType(), verificationCodeEntity.getAddressType());
-        return fetchRealAddress(realaddress, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress())
+        return Mono.justOrEmpty(realaddress)
                 .filter(StringUtils::hasText)
                 .switchIfEmpty(Mono.error(new PnInternalException("Address to save not found", PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_ADDRESS_NOT_FOUND)))
                 .flatMap(address -> this.dataVaultClient.updateRecipientAddressByInternalId(verificationCodeEntity.getRecipientId(), addressId, address))
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity, addressesToDelete))
                 .then(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS));
-    }
-
-    private Mono<String> fetchRealAddress(String realAddress, String recipientId, String hashedAddress) {
-        // Se realaddress è nullo, siamo nel caso in cui l'indirizzo è in fase di verifica. Reperisco il verified address dal datavault.
-        if (realAddress == null) {
-            return dataVaultClient.getVerificationCodeAddressByInternalId(recipientId, hashedAddress).map(AddressDtoDto::getValue);
-        }
-        return Mono.just(realAddress);
     }
 
     /**
@@ -199,10 +190,10 @@ public class VerificationCodeUtils {
     }
 
     // Metodo per aggiornare l'indirizzo se il canale legale è presente
-    private Mono<Void> updateRecipientAddressIfLegalChannel(String recipientId, String hashedaddress, String realaddress, boolean isLegal) {
+    private Mono<Void> updateRecipientAddressIfLegalChannel(String recipientId, String addressId, String realaddress, boolean isLegal) {
         if (isLegal) {
             // Ttl impostato al doppio del tempo massimo di validazione di una PEC, in secondi.
-            return dataVaultClient.updateRecipientAddressByInternalId(recipientId, composeVcAddressId(hashedaddress), realaddress, BigDecimal.valueOf(pnUserattributesConfig.getDatavaultVcAddressTtl().getSeconds()));
+            return dataVaultClient.updateRecipientAddressByInternalId(recipientId, addressId, realaddress, BigDecimal.valueOf(pnUserattributesConfig.getDatavaultVcAddressTtl().getSeconds()));
         }
         return Mono.empty();
     }

@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.services.utils;
 
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
@@ -7,9 +8,6 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.api.AddressBookApi;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.api.RecipientsApi;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
@@ -84,14 +83,29 @@ class VerificationCodeUtilsTest {
                 null);
 
         //WHEN
-        when(dataVaultClient.getVerificationCodeAddressByInternalId(anyString(), anyString())).thenReturn(Mono.just(new AddressDtoDto().value(realAddress)));
+        when(verifiedAddressUtils.saveInDynamodb(any(AddressBookEntity.class), anyList())).thenReturn(Mono.empty());
+
+        //THEN
+        StepVerifier.create(verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), null)).expectError(PnInternalException.class);
+    }
+
+    @Test
+    void validateVerificationCodeAndSendToDataVault_AddressNotFound() {
+        //GIVEN
+        String realAddress = "nonexisting@example.com";
+        VerificationCodeEntity verificationCodeEntity = new VerificationCodeEntity(RECIPIENT_ID,
+                hashAddress(realAddress),
+                LegalChannelTypeDto.PEC.getValue(),
+                "default",
+                LEGAL.getValue(),
+                null);
+
+        //WHEN
         when(dataVaultClient.updateRecipientAddressByInternalId(eq(RECIPIENT_ID), anyString(), eq(realAddress))).thenReturn(Mono.empty());
         when(verifiedAddressUtils.saveInDynamodb(any(AddressBookEntity.class), anyList())).thenReturn(Mono.empty());
 
         //THEN
-        verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), null).block();
-
-        verify(dataVaultClient).getVerificationCodeAddressByInternalId(anyString(), anyString());
+        verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), realAddress).block();
     }
 
 }

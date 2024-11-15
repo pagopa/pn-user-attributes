@@ -1,5 +1,6 @@
 package it.pagopa.pn.user.attributes.handler;
 
+import it.pagopa.pn.commons.exceptions.PnRuntimeException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -9,6 +10,7 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
@@ -27,9 +29,9 @@ public class ExternalChannelResponseHandler {
     private final AddressBookDao addressBookDao;
     private final VerificationCodeUtils verificationCodeUtils;
     private final PnExternalChannelClient externalChannelClient;
-
-    private static final String PEC_CONFIRM_PREFIX = "pec-confirm-";
     private final PnDataVaultClient pnDataVaultClient;
+    private static final String PEC_CONFIRM_PREFIX = "pec-confirm-";
+
 
 
     public Mono<Void> consumeExternalChannelResponse(SingleStatusUpdateDto singleStatusUpdateDto) {
@@ -85,7 +87,8 @@ public class ExternalChannelResponseHandler {
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
                                 .collectList()
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
-                                .flatMap(deleteItemEnhancedRequests -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, deleteItemEnhancedRequests, null))
+                                .zipWhen(addressesToDelete -> pnDataVaultClient.getVerificationCodeAddressByInternalId(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).defaultIfEmpty(new AddressDtoDto()))
+                                .flatMap(tuple -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, tuple.getT1(), tuple.getT2().getValue()))
                                 .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
@@ -99,7 +102,10 @@ public class ExternalChannelResponseHandler {
                 .switchIfEmpty(Mono.fromRunnable(
                         () -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()).thenReturn("KO"))
                 .onErrorResume(x -> {
-                    String message = x.getMessage();
+                    String message;
+                    if (x instanceof PnRuntimeException pnRuntimeException)
+                        message = String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
+                    else message = x.getMessage();
                     String failureMessage = String.format("checkVerificationAddressAndSave PEC error %s", message);
                     logEvent.generateFailure(failureMessage).log();
                     log.error("checkVerificationAddressAndSave PEC error {}", message, x);

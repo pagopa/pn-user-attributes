@@ -476,7 +476,7 @@ public class AddressBookService {
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                 channelType, checkedSenderId, legal, null);
-                            return handleVerifiedAddress(legalChannelType, verificationCode, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, addressVerificationDto.getValue());
+                            return handleVerifiedAddress(legalChannelType, verificationCode, filteredAddressList, addressVerificationDto.getValue());
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
@@ -504,8 +504,9 @@ public class AddressBookService {
     }
 
     private Mono<SAVE_ADDRESS_RESULT> handleVerifiedAddress(LegalChannelTypeDto legalChannelType,
-                                                            VerificationCodeEntity verificationCode, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList,
-                                                            List<String> pnCxGroups, String pnCxRole, String realaddress) {
+                                                            VerificationCodeEntity verificationCode,
+                                                            List<LegalDigitalAddressDto> filteredAddressList,
+                                                            String realaddress) {
 
         if ( legalChannelType!= null && (legalChannelType.equals(LegalChannelTypeDto.SERCQ) || legalChannelType.equals(LegalChannelTypeDto.PEC))) {
             if (!filteredAddressList.isEmpty()) {
