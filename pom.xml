@@ -287,7 +287,7 @@
             </goals>
             <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/1c1bcaef3837a15f866596a6d9af94e3978805ff/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/8086e30e29056c08c6ae9cb8612e4462dc2ae1ad/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
