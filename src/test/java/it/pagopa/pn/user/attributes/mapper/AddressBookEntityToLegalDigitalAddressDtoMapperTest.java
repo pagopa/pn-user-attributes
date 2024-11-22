@@ -32,6 +32,8 @@ class AddressBookEntityToLegalDigitalAddressDtoMapperTest {
         dtoExpected.setChannelType(LegalChannelTypeDto.fromValue(ce.getChannelType()));
         dtoExpected.setAddressType(LegalAddressTypeDto.fromValue(ce.getAddressType()));
         dtoExpected.setSenderId(ce.getSenderId());
+        dtoExpected.setCreated(ce.getCreated());
+        dtoExpected.setLastModified(ce.getLastModified());
 
         LegalDigitalAddressDto dto = mapper.toDto(ce);
 

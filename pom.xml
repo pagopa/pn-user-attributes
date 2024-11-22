@@ -162,6 +162,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <typeMappings>
+                <typeMapping>OffsetDateTime=java.time.Instant</typeMapping>
+              </typeMappings>
               <inputSpec>${project.basedir}/docs/openapi/pn-address-book-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
@@ -174,7 +177,7 @@
                 <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
-                <dateLibrary>java11</dateLibrary>
+                <dateLibrary>java8</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
@@ -193,6 +196,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <typeMappings>
+                <typeMapping>OffsetDateTime=java.time.Instant</typeMapping>
+              </typeMappings>
               <inputSpec>${project.basedir}/docs/openapi/pn-user-consents-api-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
@@ -205,7 +211,7 @@
                 <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
-                <dateLibrary>java11</dateLibrary>
+                <dateLibrary>java8</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
@@ -225,6 +231,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <typeMappings>
+                <typeMapping>OffsetDateTime=java.time.Instant</typeMapping>
+              </typeMappings>
               <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-internal-io.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
@@ -237,7 +246,7 @@
                 <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.io.v1.config</configPackage>
-                <dateLibrary>java11</dateLibrary>
+                <dateLibrary>java8</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>
@@ -256,6 +265,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <typeMappings>
+                <typeMapping>OffsetDateTime=java.time.Instant</typeMapping>
+              </typeMappings>
               <inputSpec>${project.basedir}/docs/openapi/pn-address-book-b2b-pg-internal.yaml</inputSpec>
               <generatorName>spring</generatorName>
               <library>spring-boot</library>
@@ -268,7 +280,7 @@
                 <modelPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.dto</modelPackage>
                 <apiPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.b2b.generated.openapi.server.v1.config</configPackage>
-                <dateLibrary>java11</dateLibrary>
+                <dateLibrary>java8</dateLibrary>
                 <delegatePattern>true</delegatePattern>
                 <interfaceOnly>true</interfaceOnly>
                 <annotationLibrary>none</annotationLibrary>

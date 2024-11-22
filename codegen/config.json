@@ -9,6 +9,9 @@
         },
         {
             "intendedUsage": "WEB",
+            "commonFiles": [
+                "pn-address-book-common-components.yaml"
+            ],
             "openapiFiles": [
                 "pn-address-book-api-internal.yaml"
             ],
@@ -23,6 +26,9 @@
         },
         {
             "intendedUsage": "B2BPG",
+            "commonFiles": [
+                "pn-address-book-common-components.yaml"
+            ],
             "openapiFiles": [
                 "pn-address-book-b2b-pg-internal.yaml"
             ],

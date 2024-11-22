@@ -33,6 +33,8 @@ class AddressBookEntityToCourtesyDigitalAddressDtoMapperTest {
         dtoExpected.setChannelType(CourtesyChannelTypeDto.fromValue(ce.getChannelType()));
         dtoExpected.setAddressType(CourtesyAddressTypeDto.fromValue(ce.getAddressType()));
         dtoExpected.setSenderId(ce.getSenderId());
+        dtoExpected.setCreated(ce.getCreated());
+        dtoExpected.setLastModified(ce.getLastModified());
 
         CourtesyDigitalAddressDto dto = mapper.toDto(ce);
 
