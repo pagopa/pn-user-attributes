@@ -65,6 +65,7 @@ public class PnUserattributesConfig {
     private int validationcodemaxattempts;
     private Duration verificationcodelegalttl;
     private Duration verificationcodettl;
+    private Duration datavaultVcAddressTtl;
 
     private List<String> externalChannelDigitalCodesSuccess;
 
@@ -93,6 +94,7 @@ public class PnUserattributesConfig {
         this.verificationCodeMessagePECConfirm = fetchMessage("pecbodyconfirm.html");
         this.verificationCodeMessagePECConfirmSubject = fetchMessage("pecsubjectconfirm.txt");
         this.verificationCodeMessagePECRejectSubject = fetchMessage("pecsubjectreject.txt");
+        this.datavaultVcAddressTtl = this.verificationcodelegalttl.multipliedBy(2);
         if (this.aoouosenderid == null){
             this.aoouosenderid = new ArrayList<>();
         }

@@ -7,11 +7,16 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAddressTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import static it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils.composeVcAddressId;
 
 /**
  * Classe wrapper di pn-data-vault, con gestione del backoff
@@ -37,14 +42,19 @@ public class PnDataVaultClient {
      *
      * @return void
      */
-    public Mono<Void> updateRecipientAddressByInternalId(String internalId, String addressId, String realaddress)
+    public Mono<Void> updateRecipientAddressByInternalId(String internalId, String addressId, String realaddress, BigDecimal ttl)
     {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Updating recipient address");
         log.debug("updateRecipientAddressByInternalId internalId={} addressId={}", internalId, addressId);
         AddressDtoDto dto = new AddressDtoDto();
         dto.setValue(realaddress);
-        return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, dto);
+        return addressBookApi.updateRecipientAddressByInternalId (internalId, addressId, ttl, dto);
             
+    }
+
+    public Mono<Void> updateRecipientAddressByInternalId(String internalId, String addressId, String realaddress)
+    {
+        return updateRecipientAddressByInternalId(internalId, addressId, realaddress, null);
     }
 
     /**
@@ -59,7 +69,21 @@ public class PnDataVaultClient {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Retrieving recipient addresses");
         log.debug("getRecipientAddressesByInternalId internalId:{}", internalId);
         return addressBookApi.getRecipientAddressesByInternalId (internalId);
-            
+    }
+
+    /**
+     * Recupera un indirizzo in fase di verifica per un utente
+     *
+     * @param internalId uid dell'utente
+     * @param hashedAddress hash dell'indirizzo
+     * @return l'indirizzo
+     */
+    public Mono<AddressDtoDto> getVerificationCodeAddressByInternalId(String internalId, String hashedAddress) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DATA_VAULT, "Retrieving verification code address");
+        log.debug("getVerificationCodeAddressByInternalId internalId:{}, hashedAddress:{}", internalId, hashedAddress);
+        return addressBookApi.getRecipientAddressesByInternalId(internalId)
+                .map(RecipientAddressesDtoDto::getAddresses)
+                .mapNotNull(addresses -> addresses.get(composeVcAddressId(hashedAddress)));
     }
 
     /**

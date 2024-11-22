@@ -38,6 +38,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -156,6 +157,8 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.getAddresses(Mockito.any(), Mockito.any(), Mockito.any(), anyBoolean())).thenReturn(Flux.fromIterable(listFromDb));
         Mockito.lenient().when(pnDatavaultClient.deleteRecipientAddressByInternalId(anyString(), anyString())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteAddressBook(Mockito.any(), Mockito.any(), Mockito.any(), any(), eq(true))).thenReturn(Mono.empty());
+        Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString(), any(BigDecimal.class))).thenReturn(Mono.empty());
+
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, null, null)
                 .block(d);
