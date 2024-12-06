@@ -45,7 +45,6 @@ Resources:
             struct<
               pk:struct<S:string>,
               sk:struct<S:string>,
-              address:struct<S:string>,
               addressType:struct<S:string>,
               codeValid:struct<NULL:boolean,BOOL:boolean>,
               created:struct<S:string>,
