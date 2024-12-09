@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.legalfacts;
+package it.pagopa.pn.user.attributes.middleware.templates;
 
 public interface TemplateGenerator {
 
