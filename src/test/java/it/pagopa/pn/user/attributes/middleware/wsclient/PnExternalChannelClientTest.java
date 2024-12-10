@@ -89,7 +89,6 @@ class PnExternalChannelClientTest {
         CourtesyChannelTypeDto courtesyChannelType = null;
         String verificationCode = "12345";
         String path = "/external-channels/v1/digital-deliveries/courtesy-full-message-requests/.*";
-        String pathTemplate = "/templates-engine-private/v1/templates/pec-validation-contacts-reject-body";
 
         BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
         baseRecipientDtoDto.setInternalId(recipientId);
@@ -108,8 +107,7 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", recipientId, address)
-                .block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", recipientId, address).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
