@@ -4,6 +4,7 @@ import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ActionHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
+import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
@@ -18,6 +19,7 @@ import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -39,12 +41,16 @@ import static org.mockserver.model.HttpResponse.response;
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
         "pn.user-attributes.client_externalchannels_basepath=http://localhost:9998",
-        "pn.env.runtime=PROD"
+        "pn.env.runtime=PROD",
+        "pn.user-attributes.enableTemplatesEngine=false"
 })
 class PnExternalChannelClientTest {
 
     @Autowired
     private PnExternalChannelClient pnExternalChannelClient;
+
+    @Autowired
+    private TemplateGenerator templateGenerator;
 
     @MockBean
     PnDataVaultClient pnDataVaultClient;
@@ -67,14 +73,13 @@ class PnExternalChannelClientTest {
 
     @BeforeEach
     public void init(){
-        mockServer = startClientAndServer(9998);
+        mockServer = startClientAndServer(9998, 9999);
     }
 
     @AfterEach
     public void end(){
         mockServer.stop();
     }
-
 
     @Test
     void sendPECRejected() {
@@ -84,13 +89,13 @@ class PnExternalChannelClientTest {
         CourtesyChannelTypeDto courtesyChannelType = null;
         String verificationCode = "12345";
         String path = "/external-channels/v1/digital-deliveries/courtesy-full-message-requests/.*";
+        String pathTemplate = "/templates-engine-private/v1/templates/pec-validation-contacts-reject-body";
 
         BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
         baseRecipientDtoDto.setInternalId(recipientId);
         baseRecipientDtoDto.setDenomination("mario rossi");
         List<BaseRecipientDtoDto> list = new ArrayList<>();
         list.add(baseRecipientDtoDto);
-
 
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
@@ -103,7 +108,8 @@ class PnExternalChannelClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", recipientId, address).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", recipientId, address)
+                .block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
