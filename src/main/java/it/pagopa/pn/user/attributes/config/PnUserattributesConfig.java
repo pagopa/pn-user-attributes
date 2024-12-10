@@ -37,6 +37,7 @@ public class PnUserattributesConfig {
 
     private String dynamodbTableName;
 
+    private String templatesEngineBaseUrl;
     private String clientDatavaultBasepath;
     private String clientDeliveryBasepath;
     private String clientExternalregistryBasepath;

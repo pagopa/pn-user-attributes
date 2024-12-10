@@ -17,7 +17,7 @@ public class TemplatesClientConfig {
     public TemplateApi templateApiConfig(@Qualifier("withTracing") RestTemplate restTemplate,
                                          PnUserattributesConfig cfg) {
         ApiClient apiClient = new ApiClient(restTemplate);
-        apiClient.setBasePath(cfg.getClientDatavaultBasepath());
+        apiClient.setBasePath(cfg.getTemplatesEngineBaseUrl());
         return new TemplateApi(apiClient);
     }
 
