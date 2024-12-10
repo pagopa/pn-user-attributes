@@ -161,9 +161,8 @@ class PnExternalChannelClientByTemplateClientTest {
         List<BaseRecipientDtoDto> list = new ArrayList<>();
         list.add(baseRecipientDtoDto);
 
-        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-
         // When - Then
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -189,9 +188,8 @@ class PnExternalChannelClientByTemplateClientTest {
         List<BaseRecipientDtoDto> list = new ArrayList<>();
         list.add(baseRecipientDtoDto);
 
-        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-
         //When - Then
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -216,9 +214,8 @@ class PnExternalChannelClientByTemplateClientTest {
         List<BaseRecipientDtoDto> list = new ArrayList<>();
         list.add(baseRecipientDtoDto);
 
-        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-
         //When - Then
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
@@ -244,9 +241,8 @@ class PnExternalChannelClientByTemplateClientTest {
         List<BaseRecipientDtoDto> list = new ArrayList<>();
         list.add(baseRecipientDtoDto);
 
-        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-
         //When - Then
+        Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
         new MockServerClient("localhost", 9998)
                 .when(request()
                         .withMethod("PUT")
