@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>
  * **Nota:** Quando l'implementazione {@link TemplateGeneratorByDocComposition} non sarà più necessaria,
- * si dovranno eliminare {@link TemplateGeneratorConfig}, {@link TemplateGeneratorByDocComposition} e qualsiasi riferimento ad esse.
+ * si dovranno eliminare {@link TemplateGeneratorConfig}, {@link TemplateGeneratorByDocComposition} e qualsiasi riferimento ad esse
+ * come ad esempio la properties pn.user-attributes.enableTemplatesEngine.
  * </p>
  */
 @Configuration
