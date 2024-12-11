@@ -3,7 +3,7 @@ package it.pagopa.pn.user.attributes.config;
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import it.pagopa.pn.user.attributes.middleware.templates.impl.TemplateGeneratorByClient;
 import it.pagopa.pn.user.attributes.middleware.templates.impl.TemplateGeneratorByDocComposition;
-import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClientImpl;
+import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClient;
 import it.pagopa.pn.user.attributes.utils.DocumentComposition;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>
  * Quando la proprietà è impostata su {@code true} (o non è definita), viene utilizzata
- * l'implementazione {@link TemplateGeneratorByClient}, che si basa su {@link TemplatesClientImpl}.
+ * l'implementazione {@link TemplateGeneratorByClient}, che si basa su {@link TemplatesClient}.
  * Quando la proprietà è impostata su {@code false}, viene utilizzata l'implementazione
  * {@link TemplateGeneratorByDocComposition}, che utilizza {@link DocumentComposition} e
  * {@link PnUserattributesConfig}.
@@ -48,7 +48,7 @@ public class TemplateGeneratorConfig {
     /**
      * Implementazione del client utilizzata da {@link TemplateGeneratorByClient}.
      */
-    private final TemplatesClientImpl templatesClient;
+    private final TemplatesClient templatesClient;
 
 
     /**

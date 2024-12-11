@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @CustomLog
 @Component
-public class TemplatesClientImpl {
+public class TemplatesClient {
 
     private final TemplateApi templateEngineClient;
 

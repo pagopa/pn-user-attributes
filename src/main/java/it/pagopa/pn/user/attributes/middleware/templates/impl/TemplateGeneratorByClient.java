@@ -1,12 +1,12 @@
 package it.pagopa.pn.user.attributes.middleware.templates.impl;
 
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
-import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClientImpl;
+import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.MailVerificationCodeBody;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.PecVerificationCodeBody;
 
-public record TemplateGeneratorByClient(TemplatesClientImpl templatesClient) implements TemplateGenerator {
+public record TemplateGeneratorByClient(TemplatesClient templatesClient) implements TemplateGenerator {
 
     @Override
     public String generateEmailBody(String verificationCode) {
