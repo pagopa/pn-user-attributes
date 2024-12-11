@@ -1,4 +1,4 @@
-package it.pagopa.pn.user.attributes.middleware.wsclient.templatesengine;
+package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.ApiClient;
