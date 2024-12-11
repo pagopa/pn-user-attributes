@@ -3,7 +3,7 @@ package it.pagopa.pn.user.attributes.config;
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import it.pagopa.pn.user.attributes.middleware.templates.impl.TemplateGeneratorByClient;
 import it.pagopa.pn.user.attributes.middleware.templates.impl.TemplateGeneratorByDocComposition;
-import it.pagopa.pn.user.attributes.middleware.wsclient.templatesengine.impl.TemplatesClientImpl;
+import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClientImpl;
 import it.pagopa.pn.user.attributes.utils.DocumentComposition;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

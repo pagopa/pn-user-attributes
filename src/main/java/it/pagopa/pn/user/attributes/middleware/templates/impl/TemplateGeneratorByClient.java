@@ -1,7 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.templates.impl;
 
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
-import it.pagopa.pn.user.attributes.middleware.wsclient.templatesengine.impl.TemplatesClientImpl;
+import it.pagopa.pn.user.attributes.middleware.wsclient.TemplatesClientImpl;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.MailVerificationCodeBody;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.PecVerificationCodeBody;
