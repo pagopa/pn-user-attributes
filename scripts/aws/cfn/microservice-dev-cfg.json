@@ -19,7 +19,7 @@
     "WireTapLogActivation": "false",
     "MountEfs": "false",
     "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered",
-    "IsSercqEnabled": "false",
+    "IsSercqEnabled": "true",
     "EnableTemplatesEngine": "true"
   }
 }
