@@ -7,7 +7,7 @@ import it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes;
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import it.pagopa.pn.user.attributes.utils.DocumentComposition;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.CustomLog;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.InputStream;
@@ -15,7 +15,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
+@CustomLog
 @AllArgsConstructor
 public class TemplateGeneratorByDocComposition implements TemplateGenerator {
 
@@ -28,6 +28,7 @@ public class TemplateGeneratorByDocComposition implements TemplateGenerator {
     private final PnUserattributesConfig pnUserattributesConfig;
 
     public String generatePecBody(String verificationCode) {
+        log.debug("retrieve DocComposition template PecBody");
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put(FIELD_LOGO, SEND_LOGO_BASE64);
         templateModel.put(FIELD_VERIFICATION_CODE, verificationCode);
@@ -38,6 +39,7 @@ public class TemplateGeneratorByDocComposition implements TemplateGenerator {
     }
 
     public String generateEmailBody(String verificationCode) {
+        log.debug("retrieve DocComposition template EmailBody");
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put(FIELD_LOGO, SEND_LOGO_BASE64);
         templateModel.put(FIELD_VERIFICATION_CODE, verificationCode);
@@ -48,6 +50,7 @@ public class TemplateGeneratorByDocComposition implements TemplateGenerator {
     }
 
     public String generatePecConfirmBody() {
+        log.debug("retrieve DocComposition template PecConfirmBody");
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put(FIELD_LOGO, SEND_LOGO_BASE64);
         return documentComposition.executeTextTemplate(
@@ -57,6 +60,7 @@ public class TemplateGeneratorByDocComposition implements TemplateGenerator {
     }
 
     public String generatePecRejectBody() {
+        log.debug("retrieve DocComposition template PecRejectBody");
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put(FIELD_LOGO, SEND_LOGO_BASE64);
         return documentComposition.executeTextTemplate(
@@ -67,26 +71,31 @@ public class TemplateGeneratorByDocComposition implements TemplateGenerator {
 
     @Override
     public String generateEmailSubject() {
+        log.debug("retrieve DocComposition template EmailSubject");
         return pnUserattributesConfig.getVerificationCodeMessageEMAILSubject();
     }
 
     @Override
     public String generatePecSubject() {
+        log.debug("retrieve DocComposition template VerificationCodeMessagePECSubject");
         return pnUserattributesConfig.getVerificationCodeMessagePECSubject();
     }
 
     @Override
     public String generatePecSubjectConfirm() {
+        log.debug("retrieve DocComposition template VerificationCodeMessagePECConfirmSubject");
         return pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject();
     }
 
     @Override
     public String generatePecSubjectReject() {
+        log.debug("retrieve DocComposition template VerificationCodeMessagePECRejectSubject");
         return pnUserattributesConfig.getVerificationCodeMessagePECRejectSubject();
     }
 
     @Override
     public String generateSmsBody() {
+        log.debug("retrieve DocComposition template VerificationCodeMessageSMS");
         return pnUserattributesConfig.getVerificationCodeMessageSMS();
     }
 
