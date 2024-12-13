@@ -20,6 +20,6 @@
     "MountEfs": "false",
     "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered",
     "IsSercqEnabled": "false",
-    "enableTemplatesEngine": "true"
+    "EnableTemplatesEngine": "true"
   }
 }
