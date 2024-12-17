@@ -58,9 +58,7 @@ class PnExternalRegistryClientTest {
 
     @BeforeEach
     public void init(){
-
         mockServer = startClientAndServer(9999);
-
     }
 
     @AfterEach
