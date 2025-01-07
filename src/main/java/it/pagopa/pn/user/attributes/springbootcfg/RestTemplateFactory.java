@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
-
 import java.time.OffsetDateTime;
+
 
 @Configuration
 public class RestTemplateFactory {
@@ -20,6 +20,20 @@ public class RestTemplateFactory {
         this.templateFactory = templateFactory;
     }
 
+    /**
+     * Configures and provides a {@link RestTemplate} bean with custom date serialization formatting.
+     * <p>
+     * This method overrides the default behavior for serializing {@link OffsetDateTime} values
+     * to ensure that the fractional seconds are formatted with a consistent number of digits.
+     * The {@link RestTemplate} is built using the provided {@link it.pagopa.pn.commons.pnclients.RestTemplateFactory}
+     * and configured with tracing, retry, and timeout settings.
+     * </p>
+     *
+     * @param retryMaxAttempts the maximum number of retry attempts for HTTP requests
+     * @param connectionTimeout the timeout in milliseconds for establishing HTTP connections
+     * @param readTimeout the timeout in milliseconds for reading HTTP responses
+     * @return a configured {@link RestTemplate} instance with custom date serialization formatting
+     */
     @Bean
     @Primary
     @Qualifier("withOffsetDateTimeFormatter")
