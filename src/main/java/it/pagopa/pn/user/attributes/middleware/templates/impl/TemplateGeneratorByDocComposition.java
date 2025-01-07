@@ -7,7 +7,7 @@ import it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes;
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import it.pagopa.pn.user.attributes.utils.DocumentComposition;
 import lombok.AllArgsConstructor;
-import lombok.CustomLog;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import java.io.InputStream;
 import java.util.Base64;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-@CustomLog
+@Slf4j
 @AllArgsConstructor
 public class TemplateGeneratorByDocComposition implements TemplateGenerator {
 

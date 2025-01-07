@@ -23,7 +23,6 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
     @Override
     public String generateEmailBody(String verificationCode) {
         log.debug("retrieve template mailVerificationCodeBody");
-        System.out.println("SYS - retrieve template mailVerificationCodeBody");
         MailVerificationCodeBody mailVerificationCodeBody = new MailVerificationCodeBody();
         mailVerificationCodeBody.setVerificationCode(verificationCode);
         return templatesClient.mailVerificationCodeBody(LanguageEnum.IT, mailVerificationCodeBody);
@@ -40,7 +39,6 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
     @Override
     public String generateEmailSubject() {
         log.debug("retrieve template mailVerificationCodeSubject");
-        System.out.println("SYS - retrieve template mailVerificationCodeSubject");
         return templatesClient.mailVerificationCodeSubject(LanguageEnum.IT);
     }
 
@@ -142,7 +140,6 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
     @Override
     public String generateSmsBody() {
         log.debug("retrieve template smsVerificationCodeBody");
-        System.out.println("SYS - retrieve template smsVerificationCodeBody");
         return templatesClient.smsVerificationCodeBody(LanguageEnum.IT);
     }
 }
