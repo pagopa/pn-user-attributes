@@ -414,7 +414,7 @@ Resources:
         ContainerEnvEntry19: !Sub 'PN_USER_ATTRIBUTES_SERCQ_ADDRESS=${SercqAddress}'
         ContainerEnvEntry20: !Sub 'PN_USER_ATTRIBUTES_IS_SERCQ_ENABLED=${IsSercqEnabled}'
         ContainerEnvEntry21: !Sub 'PN_USER_ATTRIBUTES_CLIENT_TEMPLATESENGINE_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
-        ContainerEnvEntry22: !Sub 'PN_USER_ATTRIBUTES_ENABLE_TEMPLATES_ENGINE={EnableTemplatesEngine}'
+        ContainerEnvEntry22: !Sub 'PN_USER_ATTRIBUTES_ENABLE_TEMPLATES_ENGINE=${EnableTemplatesEngine}'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*,/pg-consents/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds
