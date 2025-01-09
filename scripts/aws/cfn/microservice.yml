@@ -351,6 +351,14 @@ Parameters:
       - true
       - false
 
+  EnableTemplatesEngine:
+    Type: String
+    Default: false
+    Description: 'Enable TemplatesEngine'
+    AllowedValues:
+      - true
+      - false
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
 
