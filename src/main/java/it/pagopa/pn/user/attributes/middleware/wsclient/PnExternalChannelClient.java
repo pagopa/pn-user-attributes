@@ -15,7 +15,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalNotificationRequestDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
-import it.pagopa.pn.user.attributes.utils.TemplateGenerator;
+import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -73,7 +73,7 @@ public class PnExternalChannelClient {
                     .build();
             logEvent.log();
             return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(),
-                    pnUserattributesConfig.getVerificationCodeMessagePECRejectSubject(), address)
+                    templateGenerator.generatePecSubjectReject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -103,7 +103,7 @@ public class PnExternalChannelClient {
 
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
-                    templateGenerator.generatePecConfirmBody(), pnUserattributesConfig.getVerificationCodeMessagePECConfirmSubject());
+                    templateGenerator.generatePecConfirmBody(), templateGenerator.generatePecSubjectConfirm());
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
@@ -144,7 +144,7 @@ public class PnExternalChannelClient {
         logEvent.log();
 
 
-        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode), pnUserattributesConfig.getVerificationCodeMessagePECSubject())
+        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode), templateGenerator.generatePecSubject())
                 .onErrorResume(x -> {
                     String message = elabExceptionMessage(x);
                     String failureMessage = String.format("sendLegalVerificationCode PEC response error %s", message);
@@ -248,7 +248,7 @@ public class PnExternalChannelClient {
                     .build();
             logEvent.log();
             return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode),
-                    pnUserattributesConfig.getVerificationCodeMessageEMAILSubject(), address)
+                    templateGenerator.generateEmailSubject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -299,7 +299,7 @@ public class PnExternalChannelClient {
 
     private String getSMSVerificationCodeBody(String verificationCode)
     {
-        String message = pnUserattributesConfig.getVerificationCodeMessageSMS();
+        String message = templateGenerator.generateSmsBody();
         message = String.format(message, verificationCode);
         return  message;
     }
