@@ -1,0 +1,5 @@
+{
+  "Parameters" : {
+    "UserAttributesGlueTableName": "pn_userattributes"
+  }
+}

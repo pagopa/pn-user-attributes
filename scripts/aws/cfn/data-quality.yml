@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Data quality template, creates a nested stack for Glue Table and Crawler
+
+Parameters:
+  TemplateBucketBaseUrl:
+    Type: String
+    Description: The S3 bucket from which to fetch the templates used by this stack.
+  GlueServiceRoleArn:
+    Type: String
+    Description: Service role for the Glue Crawler.
+  LogsBucketName:
+    Type: String
+    Description: Logs bucket name
+  GlueDatabaseName:
+    Description: Name of the Glue Database
+    Type: String
+  UserAttributesTableName:
+    Type: String
+    Description: |
+      DynamoDb table name for pn-userAttributes, valorized by the related output
+      in the storage.yaml template, used also for identifying the S3 bucket
+      directory where related CDC files are stored.
+  
+  UserAttributesGlueTableName:
+    Type: String
+    AllowedPattern: '^[a-z_]+$'
+    ConstraintDescription: | 
+       Glue table name for pn-userattributes, accept only lowercase values and underscores.
+    Default: pn_userattributes
+
+Resources:
+  PnUserAttributesDataQualityStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/cdc-glue.yaml"
+      Parameters:
+        DynamoTableName: !Ref UserAttributesTableName
+        GlueTableName: !Ref UserAttributesGlueTableName
+        GlueServiceRoleArn: !Ref GlueServiceRoleArn
+        LogsBucketName: !Ref LogsBucketName
+        GlueDatabaseName: !Ref GlueDatabaseName
+        DynamoDBKeysStructure: |
+            struct<pk:struct<S:string>,sk:struct<S:string>>
+        DynamoDBNewImageStructure: |
+            struct<
+              pk:struct<S:string>,
+              sk:struct<S:string>,
+              addressType:struct<S:string>,
+              codeValid:struct<NULL:boolean,BOOL:boolean>,
+              created:struct<S:string>,
+              failedAttempts:struct<N:string>,
+              lastModified:struct<S:string>,
+              pecValid:struct<NULL:boolean,BOOL:boolean>,
+              requestId:struct<S:string>,
+              senderId:struct<S:string>,
+              ttl:struct<N:string>,
+              verificationCode:struct<S:string>
+            >
