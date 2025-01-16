@@ -89,8 +89,11 @@ public class ExternalChannelResponseHandler {
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
                                 .zipWhen(addressesToDelete -> pnDataVaultClient.getVerificationCodeAddressByInternalId(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress())
                                         .defaultIfEmpty(new AddressDtoDto().value(verificationCodeEntity.getAddress())))
-                                .flatMap(tuple -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, tuple.getT1(), tuple.getT2().getValue()))
-                                .flatMap(x -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), verificationCodeEntity.getAddress()))
+                                .flatMap(tuple -> {
+                                    String address = tuple.getT2().getValue();
+                                    return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, tuple.getT1(), address).map(x -> address);
+                                })
+                                .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
                     } else {
