@@ -11,6 +11,7 @@ async function mapPayload(event) {
         actionId: entity.pk+entity.requestId,
         internalId: entity.pk.replace("VC#",""),
         address: entity.address,
+        hashedAddress : entity.sk.split("#")[0],
         timestamp: date.toISOString(),
         type: 'PEC_REJECTED_ACTION'
       };

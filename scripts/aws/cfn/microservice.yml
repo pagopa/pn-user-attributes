@@ -83,6 +83,18 @@ Parameters:
     Type: String
     Description: 'Base url of external channel microservice'
 
+  DataVaultBaseUrl:
+    Type: String
+    Description: 'Base url of datavault microservice'
+
+  DataVaultProtocol:
+    Type: String
+    Description: 'Protocol for connecting to datavault'
+
+  DataVaultGetRecipientAddressesPath:
+    Type: String
+    Description: 'Path for getting recipient addresses from datavault'
+
   HeaderValueExternalChannelCxId:
     Type: String
     Description: 'Header di riconoscimento per external channel'
@@ -647,6 +659,9 @@ Resources:
         Variables:
           REGION: !Sub ${AWS::Region}
           QUEUE_URL: !Ref UserAttributesActionsQueueURL
+          PN_DATAVAULT_BASE_URL: !Ref DataVaultBaseUrl
+          PN_DATAVAULT_PROTOCOL: !Ref DataVaultProtocol
+          PN_DATAVAULT_GET_RECIPIENT_ADDRESSES_PATH: !Ref DataVaultGetRecipientAddressesPath
       TracingConfig:
         Mode: Active
       Layers:
