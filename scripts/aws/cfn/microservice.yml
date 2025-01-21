@@ -55,6 +55,10 @@ Parameters:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
 
+  PutIntoVpc:
+    Type: String
+    Default: "true"
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -365,6 +369,7 @@ Parameters:
 
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
+  HaveToDefineVpcs: !Equals ["true", !Ref PutIntoVpc]
 
 Resources:
 
@@ -644,6 +649,19 @@ Resources:
   ###              pecValidationExpiredLambda            ###
   #########################################################
 
+  # Data vault Service security group
+  DataVaultServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: HaveToDefineVpcs
+    Properties:
+      GroupDescription: !Sub ${ProjectName}-DataVaultServiceSecurityGroup
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
   # Lambda function
   PecValidationExpiredLambda:
     Type: AWS::Lambda::Function
@@ -655,6 +673,13 @@ Resources:
         S3Bucket: !Ref MicroserviceBucketName
         S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/pecValidationExpired.zip"
       Role: !GetAtt PecValidationExpiredLambdaRole.Arn
+      VpcConfig:
+        Fn::If:
+          - HaveToDefineVpcs
+          - SecurityGroupIds:
+              - !GetAtt DataVaultServiceSecurityGroup.GroupId
+            SubnetIds: !Ref SubnetsIds
+          - !Ref AWS::NoValue
       Environment:
         Variables:
           REGION: !Sub ${AWS::Region}
@@ -684,6 +709,7 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
 
   # Lambda function IAM policy
   PecValidationExpiredLambdaPolicy:
