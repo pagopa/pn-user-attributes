@@ -7,7 +7,8 @@
     "VerificationCodeLegalTTL": "1d",
     "VerificationCodeCourtesyTTL": "15m",
     "AooUoSenderID": "dummy1,dummy2",
-    "DataVaultBaseUrl": "http://alb.confidential.pn.internal:8080",
+    "DataVaultHostname": "http://alb.confidential.pn.internal",
+    "DataVaultPort": "8080",
     "DataVaultProtocol": "http",
     "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses"
   }

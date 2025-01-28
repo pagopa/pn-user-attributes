@@ -5,6 +5,7 @@ const mocker = HttpRequestMock.setup();
 
 process.env.PN_DATAVAULT_HOSTNAME = "localhost";
 process.env.PN_DATAVAULT_GET_RECIPIENT_ADDRESSES_PATH = "/get-path";
+process.env.PN_DATAVAULT_PORT = "8080";
 process.env.PN_DATAVAULT_PROTOCOL = "http"
 
 describe("test sqs functions", () => {

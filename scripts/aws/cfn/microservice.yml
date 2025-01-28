@@ -87,9 +87,13 @@ Parameters:
     Type: String
     Description: 'Base url of external channel microservice'
 
-  DataVaultBaseUrl:
+  DataVaultHostname:
     Type: String
-    Description: 'Base url of datavault microservice'
+    Description: 'Hostname of datavault microservice'
+
+  DataVaultPort:
+    Type: String
+    Description: 'Port of datavault microservice'
 
   DataVaultProtocol:
     Type: String
@@ -697,7 +701,8 @@ Resources:
         Variables:
           REGION: !Sub ${AWS::Region}
           QUEUE_URL: !Ref UserAttributesActionsQueueURL
-          PN_DATAVAULT_BASE_URL: !Ref DataVaultBaseUrl
+          PN_DATAVAULT_HOSTNAME: !Ref DataVaultHostname
+          PN_DATAVAULT_PORT: !Ref DataVaultPort
           PN_DATAVAULT_PROTOCOL: !Ref DataVaultProtocol
           PN_DATAVAULT_GET_RECIPIENT_ADDRESSES_PATH: !Ref DataVaultGetRecipientAddressesPath
       TracingConfig:

@@ -1,5 +1,6 @@
 const http = require(process.env.PN_DATAVAULT_PROTOCOL);
 const HOSTNAME = process.env.PN_DATAVAULT_HOSTNAME;
+const PORT = process.env.PN_DATAVAULT_PORT;
 const PATHGET = process.env.PN_DATAVAULT_GET_RECIPIENT_ADDRESSES_PATH;
 
 function getRecipientAddressesByInternalId(internalId) {
@@ -8,6 +9,7 @@ function getRecipientAddressesByInternalId(internalId) {
     method: "GET",
     hostname: HOSTNAME,
     path: PATHGET.replace("{internalId}", internalId),
+    port: PORT,
     headers: {
       "Content-Type": "application/json",
     },
