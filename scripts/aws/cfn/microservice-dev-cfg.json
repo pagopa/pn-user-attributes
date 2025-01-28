@@ -15,13 +15,14 @@
     "EnhancedWebSecurityEnabled": "true",
     "PecValidationExpiredLambdaMaximumBatchingWindowInSeconds": "20",
     "PecValidationExpiredLambdaBatchSize": "60",
-    "PnCronAnalyzer": "* */1 * * * *",
+    "PnCronAnalyzer": "-",
     "WireTapLogActivation": "false",
     "MountEfs": "false",
     "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered",
-    "IsSercqEnabled": "false",
+    "IsSercqEnabled": "true",
     "DataVaultBaseUrl": "http://alb.confidential.pn.internal:8080",
     "DataVaultProtocol": "http",
-    "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses"
+    "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses",
+    "EnableTemplatesEngine": "true"
   }
 }
