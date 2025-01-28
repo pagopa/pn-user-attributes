@@ -688,7 +688,10 @@ Resources:
           - HaveToDefineVpcs
           - SecurityGroupIds:
               - !GetAtt DataVaultServiceSecurityGroup.GroupId
-            SubnetIds: !Ref SubnetsIds
+            SubnetIds:
+              - !Select [ 0, !Split [ ",", !Ref SubnetsIds ] ]
+              - !Select [ 1, !Split [ ",", !Ref SubnetsIds ] ]
+              - !Select [ 2, !Split [ ",", !Ref SubnetsIds ] ]
           - !Ref AWS::NoValue
       Environment:
         Variables:
