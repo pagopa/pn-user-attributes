@@ -20,7 +20,7 @@
     "MountEfs": "false",
     "SercqAddress": "x-pagopa-pn-sercq:send-self:notification-already-delivered",
     "IsSercqEnabled": "true",
-    "DataVaultHostname": "http://alb.confidential.pn.internal",
+    "DataVaultHostname": "alb.confidential.pn.internal",
     "DataVaultPort": "8080",
     "DataVaultProtocol": "http",
     "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses",
