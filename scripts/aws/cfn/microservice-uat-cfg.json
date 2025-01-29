@@ -2,6 +2,10 @@
   "Parameters" : {
     "HeaderValueExternalChannelCxId": "pn-delivery-001",
     "IoActivationSendOlderThanDays": 7,
-    "AooUoSenderID": "uno,due,tre"
+    "AooUoSenderID": "uno,due,tre",
+    "DataVaultHostname": "alb.confidential.pn.internal",
+    "DataVaultPort": "8080",
+    "DataVaultProtocol": "http",
+    "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses"
   }
 }

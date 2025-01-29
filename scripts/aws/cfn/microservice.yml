@@ -55,6 +55,10 @@ Parameters:
     Type: String
     Description: 'VpcId where the microservice is going to be deployed'
 
+  PutIntoVpc:
+    Type: String
+    Default: "true"
+
   EcsDefaultSecurityGroup:
     Type: String
     Description: 'Default security group required by infrastructure'
@@ -82,6 +86,22 @@ Parameters:
   ExternalChannelBaseUrl:
     Type: String
     Description: 'Base url of external channel microservice'
+
+  DataVaultHostname:
+    Type: String
+    Description: 'Hostname of datavault microservice'
+
+  DataVaultPort:
+    Type: String
+    Description: 'Port of datavault microservice'
+
+  DataVaultProtocol:
+    Type: String
+    Description: 'Protocol for connecting to datavault'
+
+  DataVaultGetRecipientAddressesPath:
+    Type: String
+    Description: 'Path for getting recipient addresses from datavault'
 
   HeaderValueExternalChannelCxId:
     Type: String
@@ -361,6 +381,7 @@ Parameters:
 
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
+  HaveToDefineVpcs: !Equals ["true", !Ref PutIntoVpc]
 
 Resources:
 
@@ -642,6 +663,19 @@ Resources:
   ###              pecValidationExpiredLambda            ###
   #########################################################
 
+  # Data vault Service security group
+  DataVaultServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: HaveToDefineVpcs
+    Properties:
+      GroupDescription: !Sub ${ProjectName}-DataVaultServiceSecurityGroup
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
   # Lambda function
   PecValidationExpiredLambda:
     Type: AWS::Lambda::Function
@@ -653,10 +687,24 @@ Resources:
         S3Bucket: !Ref MicroserviceBucketName
         S3Key: !Sub "${MicroserviceBucketBaseKey}/functions_zip/pecValidationExpired.zip"
       Role: !GetAtt PecValidationExpiredLambdaRole.Arn
+      VpcConfig:
+        Fn::If:
+          - HaveToDefineVpcs
+          - SecurityGroupIds:
+              - !GetAtt DataVaultServiceSecurityGroup.GroupId
+            SubnetIds:
+              - !Select [ 0, !Split [ ",", !Ref SubnetsIds ] ]
+              - !Select [ 1, !Split [ ",", !Ref SubnetsIds ] ]
+              - !Select [ 2, !Split [ ",", !Ref SubnetsIds ] ]
+          - !Ref AWS::NoValue
       Environment:
         Variables:
           REGION: !Sub ${AWS::Region}
           QUEUE_URL: !Ref UserAttributesActionsQueueURL
+          PN_DATAVAULT_HOSTNAME: !Ref DataVaultHostname
+          PN_DATAVAULT_PORT: !Ref DataVaultPort
+          PN_DATAVAULT_PROTOCOL: !Ref DataVaultProtocol
+          PN_DATAVAULT_GET_RECIPIENT_ADDRESSES_PATH: !Ref DataVaultGetRecipientAddressesPath
       TracingConfig:
         Mode: Active
       Layers:
@@ -679,6 +727,7 @@ Resources:
               - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
 
   # Lambda function IAM policy
   PecValidationExpiredLambdaPolicy:
