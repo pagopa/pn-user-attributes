@@ -38,7 +38,7 @@ exports.getVerificationCodeAddressByInternalId = async function (internalId, has
   try {
     console.log(`Invoking method getVerificationCodeAddressByInternalId with args : [${internalId}, ${hashedAddress}]`);
     var response = await getRecipientAddressesByInternalId(internalId);
-    return response.addresses["VC#" + internalId];
+    return response.addresses["VC#" + hashedAddress].value;
   }
   catch (error) {
     console.error("Exception in method getVerificationCodeAddressByInternalId: " + error);

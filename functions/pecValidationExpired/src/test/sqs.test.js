@@ -180,7 +180,9 @@ describe("test sqs functions", () => {
 
   function mockDatavaultCall(hasAddress) {
     const addresses = {
-      "VC#PF-123456789": "test@test.it"
+      "VC#2345678": {
+      value: "test@test.it"
+      }
     }
     const mockResponse = {
       addresses: hasAddress ? addresses : "{}"
