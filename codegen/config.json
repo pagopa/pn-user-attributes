@@ -8,23 +8,6 @@
             "servicePath": "address-book-io"
         },
         {
-            "intendedUsage": "WEB",
-            "commonFiles": [
-                "pn-address-book-common-components.yaml"
-            ],
-            "openapiFiles": [
-                "pn-address-book-api-internal.yaml"
-            ],
-            "servicePath": "address-book"
-        },
-        {
-            "intendedUsage": "WEB",
-            "openapiFiles": [
-                "pn-user-consents-api-internal.yaml"
-            ],
-            "servicePath": "user-consents"
-        },
-        {
             "intendedUsage": "B2BPG",
             "commonFiles": [
                 "pn-address-book-common-components.yaml"
