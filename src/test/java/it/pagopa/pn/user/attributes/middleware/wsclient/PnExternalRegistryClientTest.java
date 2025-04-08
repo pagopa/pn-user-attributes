@@ -46,6 +46,14 @@ class PnExternalRegistryClientTest {
     @Autowired
     private PnExternalRegistryClient client;
 
+    @Autowired
+    private PnUserattributesConfig pnUserattributesConfig;
+
+    @Autowired
+    private MsClientExtRegistryConfig msClientConfig;
+    @Autowired
+    private MsClientConfig msClientConfig1;
+
 
     private static ClientAndServer mockServer;
 
