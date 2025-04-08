@@ -11,14 +11,6 @@ Parameters:
     Type: String
     Description: ARN of alarm topic
 
-  ApiDnsName:
-    Type: String
-    Description: 'The DNS name used for B2B rest API.'
-
-  WebApiDnsName:
-    Type: String
-    Description: 'The DNS name used for WEB rest API.'
-
   IoApiDnsName:
     Type: String
     Description: 'The DNS name used for IO rest API.'
@@ -348,28 +340,10 @@ Parameters:
     Type: String
     Default: ''
 
-  WebWafLimitUserAttributes:
-    Type: Number
-    Default: 600
-    Description: WEB api WAF Limit (per IP)
-
-  WebWafLimitAddressBook:
-    Type: Number
-    Default: 600
-    Description: WEB api WAF Limit (per IP)
-
   B2bPgWafLimit:
     Type: Number
     Default: 600
     Description: B2B api WAF Limit (per IP)
-
-  EnhancedWebSecurityEnabled:
-    Type: String
-    Default: false
-    Description: Enable additional WAF Web rules
-    AllowedValues:
-      - true
-      - false
 
   EnableTemplatesEngine:
     Type: String
@@ -490,66 +464,6 @@ Resources:
             Resource:
               - !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${UserAttributesTableEncryptKeyId}
 
-  # Expose PN-user-attributes microservice public API with API-GW for WEB usage
-  UserAttributesMicroservicePublicWebAPI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-user-attributes'
-        IntendedUsage: WEB
-        DnsName: !Ref WebApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: 'user-consents'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn        
-        OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-user-consents-WEB-aws.yaml
-
-  UserAttributesMicroservicePublicWebApiWaf:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
-      Parameters:
-        WAFName: !Sub '${ProjectName}-user-attributes-web'
-        IntendedUsage: WEB
-        APIGatewayARNs: !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: !Ref WebWafLimitUserAttributes
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
-
-  # Expose PN-AddressBook microservice public API with API-GW for WEB usage
-  AddressBookMicroservicePublicWebAPI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-expose-service-openapi.yaml"
-      Parameters:
-        MicroServiceUniqueName: !Sub '${ProjectName}-address-book'
-        IntendedUsage: WEB
-        DnsName: !Ref WebApiDnsName
-        ProjectName: !Ref ProjectName
-        ServiceApiPath: 'address-book'
-        NetworkLoadBalancerLink: !Ref NetworkLoadBalancerLink
-        ApplicationLoadBalancerDomain: !Ref ApplicationLoadBalancerDomain
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        CloudwatchLogKinesisStreamArn: !Ref LogsKinesisSourceStreamArn    
-        OpenApiBucketName: !Ref MicroserviceBucketName
-        OpenApiBucketKey: !Sub ${MicroserviceBucketBaseKey}/docs/openapi/aws/api-address-book-WEB-aws.yaml
-
-  AddressBookMicroservicePublicWebApiWaf:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/api-gw-waf-acl.yaml"
-      Parameters:
-        WAFName: !Sub '${ProjectName}-address-book-web'
-        IntendedUsage: WEB
-        APIGatewayARNs: !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.APIGatewayARN
-        Limit: !Ref WebWafLimitAddressBook
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        EnhancedWebSecurityEnabled: !Ref EnhancedWebSecurityEnabled
-
   # Expose PN-AddressBook microservice public API with API-GW for IO Backend usage
   AddressBookMicroservicePublicIoAPI:
     Type: AWS::CloudFormation::Stack
@@ -619,25 +533,17 @@ Resources:
           - - !Ref UserAttributesTableName 
         RestApiStageArns: !Join
           - ','
-          - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiStageArn
-            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiStageArn
-            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiStageArn
+          - - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiStageArn
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiStageArn
         RestApiNames: !Join
           - ','
-          - - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiName
-            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiName
-            - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
+          - - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiName
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiName
         AlarmArns: !Join
           - ','
           - - !GetAtt UserAttributesMicroservice.Outputs.FatalLogsMetricAlarmArn
-            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
-            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiErrorAlarmArn
-            - !GetAtt UserAttributesMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
-            - !GetAtt AddressBookMicroservicePublicWebAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiLatencyAlarmArn
             - !Ref PecValidationExpiredDLQAlarmARN
