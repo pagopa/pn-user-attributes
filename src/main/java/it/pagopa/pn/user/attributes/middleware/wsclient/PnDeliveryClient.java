@@ -3,8 +3,8 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 
 import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.api.InternalOnlyApi;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationStatus;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV23;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationStatusV26;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV25;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -39,13 +39,13 @@ public class PnDeliveryClient {
      *
      * @return void
      */
-    public Flux<SentNotificationV23> searchNotificationPrivate(OffsetDateTime startDate, OffsetDateTime endDate, String internalId)
+    public Flux<SentNotificationV25> searchNotificationPrivate(OffsetDateTime startDate, OffsetDateTime endDate, String internalId)
     {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_DELIVERY, "Search notifications for user");
         log.debug("searchNotificationPrivate internalId={} startDate={} endDate={}", internalId, startDate, endDate);
         
         return this.pnDeliveryApi.searchNotificationsPrivate(startDate, endDate, internalId, true, null,
-                        List.of(NotificationStatus.ACCEPTED, NotificationStatus.DELIVERING, NotificationStatus.DELIVERED), null, CxTypeAuthFleetDto.PF.getValue(),50, null)
+                        List.of(NotificationStatusV26.ACCEPTED, NotificationStatusV26.DELIVERING, NotificationStatusV26.DELIVERED), null, CxTypeAuthFleetDto.PF.getValue(),50, null)
                 .onErrorResume(throwable -> {
                     log.error("error searchNotificationsPrivate message={}", elabExceptionMessage(throwable) , throwable);
                     return Mono.error(throwable);
@@ -62,7 +62,7 @@ public class PnDeliveryClient {
                 });
     }
 
-    public Mono<SentNotificationV23> getSentNotificationPrivate(String iun)
+    public Mono<SentNotificationV25> getSentNotificationPrivate(String iun)
     {
         log.info("getSentNotificationPrivate iun={}", iun);
 

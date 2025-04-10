@@ -10,8 +10,8 @@ import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionEvent;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipientV23;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV23;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.NotificationRecipientV24;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV25;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.SendMessageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -92,7 +92,7 @@ public class IONotificationService   {
         }
     }
 
-    public Mono<Void> scheduleSendMessage(String actionIdPrefix, String internalId, SentNotificationV23 sentNotification) {
+    public Mono<Void> scheduleSendMessage(String actionIdPrefix, String internalId, SentNotificationV25 sentNotification) {
 
         return Mono.fromRunnable(() -> {
             log.info("scheduleCheckNotificationToSendAfterIOActivation internalId={}", internalId);
@@ -134,7 +134,7 @@ public class IONotificationService   {
     }
 
 
-    public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotificationV23 sentNotification) {
+    public Mono<Void> consumeIoSendMessageEvent(String internalId, SentNotificationV25 sentNotification) {
         log.debug("consumeIoSendMessageEvent iun={} internalId={}", sentNotification.getIun(), internalId);
         SendMessageRequest sendMessageRequest = this.getSendMessageRequest(sentNotification, internalId);
         return this.pnExternalRegistryIoClient.sendIOMessage(sendMessageRequest)
@@ -146,7 +146,7 @@ public class IONotificationService   {
 
 
     @NotNull
-    private SendMessageRequest getSendMessageRequest(SentNotificationV23 notification, String internalId) {
+    private SendMessageRequest getSendMessageRequest(SentNotificationV25 notification, String internalId) {
 
         // recupero l'indice del recipient, mi servirà poi
         OptionalInt indexRecipient = IntStream.range(0, notification.getRecipients().size())
@@ -156,7 +156,7 @@ public class IONotificationService   {
         if (indexRecipient.isEmpty())
             throw new PnInternalException("recipient is empty", ERROR_CODE_MISSING_RECIPIENTID);
 
-        NotificationRecipientV23 recipient = notification.getRecipients().get(indexRecipient.getAsInt());
+        NotificationRecipientV24 recipient = notification.getRecipients().get(indexRecipient.getAsInt());
 
         SendMessageRequest sendMessageRequest = new SendMessageRequest();
         sendMessageRequest.setAmount(notification.getAmount());

@@ -9,7 +9,7 @@ import it.pagopa.pn.user.attributes.middleware.queue.entities.ActionType;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import it.pagopa.pn.user.attributes.services.IONotificationService;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV23;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV25;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -66,7 +66,7 @@ class ActionHandlerTest {
                         .internalId("123")
                         .actionId("123456")
                         .type(ActionType.SEND_MESSAGE_ACTION)
-                        .sentNotification(new SentNotificationV23())
+                        .sentNotification(new SentNotificationV25())
                         .build();
                 return action;
             }
