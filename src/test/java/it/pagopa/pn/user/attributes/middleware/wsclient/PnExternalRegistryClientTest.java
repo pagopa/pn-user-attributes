@@ -6,6 +6,7 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto.PrivacyNoticeVersionResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.ActivationPayload;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.ActivationStatus;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,7 @@ class PnExternalRegistryClientTest {
     private MsClientExtRegistryConfig msClientConfig;
     @Autowired
     private MsClientConfig msClientConfig1;
+
 
     private static ClientAndServer mockServer;
 
@@ -155,4 +157,35 @@ class PnExternalRegistryClientTest {
         Mono<String> mono = client.findPrivacyNoticeVersion( "TOS", "PF" );
         Assertions.assertThrows(Exception.class, () -> mono.block());
     }
+
+    @Test
+    void getRootSenderIdTest() {
+        String senderId = "test-sender-id";
+        String expectedRootId = "root-id-123";
+
+        RootSenderIdResponse response = new RootSenderIdResponse();
+        response.setRootId(expectedRootId);
+
+        byte[] responseBodyBytes = new byte[0];
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            responseBodyBytes = mapper.writeValueAsBytes(response);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        new MockServerClient("localhost", 9999)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/ext-registry-private/pa/v1/" + senderId + "/root-id"))
+                .respond(response()
+                        .withBody(responseBodyBytes)
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        String actualRootId = client.getRootSenderId(senderId).block();
+
+        Assertions.assertEquals(expectedRootId, actualRootId);
+    }
+
 }
