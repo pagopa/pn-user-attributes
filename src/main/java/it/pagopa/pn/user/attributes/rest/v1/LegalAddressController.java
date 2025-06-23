@@ -141,18 +141,20 @@ public class LegalAddressController implements LegalApi {
         return Mono.defer(() -> {
                     // Caso PG (Persona giuridica)
                     if (pnCxType.equals(CxTypeAuthFleetDto.PG)) {
-                        return Mono.zip(consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                        return Mono.just(consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null));
                     }
                     // Caso PF (Persona Fisica) o altro
                     else {
                         String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
-                        return Mono.zip(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                        return Mono.just(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null));
                     }
                 })
-                .map(tuple -> tuple.getT1().getAccepted() && tuple.getT2().getAccepted())
-                .doOnNext(hasConsents -> {
+                .flatMap(hasConsents -> {
                     if (Boolean.FALSE.equals(hasConsents)) {
                         log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                        return Mono.error(new SercqDisabledException("Missing consent for recipientId: " + recipientId));
+                    } else {
+                        return Mono.just(true);
                     }
                 });
     }
