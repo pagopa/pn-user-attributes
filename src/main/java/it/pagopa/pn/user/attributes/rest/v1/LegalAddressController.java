@@ -97,9 +97,8 @@ public class LegalAddressController implements LegalApi {
                                                                                           List<String> pnCxGroups,
                                                                                           String pnCxRole,
                                                                                           ServerWebExchange exchange) {
-        log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
-                recipientId, pnCxType, senderId, channelType, addressVerificationDto.block().toString(), pnCxGroups, pnCxRole);
-
+        addressVerificationDto.doOnNext(dto -> log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}"
+                ,recipientId, pnCxType, senderId, channelType, dto, pnCxGroups, pnCxRole));
         if(!pnUserattributesConfig.isSercqEnabled() && channelType == LegalChannelTypeDto.SERCQ) {
             return Mono.error(new SercqDisabledException("SERCQ consent is disabled, cannot consent to channel type " + channelType));
         }
