@@ -141,17 +141,17 @@ public class LegalAddressController implements LegalApi {
         return Mono.defer(() -> {
                     // Caso PG (Persona giuridica)
                     if (pnCxType.equals(CxTypeAuthFleetDto.PG)) {
-                        return Mono.just(consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null));
+                        return consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null);
                     }
                     // Caso PF (Persona Fisica) o altro
                     else {
                         String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
-                        return Mono.just(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null));
+                        return consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null);
                     }
                 })
-                .flatMap(hasConsents -> {
-                    if (Boolean.FALSE.equals(hasConsents)) {
-                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                .flatMap(consentDto -> {
+                    if (consentDto ==null || (consentDto != null && Boolean.FALSE.equals(consentDto.getAccepted()))) {
+                        log.warn("Consents TOS is missing for recipientId: {}", recipientId);
                         return Mono.error(new SercqDisabledException("Missing consent for recipientId: " + recipientId));
                     } else {
                         return Mono.just(true);
