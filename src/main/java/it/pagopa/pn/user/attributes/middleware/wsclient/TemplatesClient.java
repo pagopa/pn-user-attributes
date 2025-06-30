@@ -3,6 +3,7 @@ package it.pagopa.pn.user.attributes.middleware.wsclient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.api.TemplateApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.MailVerificationCodeBody;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.PecValidationContactsBody;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.PecVerificationCodeBody;
 import lombok.AllArgsConstructor;
 import lombok.CustomLog;
@@ -24,6 +25,7 @@ public class TemplatesClient {
      * @return the email verification code body as a String.
      */
     public String mailVerificationCodeBody(LanguageEnum xLanguage, MailVerificationCodeBody mailVerificationCodeBody) {
+        //add recipientType (si può usare direttamente il recipientId)
         return templateEngineClient.mailVerificationCodeBody(xLanguage, mailVerificationCodeBody);
     }
 
@@ -64,8 +66,9 @@ public class TemplatesClient {
      * @param xLanguage the language for the template.
      * @return the PEC validation contacts success body as a String.
      */
-    public String pecValidationContactsSuccessBody(LanguageEnum xLanguage) {
-        return templateEngineClient.pecValidationContactsSuccessBody(xLanguage);
+    public String pecValidationContactsSuccessBody(LanguageEnum xLanguage, PecValidationContactsBody pecValidationContactsBody) {
+        //add recipientType
+        return templateEngineClient.pecValidationContactsSuccessBody(xLanguage, pecValidationContactsBody);
     }
 
     /**
@@ -84,8 +87,9 @@ public class TemplatesClient {
      * @param xLanguage the language for the template.
      * @return the PEC validation contacts rejection body as a String.
      */
-    public String pecValidationContactsRejectBody(LanguageEnum xLanguage) {
-        return templateEngineClient.pecValidationContactsRejectBody(xLanguage);
+    public String pecValidationContactsRejectBody(LanguageEnum xLanguage, PecValidationContactsBody pecValidationContactsBody) {
+        //add recipientType
+        return templateEngineClient.pecValidationContactsRejectBody(xLanguage, pecValidationContactsBody);
     }
 
     /**

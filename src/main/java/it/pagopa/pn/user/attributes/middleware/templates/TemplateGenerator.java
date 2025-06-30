@@ -8,7 +8,7 @@ public interface TemplateGenerator {
      * @param verificationCode the code to include in the email body for verification purposes.
      * @return the generated email body template as a String.
      */
-    String generateEmailBody(String verificationCode);
+    String generateEmailBody(String verificationCode, String recipientType);
 
     /**
      * Generates the email subject.
@@ -30,14 +30,14 @@ public interface TemplateGenerator {
      *
      * @return the generated PEC confirmation body template as a String.
      */
-    String generatePecConfirmBody();
+    String generatePecConfirmBody(String recipientType);
 
     /**
      * Generates the PEC reject body.
      *
      * @return the generated PEC reject body template as a String.
      */
-    String generatePecRejectBody();
+    String generatePecRejectBody(String recipientType);
 
     /**
      * Generates the PEC subject.
