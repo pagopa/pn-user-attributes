@@ -144,7 +144,7 @@ class LegalAddressControllerTest {
 
     @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
     @MethodSource("provideChannelTypes")
-    void postRecipientLegalAddress(String channelType) { //TODO PN-13163
+    void postRecipientLegalAddress(String channelType) {
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)

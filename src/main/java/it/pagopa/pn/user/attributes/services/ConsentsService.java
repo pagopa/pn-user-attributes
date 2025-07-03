@@ -66,7 +66,9 @@ public class ConsentsService {
     @NotNull
     private Mono<ConsentDto> retrieveConsents(CxTypeAuthFleetDto xPagopaPnCxType, ConsentTypeDto consentType, String version, String uidWithCxType) {
         return pnExternalRegistryClient.findPrivacyNoticeVersion(consentType.getValue(), xPagopaPnCxType.getValue())
+                .doOnNext(lastConsentVersion -> log.info("Retrieved consents version: {}", lastConsentVersion))
                 .zipWhen(lastConsentVersion -> consentDao.getConsentByType(uidWithCxType, consentType.getValue(), StringUtils.hasText(version) ? version : lastConsentVersion)
+                                .doOnNext(consentEntity -> log.info("Found consent for consentType {} : {}",consentType,consentEntity.toString()))
                                 .switchIfEmpty(consentDao.getConsents(uidWithCxType).filter(x -> consentType.getValue().equals(x.getConsentType())).take(1).next())
                                 .defaultIfEmpty(new ConsentEntity(uidWithCxType, consentType.getValue(), ConsentEntity.NONEACCEPTED_VERSION)),
                         (lastConsentVersion, entity) -> ConsentDto.builder()

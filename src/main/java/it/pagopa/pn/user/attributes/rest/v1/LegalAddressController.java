@@ -97,9 +97,8 @@ public class LegalAddressController implements LegalApi {
                                                                                           List<String> pnCxGroups,
                                                                                           String pnCxRole,
                                                                                           ServerWebExchange exchange) {
-        log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
-                recipientId, pnCxType, senderId, channelType, addressVerificationDto.toString(), pnCxGroups, pnCxRole);
-
+        addressVerificationDto.doOnNext(dto -> log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}"
+                ,recipientId, pnCxType, senderId, channelType, dto, pnCxGroups, pnCxRole));
         if(!pnUserattributesConfig.isSercqEnabled() && channelType == LegalChannelTypeDto.SERCQ) {
             return Mono.error(new SercqDisabledException("SERCQ consent is disabled, cannot consent to channel type " + channelType));
         }
@@ -139,20 +138,25 @@ public class LegalAddressController implements LegalApi {
 
     private Mono<Boolean> checkSercqConsents(String recipientId, CxTypeAuthFleetDto pnCxType) {
         return Mono.defer(() -> {
+                    log.info("Start checkSercqConsents - recipientId={} , pnCxType={} ", recipientId,pnCxType);
                     // Caso PG (Persona giuridica)
                     if (pnCxType.equals(CxTypeAuthFleetDto.PG)) {
-                        return Mono.zip(consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                        log.info("Sercq consent is PG, getting consent for recipientId={}", recipientId);
+                        return consentsService.getPgConsentByType(recipientId, pnCxType, ConsentTypeDto.TOS_SERCQ, null);
                     }
                     // Caso PF (Persona Fisica) o altro
                     else {
+                        log.info("Sercq consent is not PG, getting consent for recipientId={}", recipientId);
                         String xPagopaPnUid = removeRecipientIdPrefix(recipientId);
-                        return Mono.zip(consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null), consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.DATAPRIVACY_SERCQ, null));
+                        return consentsService.getConsentByType(xPagopaPnUid, pnCxType, ConsentTypeDto.TOS_SERCQ, null);
                     }
                 })
-                .map(tuple -> tuple.getT1().getAccepted() && tuple.getT2().getAccepted())
-                .doOnNext(hasConsents -> {
-                    if (Boolean.FALSE.equals(hasConsents)) {
-                        log.warn("Consents TOS and PRIVACY are missing for recipientId: {}", recipientId);
+                .flatMap(consentDto -> {
+                    if (consentDto == null || (consentDto != null && Boolean.FALSE.equals(consentDto.getAccepted()))) {
+                        log.info("Consent TOS is missing for recipientId: {}", recipientId);
+                        return Mono.error(new SercqDisabledException("Missing consent for recipientId: " + recipientId));
+                    } else {
+                        return Mono.just(true);
                     }
                 });
     }
