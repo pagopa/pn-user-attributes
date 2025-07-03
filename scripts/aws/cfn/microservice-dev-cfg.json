@@ -23,7 +23,6 @@
     "DataVaultHostname": "alb.confidential.pn.internal",
     "DataVaultPort": "8080",
     "DataVaultProtocol": "http",
-    "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses",
-    "EnableTemplatesEngine": "true"
+    "DataVaultGetRecipientAddressesPath": "/datavault-private/v1/recipients/internal/{internalId}/addresses"
   }
 }

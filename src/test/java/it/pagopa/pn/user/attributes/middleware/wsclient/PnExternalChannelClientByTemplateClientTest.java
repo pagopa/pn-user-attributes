@@ -40,8 +40,7 @@ import static org.mockserver.stop.Stop.stopQuietly;
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
         "pn.user-attributes.client_externalchannels_basepath=http://localhost:9998",
-        "pn.env.runtime=PROD",
-        "pn.user-attributes.enableTemplatesEngine=true"
+        "pn.env.runtime=PROD"
 })
 class PnExternalChannelClientByTemplateClientTest {
 

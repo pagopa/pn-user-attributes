@@ -7,15 +7,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Classe di configurazione per impostare i bean di Template Generator in base alle proprietà dell'applicazione.
- * <p>
- * Questa configurazione determina quale implementazione dell'interfaccia {@link TemplateGenerator}
- * deve essere istanziata a seconda del valore della proprietà
- * {@code pn.user-attributes.enableTemplatesEngine}.
- * </p>
- *
- */
+
 @Configuration
 @AllArgsConstructor
 public class TemplateGeneratorConfig {
