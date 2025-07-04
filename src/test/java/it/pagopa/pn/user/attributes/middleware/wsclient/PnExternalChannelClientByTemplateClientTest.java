@@ -40,8 +40,7 @@ import static org.mockserver.stop.Stop.stopQuietly;
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
         "pn.user-attributes.client_externalchannels_basepath=http://localhost:9998",
-        "pn.env.runtime=PROD",
-        "pn.user-attributes.enableTemplatesEngine=true"
+        "pn.env.runtime=PROD"
 })
 class PnExternalChannelClientByTemplateClientTest {
 
@@ -97,7 +96,7 @@ class PnExternalChannelClientByTemplateClientTest {
 
         // When - Then
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-        Mockito.when(templateApi.pecValidationContactsRejectBody(Mockito.any())).thenReturn("TEST- pecValidationContactsRejectBody");
+        Mockito.when(templateApi.pecValidationContactsRejectBody(Mockito.any(),Mockito.any())).thenReturn("TEST- pecValidationContactsRejectBody");
         Mockito.when(templateApi.pecValidationContactsRejectSubject(Mockito.any())).thenReturn("TEST- pecValidationContactsRejectSubject");
 
         new MockServerClient("localhost", 9998)
@@ -133,7 +132,7 @@ class PnExternalChannelClientByTemplateClientTest {
 
         // When - Then
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
-        Mockito.when(templateApi.pecValidationContactsSuccessBody(Mockito.any())).thenReturn("TEST- pecValidationContactsSuccessBody");
+        Mockito.when(templateApi.pecValidationContactsSuccessBody(Mockito.any(),Mockito.any())).thenReturn("TEST- pecValidationContactsSuccessBody");
         Mockito.when(templateApi.pecValidationContactsSuccessSubject(Mockito.any())).thenReturn("TEST- pecValidationContactsSuccessSubject");
 
         new MockServerClient("localhost", 9998)

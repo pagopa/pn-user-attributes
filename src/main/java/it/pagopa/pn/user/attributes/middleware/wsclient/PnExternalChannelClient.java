@@ -44,6 +44,8 @@ public class PnExternalChannelClient {
     private final DigitalLegalMessagesApi digitalLegalMessagesApi;
     private final PnDataVaultClient dataVaultClient;
     private final TemplateGenerator templateGenerator;
+    private static final String PF_PREFIX = "PF";
+    private static final String PG_PREFIX = "PG";
 
     public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig,
                                    DigitalCourtesyMessagesApi digitalCourtesyMessagesApi, DigitalLegalMessagesApi digitalLegalMessagesApi, PnDataVaultClient dataVaultClient,
@@ -64,7 +66,7 @@ public class PnExternalChannelClient {
 
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             String logMessage = String.format(
-                    "sendCourtesyPecRejected EMAIL sending pec address rejected rcipientId=%s address=%s channel=%s requestId=%s",
+                    "sendCourtesyPecRejected EMAIL sending pec address rejected recipient=%s address=%s channel=%s requestId=%s",
                     recipientId, LogUtils.maskEmailAddress(address), DigitalCourtesyMailRequestDto.ChannelEnum.EMAIL, requestId
             );
             PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
@@ -72,7 +74,7 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(),
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(getRecipientType(recipientId)),
                     templateGenerator.generatePecSubjectReject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
@@ -103,7 +105,7 @@ public class PnExternalChannelClient {
 
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
-                    templateGenerator.generatePecConfirmBody(), templateGenerator.generatePecSubjectConfirm());
+                    templateGenerator.generatePecConfirmBody(getRecipientType(recipientId)), templateGenerator.generatePecSubjectConfirm());
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
@@ -247,7 +249,7 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode),
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode,getRecipientType(recipientId)),
                     templateGenerator.generateEmailSubject(), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
@@ -302,5 +304,16 @@ public class PnExternalChannelClient {
         String message = templateGenerator.generateSmsBody();
         message = String.format(message, verificationCode);
         return  message;
+    }
+
+    private String getRecipientType(String recipientId) {
+        //default empty string if the value cannot be retrieved
+        String result = "";
+        if(recipientId != null){
+            if(recipientId.startsWith(PF_PREFIX)) result = "PF";
+            if(recipientId.startsWith(PG_PREFIX)) result = "PG";
+        }
+        log.info("getRecipientType result: {} , for recipientId: {}", result, recipientId);
+        return result;
     }
 }
