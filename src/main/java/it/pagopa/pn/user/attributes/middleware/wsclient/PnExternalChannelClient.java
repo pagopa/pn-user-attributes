@@ -146,7 +146,7 @@ public class PnExternalChannelClient {
         logEvent.log();
 
 
-        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode), templateGenerator.generatePecSubject())
+        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode, getRecipientType(recipientId)), templateGenerator.generatePecSubject())
                 .onErrorResume(x -> {
                     String message = elabExceptionMessage(x);
                     String failureMessage = String.format("sendLegalVerificationCode PEC response error %s", message);

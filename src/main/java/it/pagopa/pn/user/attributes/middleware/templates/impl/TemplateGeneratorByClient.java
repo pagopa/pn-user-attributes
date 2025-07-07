@@ -54,10 +54,11 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC body template as a String.
      */
     @Override
-    public String generatePecBody(String verificationCode) {
+    public String generatePecBody(String verificationCode, String recipientType) {
         log.debug("retrieve template pecVerificationCodeBody");
         PecVerificationCodeBody pecVerificationCodeBody = new PecVerificationCodeBody();
         pecVerificationCodeBody.setVerificationCode(verificationCode);
+        pecVerificationCodeBody.setRecipientType(recipientType);
         return templatesClient.pecVerificationCodeBody(LanguageEnum.IT, pecVerificationCodeBody);
     }
 

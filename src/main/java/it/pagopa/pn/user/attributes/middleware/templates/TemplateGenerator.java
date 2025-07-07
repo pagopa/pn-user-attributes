@@ -21,9 +21,10 @@ public interface TemplateGenerator {
      * Generates the PEC body.
      *
      * @param verificationCode the code to include in the PEC body for verification purposes.
+     * @param recipientType the recipient type.
      * @return the generated PEC body template as a String.
      */
-    String generatePecBody(String verificationCode);
+    String generatePecBody(String verificationCode, String recipientType);
 
     /**
      * Generates the PEC confirmation body.
