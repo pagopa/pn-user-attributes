@@ -57,7 +57,7 @@ paths:
       tags:
         - courtesy
       parameters:
-       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
+       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                # ONLY EXTERNAL
       requestBody:
         required: true
         content:
@@ -74,7 +74,136 @@ paths:
               schema:
                 $ref: 'remote-refs.yaml#/components/schemas/Problem'
 
+
+  /user-consents/v1/consents/{consentType}:
+      parameters:
+        - $ref: '#/components/parameters/consentType'
+        - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'
+        - $ref: '#/components/parameters/lollipopOriginalUrl'                                     # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopOriginalMethod'                                  # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopPublicKey'                                       # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopAssertionRef'                                    # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopAssertionType'                                   # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopAuthJwt'                                         # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopUserId'                                          # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopSignatureInput'                                  # ONLY EXTERNAL
+        - $ref: '#/components/parameters/lollipopSignature'                                       # ONLY EXTERNAL
+        - $ref: '#/components/parameters/headerIoSource'                                          # ONLY EXTERNAL
+      get:
+        summary: Get single consent by type
+        description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
+        operationId: getConsentByType
+        parameters:
+          - $ref: '#/components/parameters/queryVersion'
+        tags:
+          - consents
+        #      security:                                                                # ONLY EXTERNAL
+        #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+        responses:
+          '200':
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Consent'
+          '400':
+            description: Invalid input
+            content:
+              application/problem+json:
+                schema:
+                  $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+      put:
+        summary: Accept a single consent type
+        description: Accept single consent type for the recipient
+        operationId: consentAction
+        parameters:
+          - $ref: '#/components/parameters/queryVersionRequired'
+        tags:
+          - consents
+        #      security:                                                                # ONLY EXTERNAL
+        #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentAction'
+        responses:
+          '200':
+            description: successful operation
+          '400':
+            description: Invalid input
+            content:
+              application/problem+json:
+                schema:
+                  $ref: 'remote-refs.yaml#/components/schemas/Problem'
+
+
+
 components:
+  parameters:
+    consentType:
+      name: consentType
+      in: path
+      description: A cosa sto dando il consenso
+      required: true
+      schema:
+        $ref: '#/components/schemas/ConsentType'
+    queryVersion:
+      name: version
+      in: query
+      description: La versione del consenso. se non presente il default è nessuna versione accettata.
+      required: false
+      schema:
+        $ref: '#/components/schemas/ConsentVersion'
+    queryVersionRequired:
+      name: version
+      in: query
+      description: La versione del consenso, obbligatoria in fase di accettazione.
+      required: true
+      schema:
+        $ref: '#/components/schemas/ConsentVersion'
+
+
+    ############################################################################################
+    ###                     PARAMETRO SORGENTE CREAZIONE NOTIFICA                            ###
+    ############################################################################################
+
+
+    headerIoSource:                                                                       # ONLY EXTERNAL
+      name: "x-pagopa-pn-io-src"                                                          # ONLY EXTERNAL
+      in: "header"                                                                        # ONLY EXTERNAL
+      description: "User login source channel details, should be QR_CODE or left empty"   # ONLY EXTERNAL
+      required: false                                                                     # ONLY EXTERNAL
+      schema:                                                                             # ONLY EXTERNAL
+        type: "string"
+
+
+    ############################################################################################
+    ###                     HEADER DI AUTENTICAZIONE LOLLIPOP                               ###
+    ############################################################################################
+    lollipopOriginalUrl: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopOriginalUrl'                           # ONLY EXTERNAL
+    lollipopOriginalMethod: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopOriginalMethod'                        # ONLY EXTERNAL
+    lollipopPublicKey: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopPublicKey'                             # ONLY EXTERNAL
+    lollipopAssertionRef: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopAssertionRef'                          # ONLY EXTERNAL
+    lollipopAssertionType: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopAssertionType'                         # ONLY EXTERNAL
+    lollipopAuthJwt: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopAuthJwt'                               # ONLY EXTERNAL
+    lollipopUserId: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopUserId'                                # ONLY EXTERNAL
+    lollipopSignatureInput: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopSignatureInput'                        # ONLY EXTERNAL
+    lollipopSignature: # ONLY EXTERNAL
+      $ref: './remote-refs.yaml#/components/parameters/lollipopSignature'                             # ONLY EXTERNAL
+
+
+
   schemas:
     IoCourtesyDigitalAddressActivation:
       description: Io courtesy activation
@@ -84,6 +213,54 @@ components:
       properties:
         activationStatus:
           type: boolean
+
+    ConsentAction:
+      type: object
+      properties:
+        action:
+          type: string
+          description: action on consent
+          enum:
+            - ACCEPT
+            - DECLINE
+
+    ConsentType:
+      type: string
+      description: type of consent
+      enum:
+        - TOS
+        - DATAPRIVACY
+        - TOS_DEST_B2B
+        - TOS_SERCQ
+        - DATAPRIVACY_SERCQ
+
+    Consent:
+      type: object
+      required:
+        - consentType
+        - recipientId
+        - consentVersion
+      properties:
+        recipientId:
+          example: '123e4567-e89b-12d3-a456-426614174000'
+          type: string
+        consentType:
+          $ref: '#/components/schemas/ConsentType'
+        accepted:
+          type: boolean
+        consentVersion:
+          $ref: '#/components/schemas/ConsentVersion'
+        isFirstAccept:
+          type: boolean
+
+    ConsentVersion:
+      type: string
+      description: version of consent
+      maxLength: 10
+      pattern: ^[a-zA-Z0-9_.-]*$
+
+
+
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
