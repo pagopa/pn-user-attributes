@@ -232,9 +232,13 @@ components:
       required:
         - consentType
         - recipientId
-        - consentVersion
+        - consentVersion 
+        - noticeId
       properties:
         recipientId:
+          example: '123e4567-e89b-12d3-a456-426614174000'
+          type: string
+        noticeId:
           example: '123e4567-e89b-12d3-a456-426614174000'
           type: string
         consentType:
