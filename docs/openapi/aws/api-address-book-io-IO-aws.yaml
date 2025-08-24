@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: UShJ9DXpZlYG/8IXZDecXGE3BP/vVgjJxRBb3zqkyUk=
+  version: fFeVih8dp9B2RUDuQDAInpJox5yQMVxyPJ9Ut1Us6yw=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -360,6 +360,8 @@ components:
 tags:
   - name: courtesy
     description: Receiver Digital Addresses
+  - name: consents
+    description: PN User Consents
 x-amazon-apigateway-gateway-responses:
   DEFAULT_5XX:
     responseParameters:

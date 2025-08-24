@@ -11,15 +11,17 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
-  - url: https://api.pn.pagopa.it
+  - url: https://api-io.pn.pagopa.it
     description: Ambiente di produzione
-  - url: https://api.uat.pn.pagopa.it
+  - url: https://api-io.uat.pn.pagopa.it
     description: Ambiente di test
-  - url: https://api.dev.pn.pagopa.it
+  - url: https://api-io.dev.pn.pagopa.it
     description: Ambiente di sviluppo
 tags:
   - name: courtesy
     description: Receiver Digital Addresses
+  - name: consents
+    description: PN User Consents
 
 paths:
   /address-book-io/v1/digital-address/courtesy:
