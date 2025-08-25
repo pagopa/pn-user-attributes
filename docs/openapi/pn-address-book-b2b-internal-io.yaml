@@ -250,6 +250,7 @@ components:
         - consentType
         - recipientId
         - consentVersion
+        - tosContentUrl
       properties:
         recipientId:
           example: '123e4567-e89b-12d3-a456-426614174000'
@@ -262,6 +263,11 @@ components:
           $ref: '#/components/schemas/ConsentVersion'
         isFirstAccept:
           type: boolean
+        tosContentUrl:
+          type: string
+          description: url of page which contains terms of service or privacy policy
+          format: uri
+          example: 'https://www.pagopa.it/termini-e-condizioni/'
 
     ConsentVersion:
       type: string
