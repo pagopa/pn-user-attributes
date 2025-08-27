@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: KDvoD55rbJYeJ9DBDyRZv8vkoOE9CLZy9zC2GFDVCxg=
+  version: P7r6sqML1z7x6VnKgxxBx4CeJDY2wwClmS46ImpAUrk=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -255,7 +255,7 @@ components:
         - consentType
         - recipientId
         - consentVersion
-        - tosContentUrl
+        - consentUrl
       properties:
         recipientId:
           example: 123e4567-e89b-12d3-a456-426614174000
@@ -268,7 +268,7 @@ components:
           $ref: '#/components/schemas/ConsentVersion'
         isFirstAccept:
           type: boolean
-        tosContentUrl:
+        consentUrl:
           type: string
           description: url of page which contains terms of service or privacy policy
           format: uri
