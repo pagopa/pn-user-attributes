@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: fFeVih8dp9B2RUDuQDAInpJox5yQMVxyPJ9Ut1Us6yw=
+  version: KDvoD55rbJYeJ9DBDyRZv8vkoOE9CLZy9zC2GFDVCxg=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -255,6 +255,7 @@ components:
         - consentType
         - recipientId
         - consentVersion
+        - tosContentUrl
       properties:
         recipientId:
           example: 123e4567-e89b-12d3-a456-426614174000
@@ -267,6 +268,11 @@ components:
           $ref: '#/components/schemas/ConsentVersion'
         isFirstAccept:
           type: boolean
+        tosContentUrl:
+          type: string
+          description: url of page which contains terms of service or privacy policy
+          format: uri
+          example: https://www.pagopa.it/termini-e-condizioni/
     ConsentVersion:
       type: string
       description: version of consent
