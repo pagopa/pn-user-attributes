@@ -263,7 +263,7 @@ components:
           $ref: '#/components/schemas/ConsentVersion'
         isFirstAccept:
           type: boolean
-        tosContentUrl:
+        consentUrl:
           type: string
           description: url of page which contains terms of service or privacy policy
           format: uri
