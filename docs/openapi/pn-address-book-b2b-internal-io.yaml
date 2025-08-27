@@ -250,6 +250,7 @@ components:
         - consentType
         - recipientId
         - consentVersion
+        - privacyNoticeId
         - consentUrl
       properties:
         recipientId:
@@ -263,6 +264,10 @@ components:
           $ref: '#/components/schemas/ConsentVersion'
         isFirstAccept:
           type: boolean
+        privacyNoticeId:
+          type: string
+          description: privacy notice identifier
+          example: '12345-abcde-67890-fghij'
         consentUrl:
           type: string
           description: url of page which contains terms of service or privacy policy
