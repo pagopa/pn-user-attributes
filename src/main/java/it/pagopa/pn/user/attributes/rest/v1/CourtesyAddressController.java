@@ -61,20 +61,62 @@ public class CourtesyAddressController implements CourtesyApi {
              optionalPnAuditLogEvent = Optional.empty();
         }
 
-        return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof PnAddressNotFoundException) {
-                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateWarning(throwable.getMessage()).log());
-                    } else {
+        return preCheckEmailBeforeDeletion(recipientId, senderId, channelType,pnCxType,pnCxGroups,pnCxRole,optionalPnAuditLogEvent);
+
+    }
+
+    /**
+     * Decide se la cancellazione dell'indirizzo di cortesia EMAIL è possibile:
+     * - se è presente un indirizzo SERCQ: errore 400, non è possibile la cancellazione
+     * - se non è presente un indirizzo SERCQ: si può procedere con la cancellazione
+     *
+     * Se NON ci troviamo nel channelType EMAIL verranno effettuate le cancellazioni richieste
+     */
+    private Mono<ResponseEntity<Void>> preCheckEmailBeforeDeletion(String recipientId, String senderId,
+                                                                   CourtesyChannelTypeDto channelType,
+                                                                   CxTypeAuthFleetDto pnCxType,
+                                                                   List<String> pnCxGroups,
+                                                                   String pnCxRole,
+                                                                   Optional<PnAuditLogEvent> optionalPnAuditLogEvent) {
+        log.info("Invoking preCheckEmailBeforeDeletion() for recipientId={} senderId={} channelType={}", recipientId, senderId, channelType);
+
+        if (channelType != CourtesyChannelTypeDto.EMAIL) {
+            log.info("ChannelType is not EMAIL, proceeding to delete and skipping preCheck for recipientId={} senderId={}",recipientId,senderId);
+            return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType,
+                            pnCxType, pnCxGroups, pnCxRole)
+                    .onErrorResume(throwable -> {
                         optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateFailure(throwable.getMessage()).log());
+                        return Mono.error(throwable);
+                    })
+                    .map(m -> {
+                        optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateSuccess("Delete executed").log());
+                        return ResponseEntity.noContent().build();
+                    });
+        }
+        log.info("ChannelType is EMAIL, proceeding with precheck for recipientId={} senderId={} channelType={}", recipientId,senderId,channelType);
+        return addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
+                .filter(address -> address.getChannelType() == LegalChannelTypeDto.SERCQ)
+                .hasElements()
+                .flatMap(exists -> {
+                    if (exists) {
+                        log.error("Deletion blocked: legal address SERCQ is present for recipientId={} senderId={}", recipientId, senderId);
+                        return Mono.just(ResponseEntity.badRequest().build());
+                    } else {
+                        log.info("No SERCQ legal address found, proceeding deleting EMAIL for recipientId={} senderId={} channelType={}", recipientId,senderId,channelType);
+                        return addressBookService.deleteCourtesyAddressBook(recipientId, senderId, channelType,
+                                        pnCxType, pnCxGroups, pnCxRole)
+                                .onErrorResume(throwable -> {
+                                    optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateFailure(throwable.getMessage()).log());
+                                    return Mono.error(throwable);
+                                })
+                                .map(m -> {
+                                    optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateSuccess("Delete executed").log());
+                                    return ResponseEntity.noContent().build();
+                                });
                     }
-                    return Mono.error(throwable);
-                })
-                .map(m -> {
-                    optionalPnAuditLogEvent.ifPresent(logEvent -> logEvent.generateSuccess(logMessage).log());
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
                 });
     }
+
 
     @Override
     public Mono<ResponseEntity<Flux<CourtesyDigitalAddressDto>>> getCourtesyAddressByRecipient(String recipientId,
