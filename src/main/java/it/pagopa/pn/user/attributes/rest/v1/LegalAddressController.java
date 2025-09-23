@@ -119,13 +119,41 @@ public class LegalAddressController implements LegalApi {
                                     : address.getChannelType() == LegalChannelTypeDto.SERCQ);
 
                     return checkConsents(recipientId, pnCxType, channelType)
-                            .flatMap(hasConsents -> Boolean.TRUE.equals(hasConsents) ? Mono.empty() : Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto())))
-                            .then(filteredAddresses.collectList())
-                            .doOnNext(filteredAddressesList -> log.debug("filteredAddressesList={}", filteredAddressesList))
-                            .flatMap(filteredAddressesList ->
-                                    executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                            addressVerificationDtoMdc, pnCxGroups, pnCxRole, filteredAddressesList));
-                            });
+                            .flatMap(hasConsents -> Boolean.TRUE.equals(hasConsents)
+                                    ? Mono.empty()
+                                    : Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto())))
+                            .then(Mono.defer(() -> handleChannelLogic(recipientId,pnCxType,senderId,channelType,addressVerificationDtoMdc,pnCxGroups,pnCxRole,filteredAddresses)));
+        });
+    }
+
+    private Mono<ResponseEntity<AddressVerificationResponseDto>> handleChannelLogic(String recipientId,
+                                                                                    CxTypeAuthFleetDto pnCxType,
+                                                                                    String senderId,
+                                                                                    LegalChannelTypeDto channelType,
+                                                                                    AddressVerificationDto addressVerificationDtoMdc,
+                                                                                    List<String> pnCxGroups,
+                                                                                    String pnCxRole,
+                                                                                    Flux<LegalDigitalAddressDto> filteredAddresses) {
+
+        if (channelType != LegalChannelTypeDto.SERCQ) {
+            return filteredAddresses.collectList()
+                    .flatMap(list -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
+                            addressVerificationDtoMdc, pnCxGroups, pnCxRole, list));
+        }
+
+        // Logica SERCQ: controllo presenza EMAIL courtesy
+        return addressBookService.getCourtesyAddressByRecipientAndSender(recipientId, senderId)
+                .filter(courtesy -> courtesy.getChannelType() == CourtesyChannelTypeDto.EMAIL)
+                .hasElements()
+                .flatMap(hasEmail -> {
+                    if (!hasEmail) {
+                        log.error("Activation of SERCQ failed: missing courtesy EMAIL for recipientId={} senderId={}", recipientId, senderId);
+                        return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
+                    }
+                    return filteredAddresses.collectList()
+                            .flatMap(list -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
+                                    addressVerificationDtoMdc, pnCxGroups, pnCxRole, list));
+                });
     }
 
 

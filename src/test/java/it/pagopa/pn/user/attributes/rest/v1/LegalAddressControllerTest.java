@@ -159,6 +159,11 @@ class LegalAddressControllerTest {
                 .accepted(true).build();
         ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
                 .accepted(true).build();
+
+        CourtesyDigitalAddressDto courtesyEmail = new CourtesyDigitalAddressDto();
+        courtesyEmail.setChannelType(CourtesyChannelTypeDto.EMAIL);
+        courtesyEmail.setValue("test@example.com");
+
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
@@ -166,6 +171,8 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
+                .thenReturn(Flux.just(courtesyEmail));
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
@@ -181,6 +188,56 @@ class LegalAddressControllerTest {
                 .expectStatus()
                 .isNoContent();
     }
+
+    @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddressActivationSERCQError(String channelType) {
+        // Given
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", channelType);
+
+        AddressVerificationDto addressVerification = new AddressVerificationDto();
+        addressVerification.setVerificationCode("12345");
+        addressVerification.setValue("+393333300666");
+
+
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
+
+
+
+        // When
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto1));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
+                .thenReturn(Flux.empty());
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(voidReturn);
+        when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
+
+        // Then
+        WebTestClient.ResponseSpec response = webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerification)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange();
+
+        if ("SERCQ".equals(channelType)) {
+            response.expectStatus().isBadRequest();
+        } else {
+            response.expectStatus().isNoContent();
+        }
+    }
+
 
     @ParameterizedTest(name = "Test postRecipientLegalAddress with channelType = {0}")
     @MethodSource("provideChannelTypes")
@@ -226,6 +283,8 @@ class LegalAddressControllerTest {
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setValue("test@email.com");
+        CourtesyDigitalAddressDto courtesyEmail = new CourtesyDigitalAddressDto();
+        courtesyEmail.setChannelType(CourtesyChannelTypeDto.EMAIL);
 
         ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
                 .accepted(true).build();
@@ -238,6 +297,7 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.getCourtesyAddressByRecipientAndSender(anyString(),anyString())).thenReturn(Flux.just(courtesyEmail));
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
