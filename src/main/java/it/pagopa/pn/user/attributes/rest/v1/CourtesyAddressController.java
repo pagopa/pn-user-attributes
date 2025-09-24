@@ -94,7 +94,8 @@ public class CourtesyAddressController implements CourtesyApi {
                     });
         }
         log.info("ChannelType is EMAIL, proceeding with precheck for recipientId={} senderId={} channelType={}", recipientId,senderId,channelType);
-        return addressBookService.getLegalAddressByRecipientAndSender(recipientId, senderId)
+        return addressBookService.getLegalAddressByRecipient(recipientId, pnCxType,
+                pnCxGroups, pnCxRole)
                 .filter(address -> address.getChannelType() == LegalChannelTypeDto.SERCQ)
                 .hasElements()
                 .flatMap(exists -> {

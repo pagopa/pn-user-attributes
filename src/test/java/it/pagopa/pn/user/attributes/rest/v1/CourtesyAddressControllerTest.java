@@ -193,13 +193,16 @@ class CourtesyAddressControllerTest {
                 .replace("{senderId}", SENDERID)
                 .replace("{channelType}", CourtesyChannelTypeDto.EMAIL.name());
 
-        LegalDigitalAddressDto sercqAddress = new LegalDigitalAddressDto();
-        sercqAddress.setChannelType(LegalChannelTypeDto.SERCQ);
+        LegalAndUnverifiedDigitalAddressDto dto = new LegalAndUnverifiedDigitalAddressDto();
+        dto.setRecipientId(RECIPIENTID);
+        dto.setSenderId(SENDERID);
+        dto.setChannelType(LegalChannelTypeDto.SERCQ);
+        Flux<LegalAndUnverifiedDigitalAddressDto> sercqAddress = Flux.just(dto);
 
-        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString()))
-                .thenReturn(Flux.just(sercqAddress));
+        when(svc.getLegalAddressByRecipient(any(), any(), any(), any()))
+                .thenReturn(sercqAddress);
 
-        // Quando / Then
+        // When / Then
         webTestClient.delete()
                 .uri(url)
                 .header(PA_ID, RECIPIENTID)
