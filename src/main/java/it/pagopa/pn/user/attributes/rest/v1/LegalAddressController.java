@@ -142,7 +142,7 @@ public class LegalAddressController implements LegalApi {
         }
 
         // Logica SERCQ: controllo presenza EMAIL courtesy
-        return addressBookService.getCourtesyAddressByRecipientAndSender(recipientId, senderId)
+        return addressBookService.getCourtesyAddressByRecipient(recipientId, pnCxType, pnCxGroups, pnCxRole)
                 .filter(courtesy -> courtesy.getChannelType() == CourtesyChannelTypeDto.EMAIL)
                 .hasElements()
                 .flatMap(hasEmail -> {
