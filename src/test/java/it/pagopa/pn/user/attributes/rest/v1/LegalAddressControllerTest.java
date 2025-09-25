@@ -171,7 +171,7 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
-        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
+        when(svc.getCourtesyAddressByRecipient(any(), any(),any(),any()))
                 .thenReturn(Flux.just(courtesyEmail));
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
@@ -216,7 +216,7 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
-        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
+        when(svc.getCourtesyAddressByRecipient(any(), any(),any(),any()))
                 .thenReturn(Flux.empty());
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
@@ -297,7 +297,7 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
-        when(svc.getCourtesyAddressByRecipientAndSender(anyString(),anyString())).thenReturn(Flux.just(courtesyEmail));
+        when(svc.getCourtesyAddressByRecipient(any(),any(), any(),any())).thenReturn(Flux.just(courtesyEmail));
         when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
