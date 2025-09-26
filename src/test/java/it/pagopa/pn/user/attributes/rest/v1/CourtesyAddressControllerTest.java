@@ -2,9 +2,7 @@ package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyDigitalAddressDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -16,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @WebFluxTest(controllers = {CourtesyAddressController.class})
 class CourtesyAddressControllerTest {
@@ -186,6 +184,35 @@ class CourtesyAddressControllerTest {
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
+    }
+
+    @Test
+    void deleteRecipientCourtesyAddress_FAIL_whenEmailHasSercqAddress() {
+        // Given
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CourtesyChannelTypeDto.EMAIL.name());
+
+        LegalAndUnverifiedDigitalAddressDto dto = new LegalAndUnverifiedDigitalAddressDto();
+        dto.setRecipientId(RECIPIENTID);
+        dto.setSenderId(SENDERID);
+        dto.setChannelType(LegalChannelTypeDto.SERCQ);
+        Flux<LegalAndUnverifiedDigitalAddressDto> sercqAddress = Flux.just(dto);
+
+        when(svc.getLegalAddressByRecipient(any(), any(), any(), any()))
+                .thenReturn(sercqAddress);
+
+        // When / Then
+        webTestClient.delete()
+                .uri(url)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+
+        // Verifica che deleteCourtesyAddressBook NON venga chiamata
+        verify(svc, never()).deleteCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any());
     }
 
     @Test
