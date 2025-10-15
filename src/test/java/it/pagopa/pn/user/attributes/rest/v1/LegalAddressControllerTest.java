@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @WebFluxTest(controllers = {LegalAddressController.class})
 class LegalAddressControllerTest {
@@ -70,6 +70,34 @@ class LegalAddressControllerTest {
                 .expectStatus()
                 .isNoContent();
     }
+
+    @ParameterizedTest(name = "Test deleteRecipientLegalAddress with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void deleteRecipientLegalAddressBlocked(String channelType) {
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", channelType);
+
+        LegalAndUnverifiedDigitalAddressDto specificAddress = new LegalAndUnverifiedDigitalAddressDto();
+        specificAddress.setSenderId("ente-123");
+        specificAddress.setChannelType(LegalChannelTypeDto.PEC); // può essere qualsiasi canale legale
+        specificAddress.setAddressType(LegalAddressTypeDto.LEGAL);
+
+        when(svc.getLegalAddressByRecipient(anyString(), any(), any(), any()))
+                .thenReturn(Flux.just(specificAddress));
+
+        webTestClient.delete()
+                .uri(url)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+
+        verify(svc, never()).deleteLegalAddressBook(anyString(), anyString(), any(), any(), any(), any());
+
+    }
+
 
     @ParameterizedTest(name = "Test deleteRecipientLegalAddress with channelType = {0}")
     @MethodSource("provideChannelTypes")

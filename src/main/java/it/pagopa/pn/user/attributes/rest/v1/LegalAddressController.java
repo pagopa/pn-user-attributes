@@ -73,7 +73,7 @@ public class LegalAddressController implements LegalApi {
                         logEvent.generateFailure(errMsg).log();
                         return Mono.just(ResponseEntity.badRequest().build());
                     }
-                    // Proseguo con la cancellazione
+                    // se la verifica passa, proseguo con la cancellazione
                     return addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
                             .onErrorResume(throwable -> handleDeletionError(logEvent,throwable))
                             .map(m -> {
@@ -92,7 +92,6 @@ public class LegalAddressController implements LegalApi {
 
         return addresses.stream()
                 .anyMatch(addr -> !DEFAULT_SENDERID.equals(addr.getSenderId())
-                        && addr.getChannelType() == channelType
                         && addr.getAddressType() == LegalAddressTypeDto.LEGAL);
     }
 
