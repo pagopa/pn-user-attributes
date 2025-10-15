@@ -66,7 +66,8 @@ public class LegalAddressController implements LegalApi {
                         pnCxGroups, pnCxRole)
                 .collectList()
                 .flatMap(addresses -> {
-                    if (isDeletionBlocked(senderId, channelType, addresses)) {
+                    log.info("Retrieved {} addresses for recipientId={}", addresses.size(), recipientId);
+                    if (isDeletionBlocked(senderId, addresses)) {
                         String errMsg = String.format(
                                 "Deletion not allowed: a not generic legal address exists for recipientId=%s", recipientId
                         );
@@ -87,9 +88,12 @@ public class LegalAddressController implements LegalApi {
     // va controllato se ne esiste uno per ente specifico:
     // -se esiste l'indirizzo specifico per ente, la cancellazione del domicilio generico non è possibile
     // -altrimenti si prosegue con la cancellazione
-    private boolean isDeletionBlocked(String senderId, LegalChannelTypeDto channelType, List<LegalAndUnverifiedDigitalAddressDto> addresses) {
-        if (!DEFAULT_SENDERID.equals(senderId)) return false;
-
+    private boolean isDeletionBlocked(String senderId, List<LegalAndUnverifiedDigitalAddressDto> addresses) {
+        log.info("Invoking isDeletionBlocked() for senderId={}",senderId);
+        if (!DEFAULT_SENDERID.equals(senderId)) {
+            log.debug("isDeletionBlocked() senderId={} is specific: deletion allowed", senderId);
+            return false;
+        }
         return addresses.stream()
                 .anyMatch(addr -> !DEFAULT_SENDERID.equals(addr.getSenderId())
                         && addr.getAddressType() == LegalAddressTypeDto.LEGAL);
