@@ -48,11 +48,14 @@ class LegalAddressControllerTest {
     @ParameterizedTest(name = "Test deleteRecipientLegalAddress with channelType = {0}")
     @MethodSource("provideChannelTypes")
     void deleteRecipientLegalAddress(String channelType) {
+
         // Given
         String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
                 .replace("{senderId}", SENDERID)
                 .replace("{channelType}", channelType);
 
+        when(svc.getLegalAddressByRecipient(anyString(), any(), any(), any()))
+                .thenReturn(Flux.empty());
         // When
         Mono<Object> voidReturn  = Mono.just("");
         when(svc.deleteLegalAddressBook(anyString(), anyString(), any(), any(), any(), any()))
