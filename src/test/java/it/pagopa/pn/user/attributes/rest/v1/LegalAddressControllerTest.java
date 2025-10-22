@@ -1,10 +1,12 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.exceptions.PnExceptionInsertingAddress;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,10 +22,12 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
-@WebFluxTest(controllers = {LegalAddressController.class})
+@Slf4j
+@WebFluxTest(controllers = {LegalAddressController.class,LegalAddressControllerWrapper.class, AddressPrivateControllerWrapper.class, CourtesyAddressControllerWrapper.class, CourtesyAddressController.class})
 class LegalAddressControllerTest {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";
@@ -206,9 +210,6 @@ class LegalAddressControllerTest {
                 .accepted(true).build();
         ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
                 .accepted(true).build();
-
-
-
         // When
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
@@ -222,7 +223,64 @@ class LegalAddressControllerTest {
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
-        // Then
+
+        WebTestClient.RequestHeadersSpec<?> request = webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerification)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF);
+
+        if ("SERCQ".equals(channelType)) {
+            request.exchange()
+                    .expectStatus().isBadRequest()
+                    .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                    .expectBody()
+                    .jsonPath("$.title").isEqualTo("ERROR_DURING_SERCQ_ACTIVATING")
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.errors[0].code").isEqualTo("PN_HTTPRESPONSE_GENERIC_ERROR")
+                    .jsonPath("$.errors[0].detail").exists();
+        } else {
+            request.exchange()
+                    .expectStatus().isNoContent();
+        }
+    }
+
+    @ParameterizedTest(name = "Test postRecipientLegalAddress SERCQ KO with channelType = {0}")
+    @MethodSource("provideChannelTypes")
+    void postRecipientLegalAddress_SercqKo(String channelType) {
+        // Given
+        String url = "/address-book/v1/digital-address/legal/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", channelType);
+
+        // Forzo direttamente l'eccezione quando il servizio viene chiamato
+        ConsentDto consentDto = ConsentDto.builder().consentType(ConsentTypeDto.TOS_SERCQ).recipientId("recipientId")
+                .accepted(true).build();
+        ConsentDto consentDto1 = ConsentDto.builder().consentType(ConsentTypeDto.DATAPRIVACY_SERCQ). recipientId("recipientId")
+                .accepted(true).build();
+
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.TOS_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto));
+        when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
+                .thenReturn(Mono.just(consentDto1));
+        when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
+        when(svc.getCourtesyAddressByRecipient(any(), any(), any(), any()))
+                .thenThrow(new PnExceptionInsertingAddress(
+                        ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL));
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(voidReturn);
+        when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
+
+        when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
+
+        // Corpo della request
+        AddressVerificationDto addressVerification = new AddressVerificationDto();
+        addressVerification.setValue("+393333300666");
+        addressVerification.setVerificationCode("12345");
+
+        // When & Then
         WebTestClient.ResponseSpec response = webTestClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -231,8 +289,22 @@ class LegalAddressControllerTest {
                 .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange();
 
+        response.expectBody(String.class).consumeWith(result -> {
+            String body = result.getResponseBody();
+            log.info("=== Response Body ===");
+            log.info(body);
+            log.info("=====================");
+        });
+
         if ("SERCQ".equals(channelType)) {
-            response.expectStatus().isBadRequest();
+            response.expectStatus().isBadRequest()
+                    .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                    .expectBody()
+                    .jsonPath("$.title").isEqualTo(ERROR_TITLE_LEGAL)
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.detail").isEqualTo(ERROR_ACTIVATION_LEGAL)
+                    .jsonPath("$.errors[0].code").isEqualTo("PN_HTTPRESPONSE_GENERIC_ERROR")
+                    .jsonPath("$.errors[0].detail").isEqualTo(ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL);
         } else {
             response.expectStatus().isNoContent();
         }

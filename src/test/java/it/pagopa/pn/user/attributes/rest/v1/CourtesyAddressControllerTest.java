@@ -1,7 +1,10 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
+import it.pagopa.pn.user.attributes.exceptions.PnExceptionDeletingAddress;
 import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.services.ConsentsService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +15,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@WebFluxTest(controllers = {CourtesyAddressController.class})
+@WebFluxTest(controllers = {LegalAddressController.class,LegalAddressControllerWrapper.class, AddressPrivateControllerWrapper.class, CourtesyAddressControllerWrapper.class, CourtesyAddressController.class})
 class CourtesyAddressControllerTest {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";
@@ -28,9 +32,12 @@ class CourtesyAddressControllerTest {
 
     @Autowired
     WebTestClient webTestClient;
-
     @MockBean
     AddressBookService svc;
+    @MockBean
+    ConsentsService consentsService;
+    @MockBean
+    PnUserattributesConfig pnUserattributesConfig;
 
     @Test
     void postRecipientCourtesyAddress() {
@@ -208,11 +215,46 @@ class CourtesyAddressControllerTest {
                 .header(PA_ID, RECIPIENTID)
                 .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus()
-                .isBadRequest();
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType("application/problem+json")
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.title").isEqualTo(ERROR_TITLE_COURTESY)
+                .jsonPath("$.detail").isEqualTo(ERROR_DELETE_COURTESY)
+                .jsonPath("$.errors[0].code").isEqualTo("PN_HTTPRESPONSE_GENERIC_ERROR")
+                .jsonPath("$.errors[0].detail").isEqualTo(ERROR_DELETE_COURTESY_EMAIL_DETAIL);
+
 
         // Verifica che deleteCourtesyAddressBook NON venga chiamata
         verify(svc, never()).deleteCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    void deleteRecipientCourtesyAddress_FAIL_withException() {
+        // Given
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", CourtesyChannelTypeDto.EMAIL.name());
+        when(svc.getLegalAddressByRecipient(any(), any(), any(), any()))
+                .thenReturn(Flux.just(new LegalAndUnverifiedDigitalAddressDto()));
+        doReturn(Mono.error(new PnExceptionDeletingAddress("Deleting email failed: sercq address is present")))
+                .when(svc).deleteCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any());
+
+        // When / Then
+        webTestClient.delete()
+                .uri(url)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentType("application/problem+json")
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.title").isEqualTo(ERROR_TITLE_COURTESY)
+                .jsonPath("$.detail").isEqualTo(ERROR_DELETE_COURTESY)
+                .jsonPath("$.errors[0].code").isEqualTo("PN_HTTPRESPONSE_GENERIC_ERROR")
+                .jsonPath("$.errors[0].detail").isEqualTo(ERROR_DELETE_COURTESY_EMAIL_DETAIL);
+
     }
 
     @Test
@@ -254,14 +296,19 @@ class CourtesyAddressControllerTest {
         dto.setSenderId(SENDERID);
         dto.setChannelType(CourtesyChannelTypeDto.APPIO);
 
-        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), anyString()))
+        when(svc.getCourtesyAddressByRecipientAndSender(anyString(), any()))
                 .thenReturn(retValue);
 
         // Then
         webTestClient.get()
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isOk()
+                .expectBodyList(CourtesyDigitalAddressDto.class)
+                .hasSize(1)
+                .contains(dto);
     }
 }

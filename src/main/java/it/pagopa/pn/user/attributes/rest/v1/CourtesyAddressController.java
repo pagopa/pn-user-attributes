@@ -4,10 +4,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
-import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
-import it.pagopa.pn.user.attributes.exceptions.PnExpiredVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnInvalidVerificationCodeException;
-import it.pagopa.pn.user.attributes.exceptions.PnRetryLimitVerificationCodeException;
+import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.CourtesyApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
@@ -16,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -26,9 +24,10 @@ import reactor.util.function.Tuples;
 import java.util.List;
 import java.util.Optional;
 
+import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.ERROR_DELETE_COURTESY_EMAIL_DETAIL;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
-@RestController
+@Service
 @Slf4j
 public class CourtesyAddressController implements CourtesyApi {
 
@@ -92,7 +91,7 @@ public class CourtesyAddressController implements CourtesyApi {
                 .flatMap(exists -> {
                     if (exists) {
                         log.error("Deletion blocked: legal address SERCQ is present for recipientId={} senderId={}", recipientId, senderId);
-                        return Mono.just(ResponseEntity.badRequest().build());
+                        return Mono.error(new PnExceptionDeletingAddress(ERROR_DELETE_COURTESY_EMAIL_DETAIL));
                     } else {
                         log.info("No SERCQ legal address found, proceeding deleting EMAIL for recipientId={} senderId={} channelType={}", recipientId,senderId,channelType);
                         return deleteCourtesyAddress(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole, optionalPnAuditLogEvent);
