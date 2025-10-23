@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.when;
 @Import(LocalStackTestConfig.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-class LegalAddressControllerWrapperTestIT {
+class LegalAddressControllerTestIT {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";
     private static final String PN_CX_TYPE_HEADER = "x-pagopa-pn-cx-type";
@@ -59,9 +58,7 @@ class LegalAddressControllerWrapperTestIT {
     @Autowired
     WebTestClient webTestClient;
     @Autowired
-    AddressBookDao addressBookDao;
-    @MockBean
-    LegalAddressController legalAddress;
+    private AddressBookDao addressBookDao;
     TestDao<VerificationCodeEntity> testDao;
 
     @BeforeEach
@@ -79,13 +76,13 @@ class LegalAddressControllerWrapperTestIT {
 
         AddressVerificationDto addressVerification = new AddressVerificationDto();
         addressVerification.setValue(realAddress);
-        AddressVerificationResponseDto expectedResponse = new AddressVerificationResponseDto(); expectedResponse.setResult(CODE_VERIFICATION_REQUIRED);
+
         // When
         Map<String, AddressDtoDto> addresses = Map.of(LegalAddressTypeDto.LEGAL + "#" + "default" + "#" + "PEC", new AddressDtoDto().value(realAddress));
         when(dataVaultClient.getRecipientAddressesByInternalId(RECIPIENTID)).thenReturn(Mono.just(new RecipientAddressesDtoDto().addresses(addresses)));
         when(dataVaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString(), any(BigDecimal.class))).thenReturn(Mono.empty());
         when(externalRegistryClient.getAooUoIdsApi(List.of(SENDERID))).thenReturn(Flux.empty());
-        when(legalAddress.postRecipientLegalAddress( anyString(), any(), anyString(), any(), any(), any(), any(), any()) ).thenReturn(Mono.just(ResponseEntity.ok(expectedResponse)));
+
         // Then
         webTestClient.post()
                 .uri(url)
@@ -118,13 +115,10 @@ class LegalAddressControllerWrapperTestIT {
         verificationCodeEntity.setVerificationCode("12345");
         testDao.put(verificationCodeEntity);
 
-        AddressVerificationResponseDto expectedResponse = new AddressVerificationResponseDto(); expectedResponse.setResult(PEC_VALIDATION_REQUIRED);
-
         // When
         Map<String, AddressDtoDto> addresses = Map.of(LegalAddressTypeDto.LEGAL + "#" + "default" + "#" + "PEC", new AddressDtoDto().value(realAddress));
         when(dataVaultClient.getRecipientAddressesByInternalId(RECIPIENTID)).thenReturn(Mono.just(new RecipientAddressesDtoDto().addresses(addresses)));
         when(externalRegistryClient.getAooUoIdsApi(List.of(SENDERID))).thenReturn(Flux.empty());
-        when(legalAddress.postRecipientLegalAddress( anyString(), any(), anyString(), any(), any(), any(), any(), any()) ).thenReturn(Mono.just(ResponseEntity.ok(expectedResponse)));
 
         // Then
         webTestClient.post()

@@ -18,6 +18,7 @@ import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,7 +30,7 @@ import java.util.Optional;
 import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
-@Service
+@RestController
 @Slf4j
 public class LegalAddressController implements LegalApi {
 

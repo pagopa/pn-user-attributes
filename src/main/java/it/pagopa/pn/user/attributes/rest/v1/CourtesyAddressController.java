@@ -27,7 +27,7 @@ import java.util.Optional;
 import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.ERROR_DELETE_COURTESY_EMAIL_DETAIL;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
-@Service
+@RestController
 @Slf4j
 public class CourtesyAddressController implements CourtesyApi {
 

@@ -20,7 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@WebFluxTest(controllers = {LegalAddressController.class,LegalAddressControllerWrapper.class, AddressPrivateControllerWrapper.class, CourtesyAddressControllerWrapper.class, CourtesyAddressController.class})
+@WebFluxTest(controllers = {LegalAddressController.class, CourtesyAddressController.class})
 class CourtesyAddressControllerTest {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";

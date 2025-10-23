@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@WebFluxTest(controllers = {LegalAddressController.class,LegalAddressControllerWrapper.class, AddressPrivateControllerWrapper.class, CourtesyAddressControllerWrapper.class, CourtesyAddressController.class})
+@WebFluxTest(controllers = {LegalAddressController.class, CourtesyAddressController.class})
 class LegalAddressControllerTest {
 
     private static final String PA_ID = "x-pagopa-pn-cx-id";
