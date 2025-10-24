@@ -6,6 +6,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnAddressNotFoundException;
+import it.pagopa.pn.user.attributes.exceptions.PnExceptionInsertingAddress;
 import it.pagopa.pn.user.attributes.exceptions.SercqDisabledException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -25,6 +27,7 @@ import reactor.util.function.Tuples;
 import java.util.List;
 import java.util.Optional;
 
+import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 
 @RestController
@@ -147,8 +150,8 @@ public class LegalAddressController implements LegalApi {
                 .hasElements()
                 .flatMap(hasEmail -> {
                     if (!hasEmail) {
-                        log.error("Activation of SERCQ failed: missing courtesy EMAIL for recipientId={} senderId={}", recipientId, senderId);
-                        return Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto()));
+                        log.error("Activation of sercq failed: missing courtesy email for recipientId={} senderId={}", recipientId, senderId);
+                        return Mono.error(new PnExceptionInsertingAddress(ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL));
                     }
                     return filteredAddresses.collectList()
                             .flatMap(list -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
