@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.services.utils;
 
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.AddressBookEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
@@ -92,6 +93,9 @@ public class AppIOUtils {
         // NB: non devo sovrascrivere se già presente
 
         log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db uid:{} channel:{} legal:{}", recipientId, channelType, legal);
+        if(!xPagopaCxTaxid.isEmpty()){
+            log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db taxId:{} ", LogUtils.maskTaxId(xPagopaCxTaxid));
+        }
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
         addressBookEntity.setAddresshash(AddressBookEntity.APP_IO_ENABLED);
 

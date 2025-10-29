@@ -51,6 +51,7 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
 
         Mono<String> taxIdMono;
         if (xPagopaCxTaxid != null) {
+            log.info("upsertServiceActivation taxId is not null={}", LogUtils.maskTaxId(xPagopaCxTaxid));
             taxIdMono = Mono.just(xPagopaCxTaxid);
         } else {
             log.warn("upsertServiceActivation param xPagopaCxTaxid not found, proceeding calling deanonymization from pn-data-vault");
