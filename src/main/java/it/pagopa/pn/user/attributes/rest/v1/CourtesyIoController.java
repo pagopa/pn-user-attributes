@@ -36,7 +36,7 @@ public class CourtesyIoController implements CourtesyApi {
 
 
     @Override
-    public  Mono<ResponseEntity<Void>> setCourtesyAddressIo(String xPagopaPnCxId, Mono<IoCourtesyDigitalAddressActivationDto> ioCourtesyDigitalAddressActivationDto,  final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> setCourtesyAddressIo(String xPagopaPnCxId, Mono<IoCourtesyDigitalAddressActivationDto> ioCourtesyDigitalAddressActivationDto, String xPagopaCxTaxid, final ServerWebExchange exchange) {
         String logMessage = String.format("setCourtesyAddressIo - recipientId=%s - senderId=%s - channelType=%s", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO);
         log.info(logMessage);
 
@@ -45,7 +45,7 @@ public class CourtesyIoController implements CourtesyApi {
 
                     if (dto.getActivationStatus())
                     {
-                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto())
+                        return this.addressBookService.saveCourtesyAddressBook(xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO,new AddressVerificationDto(), xPagopaCxTaxid)
                                 .map(m -> {
                                     log.info("setCourtesyAddressIo done - recipientId={} - senderId={} - channelType={} res={}", xPagopaPnCxId, null, CourtesyChannelTypeDto.APPIO, m);
                                     return ResponseEntity.noContent().build();

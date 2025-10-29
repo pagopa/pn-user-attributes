@@ -48,7 +48,7 @@ public class AppIOUtils {
                     return addressBookEntity;
                 }))
                 .then(verifiedAddressUtils.saveInDynamodb(addressBookEntity))
-                .then(this.pnExternalRegistryClient.upsertServiceActivation(addressBookEntity.getRecipientId(), false))
+                .then(this.pnExternalRegistryClient.upsertServiceActivation(addressBookEntity.getRecipientId(), false, null))
                 .onErrorResume(throwable -> {
                     if (waspresent.get()) {
                         log.error("Saving to io-activation-service failed, re-adding to addressbook appio channeltype");
@@ -84,7 +84,7 @@ public class AppIOUtils {
      * @param channelType tipologia canale
      * @return risultato dell'operazione
      */
-    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToIoActivationServiceAndSaveInDynamodb(String recipientId, String legal, String senderId, String channelType)
+    public Mono<AddressBookService.SAVE_ADDRESS_RESULT> sendToIoActivationServiceAndSaveInDynamodb(String recipientId, String legal, String senderId, String channelType, String xPagopaCxTaxid)
     {
         //NB: il metodo deve anche leggere l'eventuale AB presente, perchè deve poi schedulare l'invio di eventuali notifiche "recenti" (Xgg), e c'è bisogno di sapere se
         // il flag era già stato impostato nel periodo tra ORA e ORA-Xgg, perchè vuol dire che le eventuali notifiche fino a quel momento sono già state notificate via IO
@@ -117,7 +117,7 @@ public class AppIOUtils {
                                 .then(Mono.just(ab));
                     }
                 }, (ab, r) -> ab)
-                .zipWhen(ab -> this.pnExternalRegistryClient.upsertServiceActivation(recipientId, true)
+                .zipWhen(ab -> this.pnExternalRegistryClient.upsertServiceActivation(recipientId, true, xPagopaCxTaxid)
                                 .onErrorResume(throwable -> {
                                     log.error("Saving to io-activation-service failed, deleting from addressbook appio channeltype");
                                     // se da errore l'invocazione a io-activation-service, faccio "rollback" sul salvataggio in dynamo-db

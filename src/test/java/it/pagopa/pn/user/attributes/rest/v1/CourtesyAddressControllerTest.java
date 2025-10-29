@@ -129,7 +129,7 @@ class CourtesyAddressControllerTest {
         addressVerificationDto.setValue("value");
 
         // When
-        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any()))
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), anyString()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then

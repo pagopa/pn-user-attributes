@@ -59,7 +59,7 @@ paths:
         - courtesy
       parameters:
         - $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                   # NO EXTERNAL
-#       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
+        - $ref: '#/components/parameters/cxTaxIdInternal'
       requestBody:
         required: true
         content:
@@ -91,6 +91,14 @@ components:
       type: apiKey
       in: header
       name: x-api-key
+  parameters:
+    cxTaxIdInternal:
+      name: x-pagopa-cx-taxid
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Codice fiscale utente per bypass data-vault (only internal)
 
 security:
   - ApiKeyAuth: [] # use the same name as under securitySchemes

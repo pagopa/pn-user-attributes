@@ -94,7 +94,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveAddressBookLegal(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole);
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, null);
     }
 
     /**
@@ -126,8 +126,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null);
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid) {
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null, xPagopaCxTaxid);
     }
 
     /**
@@ -146,7 +146,7 @@ public class AddressBookService {
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto,
                                                              CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto));
+                .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, null));
     }
 
     /**
@@ -436,7 +436,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto
-                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, String xPagopaCxTaxid) {
         log.info("Start saveAddressBook recipientId={} - firstSenderId={} - legalChannelType={} - courtesyChannelType={} - addressVerificationDto={} - pnCxType={} - pnCxGroups={} - pnCxRole={}", recipientId, firstSenderId, legalChannelType, courtesyChannelType, addressVerificationDto.toString(), pnCxType, pnCxGroups, pnCxRole);
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
@@ -455,7 +455,7 @@ public class AddressBookService {
                     .build();
                 logEvent.log();
 
-                return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, checkedSenderId, channelType)
+                return appIOUtils.sendToIoActivationServiceAndSaveInDynamodb(recipientId, legal, checkedSenderId, channelType, xPagopaCxTaxid)
                     .onErrorResume(throwable -> {
                         logEvent.generateFailure("failed saving exception={}", throwable.getMessage(), throwable).log();
                         return Mono.error(throwable);
