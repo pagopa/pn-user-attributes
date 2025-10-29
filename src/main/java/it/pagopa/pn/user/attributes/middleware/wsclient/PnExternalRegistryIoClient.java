@@ -59,6 +59,7 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
                     .next()
                     .map(BaseRecipientDtoDto::getTaxId);
         }
+        log.info("upsertServiceActivation taxId={}", LogUtils.maskTaxId(String.valueOf(taxIdMono)));
         return taxIdMono.flatMap(taxId -> callUpsertServiceActivation(internalId, taxId, activated));
     }
 
