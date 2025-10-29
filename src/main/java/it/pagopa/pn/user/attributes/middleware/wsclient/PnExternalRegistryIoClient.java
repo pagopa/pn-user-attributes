@@ -7,6 +7,7 @@ import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.services.AuditLogService;
+
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
@@ -52,6 +53,7 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
         if (xPagopaCxTaxid != null) {
             taxIdMono = Mono.just(xPagopaCxTaxid);
         } else {
+            log.warn("upsertServiceActivation param xPagopaCxTaxid not found, proceeding calling deanonymization from pn-data-vault");
             taxIdMono = pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
                     .take(1)
                     .next()
