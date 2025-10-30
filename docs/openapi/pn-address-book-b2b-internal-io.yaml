@@ -59,7 +59,8 @@ paths:
         - courtesy
       parameters:
         - $ref: './remote-refs.yaml#/components/parameters/cxIdAuthFleet'                                   # NO EXTERNAL
-        - $ref: '#/components/parameters/cxTaxIdInternal'
+#       - $ref: './remote-refs.yaml#/components/parameters/cxTaxIdAuthFleet'                                  # ONLY EXTERNAL
+        - $ref: '#/components/parameters/cxTaxIdInternal'                                                   # NO EXTERNAL
       requestBody:
         required: true
         content:
