@@ -93,7 +93,7 @@ public class AppIOUtils {
         // NB: non devo sovrascrivere se già presente
 
         log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db uid:{} channel:{} legal:{}", recipientId, channelType, legal);
-        if(!xPagopaCxTaxid.isEmpty()){
+        if(xPagopaCxTaxid != null && !xPagopaCxTaxid.isEmpty()){
             log.info("sendToIoActivationServiceAndSaveInDynamodb sending to io-activation-service and save in db taxId:{} ", LogUtils.maskTaxId(xPagopaCxTaxid));
         }
         AddressBookEntity addressBookEntity = new AddressBookEntity(recipientId, legal, senderId, channelType);
