@@ -7,6 +7,8 @@ import it.pagopa.pn.commons.log.PnLogger;
 import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.services.AuditLogService;
+
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.*;
@@ -43,27 +45,41 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
      *
      * @return void
      */
-    public Mono<Boolean> upsertServiceActivation(String internalId, boolean activated)
-    {
+    public Mono<Boolean> upsertServiceActivation(String internalId, boolean activated, String xPagopaCxTaxid) {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Upsert app IO activation");
         log.debug("upsertServiceActivation internalId={} activated={}", internalId, activated);
 
-        return this.pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
-                .take(1).next()
-                .flatMap(user -> {
-                    ActivationPayload dto = new ActivationPayload();
-                    dto.setFiscalCode(user.getTaxId());
-                    dto.setStatus(activated? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
+        Mono<String> taxIdMono;
+        if (xPagopaCxTaxid != null) {
+            log.info("upsertServiceActivation taxId is not null={}", LogUtils.maskTaxId(xPagopaCxTaxid));
+            taxIdMono = Mono.just(xPagopaCxTaxid);
+        } else {
+            log.warn("upsertServiceActivation param xPagopaCxTaxid not found, proceeding calling deanonymization from pn-data-vault");
+            taxIdMono = pnDataVaultClient.getRecipientDenominationByInternalId(List.of(internalId))
+                    .take(1)
+                    .next()
+                    .map(BaseRecipientDtoDto::getTaxId);
+        }
+        log.info("upsertServiceActivation taxId={}", LogUtils.maskTaxId(String.valueOf(taxIdMono)));
+        return taxIdMono.flatMap(taxId -> callUpsertServiceActivation(internalId, taxId, activated));
+    }
 
-                    return ioApi.upsertServiceActivation(dto)
-                            .onErrorResume(throwable -> {
-                                log.error("error upserting service activation message={}", elabExceptionMessage(throwable) , throwable);
-                                return getServiceActivation(internalId);
-                            })
-                            .map(x -> {
-                                log.info("upsertServiceActivation response taxid={} status={} version={}", LogUtils.maskTaxId(x.getFiscalCode()), x.getStatus(), x.getVersion());
-                                return x.getStatus().equals(ActivationStatus.ACTIVE);
-                            });
+    private Mono<Boolean> callUpsertServiceActivation(String internalId, String taxId, boolean activated) {
+        ActivationPayload dto = new ActivationPayload();
+        dto.setFiscalCode(taxId);
+        dto.setStatus(activated ? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
+
+        return ioApi.upsertServiceActivation(dto)
+                .onErrorResume(throwable -> {
+                    log.error("error upserting service activation message={}", elabExceptionMessage(throwable), throwable);
+                    return getServiceActivation(internalId);
+                })
+                .map(response -> {
+                    log.info("upsertServiceActivation response taxid={} status={} version={}",
+                            LogUtils.maskTaxId(response.getFiscalCode()),
+                            response.getStatus(),
+                            response.getVersion());
+                    return response.getStatus().equals(ActivationStatus.ACTIVE);
                 });
     }
 

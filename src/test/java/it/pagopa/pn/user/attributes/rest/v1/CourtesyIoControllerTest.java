@@ -67,10 +67,11 @@ class CourtesyIoControllerTest {
         ioCourtesyDigitalAddressActivationDto.setActivationStatus(true);
 
         Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
-        Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
+        Mockito.when(svc.saveCourtesyAddressBook(Mockito.any(),
                         Mockito.any(),
                         Mockito.any(),
-                        Mockito.any()))
+                        Mockito.any(), Mockito.any()
+                ))
                 .thenReturn(voidReturn);
 
         // Then
@@ -121,11 +122,10 @@ class CourtesyIoControllerTest {
         IoCourtesyDigitalAddressActivationDto ioCourtesyDigitalAddressActivationDto = new IoCourtesyDigitalAddressActivationDto();
         ioCourtesyDigitalAddressActivationDto.setActivationStatus(true);
 
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> voidReturn  = Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.SUCCESS);
         Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
                         Mockito.any(),
                         Mockito.any(),
-                        Mockito.any()))
+                        Mockito.any(), Mockito.anyString()))
                 .thenReturn(Mono.error(new PnInternalException("test", "test")));
 
         // Then

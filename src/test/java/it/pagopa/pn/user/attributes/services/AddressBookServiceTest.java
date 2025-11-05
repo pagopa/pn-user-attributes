@@ -106,6 +106,7 @@ class AddressBookServiceTest {
     private static final String SERCQ_ADDRESS = "x-pagopa-pn-sercq:send-self:notification-already-delivered";
     private static final String LEGAL_ADDRESS = "email@pec.it";
     private static final String COURTESY_ADDRESS = "email@email.it";
+    private static final String USER_TAX_ID = "EEEEEE00E00E000A";
 
 
 
@@ -488,7 +489,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -520,7 +521,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.deleteVerificationCode(verificationCodeOLD)).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -553,7 +554,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.fromIterable(listPrevious));
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -602,7 +603,7 @@ class AddressBookServiceTest {
 
         // WHEN
         assertThrows(PnInvalidInputException.class, () -> {
-            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block();
+            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block();
         });
     }
 
@@ -621,7 +622,7 @@ class AddressBookServiceTest {
 
         // WHEN
         assertThrows(PnInvalidInputException.class, () -> {
-            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block();
+            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block();
         });
 
         //THEN
@@ -644,7 +645,7 @@ class AddressBookServiceTest {
         // WHEN
          assertThrows(PnInvalidInputException.class, () ->
         {
-            addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, addressVerificationDto).block();
+            addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block();
         });
 
         //THEN
@@ -667,7 +668,7 @@ class AddressBookServiceTest {
 
         // WHEN
         assertThrows(PnInvalidInputException.class, () -> {
-            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block();
+            addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block();
         });
 
         //THEN
@@ -724,13 +725,13 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.anyString())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto()).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto(), USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -747,13 +748,13 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.anyString())).thenReturn(Mono.error(new RuntimeException()));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto());
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto(), USER_TAX_ID);
         assertThrows(RuntimeException.class, () -> mono.block(d));
 
         //THEN
@@ -771,14 +772,14 @@ class AddressBookServiceTest {
         addressBook.setAddresshash(AddressBookEntity.APP_IO_DISABLED);
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(addressBook));
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(false));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.anyString())).thenReturn(Mono.just(false));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteAddressBook(Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(new Object()));
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto());
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, new AddressVerificationDto(), USER_TAX_ID);
         assertThrows(PnInternalException.class, () -> mono.block(d));
 
         //THEN
@@ -808,7 +809,7 @@ class AddressBookServiceTest {
         Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -837,7 +838,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.updateVerificationCodeIfExists(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto);
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID);
 
         //THEN
         assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
@@ -868,7 +869,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto);
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID);
 
         //THEN
         assertThrows(PnRetryLimitVerificationCodeException.class, () -> mono.block(d));
@@ -896,7 +897,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull(result);
@@ -949,7 +950,7 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(new AddressBookEntity()));
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(false));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.any())).thenReturn(Mono.just(false));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
@@ -967,7 +968,7 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(new AddressBookEntity()));
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.error(new RuntimeException()));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.any())).thenReturn(Mono.error(new RuntimeException()));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
@@ -985,7 +986,7 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(new AddressBookEntity()));
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.any())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
@@ -1023,7 +1024,7 @@ class AddressBookServiceTest {
 
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1078,7 +1079,7 @@ class AddressBookServiceTest {
 
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1133,7 +1134,7 @@ class AddressBookServiceTest {
 
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1204,7 +1205,7 @@ class AddressBookServiceTest {
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1255,7 +1256,7 @@ class AddressBookServiceTest {
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1304,7 +1305,7 @@ class AddressBookServiceTest {
         resdto1.setChannelType(CourtesyChannelTypeDto.SMS);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1579,7 +1580,7 @@ class AddressBookServiceTest {
         resdto2.setChannelType(CourtesyChannelTypeDto.EMAIL);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1650,7 +1651,7 @@ class AddressBookServiceTest {
         resdto2.setChannelType(CourtesyChannelTypeDto.EMAIL);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1716,7 +1717,7 @@ class AddressBookServiceTest {
         resdto2.setChannelType(CourtesyChannelTypeDto.EMAIL);
 
         final BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
+        baseRecipientDtoDto.setTaxId(USER_TAX_ID);
         baseRecipientDtoDto.setDenomination("utente test");
         baseRecipientDtoDto.setRecipientType(RecipientTypeDto.PF);
         baseRecipientDtoDto.setInternalId("123456");
@@ -1781,14 +1782,14 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.anyString())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(pnExternalRegistryClient.getAooUoIdsApi(List.of(ROOT_SENDER))).thenReturn(Flux.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, ROOT_SENDER, courtesyChannelType, new AddressVerificationDto()).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, ROOT_SENDER, courtesyChannelType, new AddressVerificationDto(), "EEEEEE00E00E000A").block(d);
 
         //THEN
         assertNotNull( result );
@@ -1804,13 +1805,13 @@ class AddressBookServiceTest {
         CourtesyChannelTypeDto courtesyChannelType = CourtesyChannelTypeDto.APPIO;
 
         Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean())).thenReturn(Mono.just(true));
+        Mockito.when(ioFunctionServicesClient.upsertServiceActivation(Mockito.any(), Mockito.anyBoolean(), Mockito.anyString())).thenReturn(Mono.just(true));
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, ROOT_SENDER, courtesyChannelType, new AddressVerificationDto()).block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, ROOT_SENDER, courtesyChannelType, new AddressVerificationDto(), USER_TAX_ID).block(d);
 
         //THEN
         assertNotNull( result );

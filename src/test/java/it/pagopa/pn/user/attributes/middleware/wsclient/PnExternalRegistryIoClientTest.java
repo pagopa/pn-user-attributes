@@ -131,7 +131,7 @@ class PnExternalRegistryIoClientTest {
 
 
         //When
-        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true ).block();
+        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true, baseRecipientDtoDto.getTaxId()).block();
 
         //Then
         Assertions.assertEquals( true, limitedProfile );
@@ -198,7 +198,7 @@ class PnExternalRegistryIoClientTest {
 
 
         //When
-        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true ).block();
+        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true, baseRecipientDtoDto.getTaxId()).block();
 
         //Then
         Assertions.assertEquals( false, limitedProfile);

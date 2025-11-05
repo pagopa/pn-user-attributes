@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: AinVjZfn2lgxyfptKu6qz9Cgx5HqFNTxLbjqEwsArjI=
+  version: kmbjKDNmZHSxRMi1htpDJvJVXRKa7KBG50xxEf1k24w=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -118,6 +118,13 @@ paths:
         type: http_proxy
 components:
   parameters:
+    cxTaxIdInternal:
+      name: x-pagopa-cx-taxid
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Codice fiscale utente per bypass data-vault (only internal)
     cxTaxIdAuthFleet:
       name: x-pagopa-cx-taxid
       in: header
