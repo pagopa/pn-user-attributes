@@ -9,7 +9,7 @@
   </parent>
   <groupId>it.pagopa.pn.user.attributes</groupId>
   <artifactId>pn-user-attributes</artifactId>
-  <version>2.14.1</version>
+  <version>2.14.1-SNAPSHOT</version>
   <name>pn-user-attributes</name>
   <description>TODO</description>
   <scm>
