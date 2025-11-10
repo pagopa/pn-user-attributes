@@ -15,10 +15,12 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,6 +39,7 @@ public class LegalAddressController implements LegalApi {
     private final AddressBookService addressBookService;
     private final ConsentsService consentsService;
     private final PnUserattributesConfig pnUserattributesConfig;
+    private static String DEFAULT_SENDERID ="default";
 
     public LegalAddressController(AddressBookService addressBookService, ConsentsService consentsService, PnUserattributesConfig pnUserattributesConfig) {
         this.addressBookService = addressBookService;
@@ -61,18 +64,51 @@ public class LegalAddressController implements LegalApi {
                 .build();
         logEvent.log();
 
-        return addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof PnAddressNotFoundException) {
-                        logEvent.generateWarning(throwable.getMessage()).log();
-                    } else {
-                        logEvent.generateFailure(throwable.getMessage()).log();
+        //controllo sugli indirizzi legali
+        return addressBookService.getLegalAddressByRecipient(recipientId, pnCxType,
+                        pnCxGroups, pnCxRole)
+                .collectList()
+                .flatMap(addresses -> {
+                    log.info("Retrieved {} addresses for recipientId={}", addresses.size(), recipientId);
+                    if (isDeletionBlocked(senderId, addresses)) {
+                        String errMsg = String.format(
+                                "Deletion not allowed: a not generic legal address exists for recipientId=%s", recipientId
+                        );
+                        logEvent.generateFailure(errMsg).log();
+                        return Mono.just(ResponseEntity.badRequest().build());
                     }
-                    return Mono.error(throwable);
-                }).map(m -> {
-                    logEvent.generateSuccess(logMessage).log();
-                    return ResponseEntity.noContent().build();
+                    // se la verifica passa, proseguo con la cancellazione
+                    return addressBookService.deleteLegalAddressBook(recipientId, senderId, channelType, pnCxType, pnCxGroups, pnCxRole)
+                            .onErrorResume(throwable -> handleDeletionError(logEvent,throwable))
+                            .map(m -> {
+                                logEvent.generateSuccess(logMessage).log();
+                                return ResponseEntity.noContent().build();
+                            });
                 });
+    }
+
+    //se il senderId=default vuol dire che stiamo rimuovendo un indirizzo generico,
+    // va controllato se ne esiste uno per ente specifico:
+    // -se esiste l'indirizzo specifico per ente, la cancellazione del domicilio generico non è possibile
+    // -altrimenti si prosegue con la cancellazione
+    private boolean isDeletionBlocked(String senderId, List<LegalAndUnverifiedDigitalAddressDto> addresses) {
+        log.info("Invoking isDeletionBlocked() for senderId={}",senderId);
+        if (!DEFAULT_SENDERID.equals(senderId)) {
+            log.debug("isDeletionBlocked() senderId={} is specific: deletion allowed", senderId);
+            return false;
+        }
+        return addresses.stream()
+                .anyMatch(addr -> !DEFAULT_SENDERID.equals(addr.getSenderId())
+                        && addr.getAddressType() == LegalAddressTypeDto.LEGAL);
+    }
+
+    private <T> Mono<T> handleDeletionError(PnAuditLogEvent logEvent, Throwable throwable) {
+        if (throwable instanceof PnAddressNotFoundException) {
+            logEvent.generateWarning(throwable.getMessage()).log();
+        } else {
+            logEvent.generateFailure(throwable.getMessage()).log();
+        }
+        return Mono.error(throwable);
     }
 
     @Override
