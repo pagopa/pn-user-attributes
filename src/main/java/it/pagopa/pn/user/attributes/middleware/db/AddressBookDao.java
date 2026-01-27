@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
@@ -20,8 +21,11 @@ import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
+import software.amazon.awssdk.services.dynamodb.model.TransactionConflictException;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -339,6 +343,8 @@ public class AddressBookDao extends BaseDao {
                 .flatMap(this::deleteVerifiedAddressIfItsLastRemained)
                 .then(Mono.fromFuture(() -> dynamoDbEnhancedAsyncClient.transactWriteItems(transactWriteItemsEnhancedRequest)))
                 // Elimino gli indirizzi da datavault.
+                .retryWhen(Retry.backoff(3, Duration.ofMillis(500))
+                        .filter(throwable -> throwable instanceof TransactionCanceledException || throwable instanceof TransactionConflictException))
                 .then(Mono.defer(() -> {
                     if (addressesToDelete != null && !addressesToDelete.isEmpty()) {
                         return Flux.fromIterable(addressesToDelete)

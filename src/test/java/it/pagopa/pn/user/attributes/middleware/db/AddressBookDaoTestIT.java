@@ -18,6 +18,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactWriteItemsEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.time.Duration;
@@ -896,6 +897,65 @@ class AddressBookDaoTestIT {
 
 
         }
+    @Test
+    void saveAddressBookAndVerifiedAddress_retryOnTransactionExceptions() {
+        AddressBookEntity addressBookToInsert = newAddress(true);
+        VerifiedAddressEntity verifiedAddressToInsert = new VerifiedAddressEntity("VA-123e4567-e89b-12d3-a456-426614174000", "address67323525", "SMS");
+
+        DynamoDbEnhancedAsyncClient mockClient = org.mockito.Mockito.spy(dynamoDbEnhancedAsyncClient);
+        java.util.concurrent.atomic.AtomicInteger callCount = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            int count = callCount.getAndIncrement();
+            if (count == 0) {
+                java.util.concurrent.CompletableFuture<Void> future = new java.util.concurrent.CompletableFuture<>();
+                future.completeExceptionally(
+                    software.amazon.awssdk.services.dynamodb.model.TransactionConflictException.builder().message("conflict").build()
+                );
+                return future;
+            } else if (count == 1) {
+                java.util.concurrent.CompletableFuture<Void> future = new java.util.concurrent.CompletableFuture<>();
+                future.completeExceptionally(
+                    software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException.builder().message("canceled").build()
+                );
+                return future;
+            } else {
+                // Al terzo tentativo chiama il vero metodo per scrivere davvero su DynamoDB
+                return dynamoDbEnhancedAsyncClient.transactWriteItems(
+                    invocation.getArgument(0, TransactWriteItemsEnhancedRequest.class)
+                );
+            }
+        }).when(mockClient).transactWriteItems(org.mockito.ArgumentMatchers.any(TransactWriteItemsEnhancedRequest.class));
+
+        AddressBookDao daoWithMock = new AddressBookDao(
+            mockClient,
+            addressBookDao.dynamoDbAsyncClient,
+            pnUserattributesConfig,
+            addressBookDao.pnDataVaultClient
+        );
+
+        try {
+            testDao.delete(addressBookToInsert.getPk(), addressBookToInsert.getSk());
+        } catch (Exception e) {
+            System.out.println("error removing");
+        }
+
+        daoWithMock.saveAddressBookAndVerifiedAddress(addressBookToInsert, verifiedAddressToInsert, null).block(d);
+
+        try {
+            AddressBookEntity addressBookFromDb = testDao.get(addressBookToInsert.getPk(), addressBookToInsert.getSk());
+            Assertions.assertEquals(addressBookToInsert, addressBookFromDb);
+            Assertions.assertEquals(3, callCount.get(), "Il metodo deve essere chiamato 3 volte (2 errori + 1 successo)");
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            try {
+                testDao.delete(addressBookToInsert.getPk(), addressBookToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("Nothing to remove");
+            }
+        }
+    }
 
         public static AddressBookEntity newAddress(boolean isLegal) {
            return newAddress(isLegal, "default");
