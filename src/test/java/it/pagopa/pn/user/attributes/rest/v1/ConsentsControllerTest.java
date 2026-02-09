@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,9 +37,9 @@ class ConsentsControllerTest {
 
     @Autowired
     WebTestClient webTestClient;
-    @MockBean
+    @MockitoBean
     private ConsentsService svc;
-    @MockBean
+    @MockitoBean
     private PnUserattributesConfig config;
 
     @Test
@@ -558,7 +558,7 @@ class ConsentsControllerTest {
     @Test
     void getPgConsentType() {
         String url = "/pg-consents/v1/consents/{consentType}?version={version}"
-        .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
+        .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2_B.getValue())
                 .replace("{version}", VERSION);
 
         // Given
@@ -567,7 +567,7 @@ class ConsentsControllerTest {
         consentDto.setAccepted(true);
         consentDto.setIsFirstAccept(true);
         consentDto.setConsentVersion(VERSION);
-        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2_B);
 
         // When
         when(svc.getPgConsentByType(any(), any(), any(),
@@ -587,7 +587,7 @@ class ConsentsControllerTest {
     @Test
     void getPgConsentType_ErrorTest() {
         String url = "/pg-consents/v1/consents/{consentType}?version={version}"
-                .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
+                .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2_B.getValue())
                 .replace("{version}", VERSION);
 
         // Given
@@ -596,7 +596,7 @@ class ConsentsControllerTest {
         consentDto.setAccepted(true);
         consentDto.setIsFirstAccept(true);
         consentDto.setConsentVersion(VERSION);
-        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2_B);
 
         // When
         when(svc.getPgConsentByType(any(), any(), any(),

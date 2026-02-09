@@ -56,6 +56,7 @@ components:
         receiverDigitalAddress:
           type: string
           x-field-extra-annotation: "@lombok.ToString.Exclude"                                         # NO EXTERNAL
+          format: password # NO EXTERNAL
           description: >-
             Indirizzo PEC del destinatario (o in genere recapito digitale certificato a valore legale). 
             L’indirizzo si assume valido ed attivo: i servizi erogatori non eseguono ulteriori validazioni sullo stesso.
@@ -64,6 +65,7 @@ components:
         messageText:
           type: string
           x-field-extra-annotation: "@lombok.ToString.Exclude"                                         # NO EXTERNAL
+          format: password # NO EXTERNAL
           description: >-
             Testo del corpo della comunicazione digitale.  
             Può essere a discrezione del chiamante in plain text od html (un campo ad hoc che discrimini il formato è opportuno?).

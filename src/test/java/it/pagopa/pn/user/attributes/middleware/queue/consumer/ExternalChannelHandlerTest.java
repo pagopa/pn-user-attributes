@@ -4,6 +4,7 @@ import it.pagopa.pn.user.attributes.handler.ExternalChannelResponseHandler;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.CourtesyMessageProgressEventDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -13,10 +14,6 @@ import org.springframework.messaging.MessageHeaders;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExternalChannelHandlerTest {
 
@@ -33,9 +30,6 @@ class ExternalChannelHandlerTest {
 
     @Test
     void pnExternalChannelEventConsumer() {
-        Consumer<Message<SingleStatusUpdateDto>> messageConsumer = externalChannelHandler.pnExternalChannelEventConsumer();
-        assertNotNull(messageConsumer);
-
         Mockito.when(externalChannelResponseHandler.consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class)))
                 .thenReturn(Mono.empty());
 
@@ -54,8 +48,7 @@ class ExternalChannelHandlerTest {
                 return new MessageHeaders(Map.of());
             }
         };
-
-        messageConsumer.accept(message);
+        Assertions.assertDoesNotThrow(() -> externalChannelHandler.pnExternalChannelEventConsumer(message));
 
         Mockito.verify(externalChannelResponseHandler, Mockito.times(1))
                 .consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class));
@@ -63,10 +56,7 @@ class ExternalChannelHandlerTest {
 
     @Test
     void pnExternalChannelEventConsumer_withCourtesyMessage() {
-        Consumer<Message<SingleStatusUpdateDto>> messageConsumer = externalChannelHandler.pnExternalChannelEventConsumer();
-        assertNotNull(messageConsumer);
-
-        Mockito.when(externalChannelResponseHandler.consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class)))
+       Mockito.when(externalChannelResponseHandler.consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class)))
                 .thenReturn(Mono.empty());
 
         Message<SingleStatusUpdateDto> message = new Message<>() {
@@ -85,7 +75,7 @@ class ExternalChannelHandlerTest {
             }
         };
 
-        messageConsumer.accept(message);
+        Assertions.assertDoesNotThrow(() -> externalChannelHandler.pnExternalChannelEventConsumer(message));
 
         Mockito.verify(externalChannelResponseHandler, Mockito.times(1))
                 .consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class));
@@ -93,8 +83,6 @@ class ExternalChannelHandlerTest {
 
     @Test
     void pnExternalChannelEventConsumer_catchException() {
-        Consumer<Message<SingleStatusUpdateDto>> messageConsumer = externalChannelHandler.pnExternalChannelEventConsumer();
-
         Mockito.when(externalChannelResponseHandler.consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class)))
                 .thenThrow(new RuntimeException("Simulated exception"));
 
@@ -114,7 +102,7 @@ class ExternalChannelHandlerTest {
             }
         };
 
-        assertThrows(RuntimeException.class, () -> messageConsumer.accept(message));
+        Assertions.assertThrows(RuntimeException.class, () -> externalChannelHandler.pnExternalChannelEventConsumer(message));
 
         Mockito.verify(externalChannelResponseHandler, Mockito.times(1))
                 .consumeExternalChannelResponse(Mockito.any(SingleStatusUpdateDto.class));

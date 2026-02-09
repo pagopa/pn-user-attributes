@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnDeliveryClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryIoClient;
 import it.pagopa.pn.user.attributes.services.IONotificationService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.delivery.v1.dto.SentNotificationV25;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,9 +21,6 @@ import org.springframework.messaging.MessageHeaders;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ActionHandlerTest {
 
@@ -54,11 +52,7 @@ class ActionHandlerTest {
 
     @Test
     void pnUserAttributesSendMessageActionConsumer() {
-        Consumer<Message<Action>> messageConsumer = actionHandler.pnUserAttributesSendMessageActionConsumer();
-        assertNotNull(messageConsumer);
-
         Mockito.when(ioNotificationService.consumeIoSendMessageEvent(Mockito.anyString(), Mockito.any())).thenReturn(Mono.empty());
-
         Message<Action> message = new Message<Action>() {
             @Override
             public Action getPayload() {
@@ -77,16 +71,12 @@ class ActionHandlerTest {
                 return messageHeaders;
             }
         };
-
-        messageConsumer.accept(message);
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesSendMessageActionConsumer(message));
     }
 
     @Test
     void pnUserAttributesIoActivatedActionConsumer() {
-        Consumer<Message<Action>> messageConsumer = actionHandler.pnUserAttributesIoActivatedActionConsumer();
-        assertNotNull(messageConsumer);
         Mockito.when(ioNotificationService.consumeIoActivationEvent(Mockito.anyString(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
-
         Message<Action> message = new Message<Action>() {
             @Override
             public Action getPayload() {
@@ -104,13 +94,10 @@ class ActionHandlerTest {
                 return messageHeaders;
             }
         };
-
-        messageConsumer.accept(message);
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesIoActivatedActionConsumer(message));
     }
     @Test
     void pnUserAttributesPecValidationExpiredActionConsumer() {
-        Consumer<Message<Action>> messageConsumer = actionHandler.pnUserAttributesPecValidationExpiredActionConsumer();
-        assertNotNull(messageConsumer);
         Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
         Message<Action> message = new Message<Action>() {
             @Override
@@ -131,6 +118,6 @@ class ActionHandlerTest {
             }
         };
 
-        messageConsumer.accept(message);
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesPecValidationExpiredActionConsumer(message));
     }
 }

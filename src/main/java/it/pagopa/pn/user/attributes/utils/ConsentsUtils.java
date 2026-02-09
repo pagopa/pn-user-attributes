@@ -13,7 +13,7 @@ import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.ser
 
 @Slf4j
 public class ConsentsUtils {
-    public static final Set<String> ALLOWED_CONSENT_TYPE = Set.of(TOS_DEST_B2B.getValue(), TOS_SERCQ.getValue(), DATAPRIVACY_SERCQ.getValue());
+    public static final Set<String> ALLOWED_CONSENT_TYPE = Set.of(TOS_DEST_B2_B.getValue(), TOS_SERCQ.getValue(), DATAPRIVACY_SERCQ.getValue());
     private ConsentsUtils() {
         throw new UnsupportedOperationException("Utility class");
     }

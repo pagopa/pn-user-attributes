@@ -21,9 +21,9 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -46,22 +46,22 @@ class PnExternalRegistryIoClientTest {
     @Autowired
     private PnExternalRegistryIoClient client;
 
-    @MockBean
+    @MockitoBean
     PnDataVaultClient pnDataVaultClient;
 
-    @MockBean
+    @MockitoBean
     ActionHandler actionHandler;
 
-    @MockBean
+    @MockitoBean
     SqsActionProducer sqsActionProducer;
 
-    @MockBean
+    @MockitoBean
     AuditLogService auditLogService;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelResponseHandler externalChannelResponseHandler;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelHandler externalChannelHandler;
 
     private static ClientAndServer mockServer;
@@ -315,9 +315,8 @@ class PnExternalRegistryIoClientTest {
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
         PnAuditLogEvent auditLogEvent = Mockito.mock(PnAuditLogEvent.class);
-        Mockito.when( auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
-        Mockito.when(auditLogEvent.generateSuccess(Mockito.anyString(), Mockito.any() , Mockito.any())).thenReturn(auditLogEvent);
-
+        Mockito.when(auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString())).thenReturn(auditLogEvent);
+        Mockito.when(auditLogEvent.generateSuccess(Mockito.anyString(), Mockito.any(Object[].class))).thenReturn(auditLogEvent);
 
         //When
         SendMessageResponse res = client.sendIOMessage( req ).block();
@@ -325,10 +324,15 @@ class PnExternalRegistryIoClientTest {
         //Then
         Assertions.assertNotNull( res );
         Assertions.assertEquals(SendMessageResponse.ResultEnum.SENT_COURTESY , res.getResult());
-
-        Mockito.verify( auditLogEvent).generateSuccess(Mockito.anyString(), Mockito.any(), Mockito.any());
-        Mockito.verify( auditLogEvent).log();
-        Mockito.verify( auditLogEvent, Mockito.never()).generateFailure(Mockito.any());
+        Assertions.assertNotNull(auditLogEvent);
+        Mockito.verify(auditLogService).buildAuditLogEventWithIUN(
+                Mockito.anyString(),
+                Mockito.anyInt(),
+                Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO),
+                Mockito.anyString());
+        Mockito.verify(auditLogEvent).generateSuccess(Mockito.anyString(), Mockito.any(Object[].class));
+        Mockito.verify(auditLogEvent).log();
+        Mockito.verify(auditLogEvent, Mockito.never()).generateFailure(Mockito.anyString(), Mockito.any());
     }
 
     @Test
@@ -385,19 +389,22 @@ class PnExternalRegistryIoClientTest {
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
         PnAuditLogEvent auditLogEvent = Mockito.mock(PnAuditLogEvent.class);
-        Mockito.when( auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
+        Mockito.when(auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString())).thenReturn(auditLogEvent);
         Mockito.when(auditLogEvent.generateFailure(Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
-
 
         //When
         Mono<SendMessageResponse> mono = client.sendIOMessage( req );
          Assertions.assertThrows(Exception.class, () -> mono.block());
 
         //Then
-
-        Mockito.verify( auditLogEvent, Mockito.never()).generateSuccess(Mockito.anyString(), Mockito.any(), Mockito.any());
-        Mockito.verify( auditLogEvent).log();
-        Mockito.verify( auditLogEvent).generateFailure(Mockito.anyString(), Mockito.any());
+        Mockito.verify(auditLogService).buildAuditLogEventWithIUN(
+                Mockito.anyString(),
+                Mockito.anyInt(),
+                Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO),
+                Mockito.anyString());
+        Mockito.verify(auditLogEvent, Mockito.never()).generateSuccess(Mockito.anyString(), Mockito.any(Object[].class));
+        Mockito.verify(auditLogEvent).log();
+        Mockito.verify(auditLogEvent).generateFailure(Mockito.anyString(), Mockito.any());
     }
 
 
@@ -455,8 +462,8 @@ class PnExternalRegistryIoClientTest {
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.fromIterable(list));
 
         PnAuditLogEvent auditLogEvent = Mockito.mock(PnAuditLogEvent.class);
-        Mockito.when( auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
-        Mockito.when(auditLogEvent.generateFailure(Mockito.anyString(), Mockito.any())).thenReturn(auditLogEvent);
+        Mockito.when(auditLogService.buildAuditLogEventWithIUN(Mockito.anyString(), Mockito.anyInt(), Mockito.eq(PnAuditLogEventType.AUD_DA_SEND_IO), Mockito.anyString())).thenReturn(auditLogEvent);
+        Mockito.when(auditLogEvent.generateFailure(Mockito.anyString(), Mockito.any(Object[].class))).thenReturn(auditLogEvent);
 
 
         //When
@@ -467,9 +474,9 @@ class PnExternalRegistryIoClientTest {
         Assertions.assertNotNull( res );
         Assertions.assertEquals(SendMessageResponse.ResultEnum.ERROR_COURTESY , res.getResult());
 
-        Mockito.verify( auditLogEvent, Mockito.never()).generateSuccess(Mockito.anyString(), Mockito.any(), Mockito.any());
-        Mockito.verify( auditLogEvent).log();
-        Mockito.verify( auditLogEvent).generateFailure(Mockito.anyString(), Mockito.any());
+        Mockito.verify(auditLogEvent, Mockito.never()).generateSuccess(Mockito.anyString(), Mockito.any(Object[].class));
+        Mockito.verify(auditLogEvent).log();
+        Mockito.verify(auditLogEvent).generateFailure(Mockito.anyString(), Mockito.any(Object[].class));
     }
 
     @Test
