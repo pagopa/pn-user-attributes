@@ -558,7 +558,7 @@ class ConsentsControllerTest {
     @Test
     void getPgConsentType() {
         String url = "/pg-consents/v1/consents/{consentType}?version={version}"
-        .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2_B.getValue())
+        .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
                 .replace("{version}", VERSION);
 
         // Given
@@ -567,7 +567,7 @@ class ConsentsControllerTest {
         consentDto.setAccepted(true);
         consentDto.setIsFirstAccept(true);
         consentDto.setConsentVersion(VERSION);
-        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2_B);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
 
         // When
         when(svc.getPgConsentByType(any(), any(), any(),
@@ -587,7 +587,7 @@ class ConsentsControllerTest {
     @Test
     void getPgConsentType_ErrorTest() {
         String url = "/pg-consents/v1/consents/{consentType}?version={version}"
-                .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2_B.getValue())
+                .replace("{consentType}", ConsentTypeDto.TOS_DEST_B2B.getValue())
                 .replace("{version}", VERSION);
 
         // Given
@@ -596,7 +596,7 @@ class ConsentsControllerTest {
         consentDto.setAccepted(true);
         consentDto.setIsFirstAccept(true);
         consentDto.setConsentVersion(VERSION);
-        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2_B);
+        consentDto.setConsentType(ConsentTypeDto.TOS_DEST_B2B);
 
         // When
         when(svc.getPgConsentByType(any(), any(), any(),

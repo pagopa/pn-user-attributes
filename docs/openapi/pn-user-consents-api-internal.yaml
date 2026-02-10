@@ -212,7 +212,7 @@ components:
       enum:
         - TOS
         - DATAPRIVACY
-        - TOS_DEST_B2_B
+        - TOS_DEST_B2B
         - TOS_SERCQ
         - DATAPRIVACY_SERCQ
 

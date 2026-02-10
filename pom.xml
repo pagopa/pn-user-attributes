@@ -183,6 +183,7 @@
                 <apiPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.api</apiPackage>
                 <configPackage>${project.groupId}.user.attributes.generated.openapi.server.v1.config</configPackage>
                 <useSpringBoot3>true</useSpringBoot3>
+                <enumPropertyNaming>original</enumPropertyNaming>
                 <dateLibrary>java8</dateLibrary>
                 <additionalModelTypeAnnotations>@lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
                 <delegatePattern>true</delegatePattern>

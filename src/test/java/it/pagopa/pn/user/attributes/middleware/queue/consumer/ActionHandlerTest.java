@@ -71,7 +71,7 @@ class ActionHandlerTest {
                 return messageHeaders;
             }
         };
-        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesSendMessageActionConsumer(message));
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesActionConsumer(message));
     }
 
     @Test
@@ -94,7 +94,7 @@ class ActionHandlerTest {
                 return messageHeaders;
             }
         };
-        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesIoActivatedActionConsumer(message));
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesActionConsumer(message));
     }
     @Test
     void pnUserAttributesPecValidationExpiredActionConsumer() {
@@ -118,6 +118,6 @@ class ActionHandlerTest {
             }
         };
 
-        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesPecValidationExpiredActionConsumer(message));
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesActionConsumer(message));
     }
 }

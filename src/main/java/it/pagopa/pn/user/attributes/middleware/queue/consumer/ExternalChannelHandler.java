@@ -19,7 +19,7 @@ public class ExternalChannelHandler {
         this.externalChannelResponseHandler = externalChannelResponseHandler;
     }
 
-    @SqsListener(value = "${pn.user-attributes.ext-channels-to-user-attributes-outputs}")
+    @SqsListener(value = "${pn.user-attributes.topics.fromexternalchannel}")
     public void pnExternalChannelEventConsumer(Message<SingleStatusUpdateDto> message) {
         String process = "Managing ext-channel event";
         ConsumerMDCUtils.addMessageHeadersToMDC(message.getHeaders());

@@ -409,7 +409,7 @@ class ConsentsServiceTest {
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
 
         String recipientId = "PG-recipientid";
-        ConsentTypeDto dto = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto dto = ConsentTypeDto.TOS_DEST_B2B;
         String vers1 = "VERS1";
         ConsentDto expected = new ConsentDto();
         expected.setAccepted(true);
@@ -443,7 +443,7 @@ class ConsentsServiceTest {
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PF;
 
         String recipientId = "recipientid";
-        ConsentTypeDto dto = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto dto = ConsentTypeDto.TOS_DEST_B2B;
         String vers1 = "VERS1";
         ConsentDto expected = new ConsentDto();
         expected.setAccepted(true);
@@ -471,7 +471,7 @@ class ConsentsServiceTest {
         String xPagopaPnCxId = "testId";
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
         String xPagopaPnCxRole = "ADMIN";
-        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2B;
         String version = "v1";
         ConsentActionDto consentActionDto = new ConsentActionDto();
         List<String> xPagopaPnCxGroups = Collections.emptyList();
@@ -492,7 +492,7 @@ class ConsentsServiceTest {
         String xPagopaPnCxId = "testId";
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PF;
         String xPagopaPnCxRole = "USER";
-        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2B;
         String version = "v1";
         ConsentActionDto consentActionDto = new ConsentActionDto();
         List<String> xPagopaPnCxGroups = List.of("group1");
@@ -510,7 +510,7 @@ class ConsentsServiceTest {
         String xPagopaPnCxId = "testId";
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
         String xPagopaPnCxRole = "USER";
-        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2B;
         String version = "v1";
         ConsentActionDto consentActionDto = new ConsentActionDto();
         List<String> xPagopaPnCxGroups = List.of("group1");
@@ -528,7 +528,7 @@ class ConsentsServiceTest {
         String xPagopaPnCxId = "testId";
         CxTypeAuthFleetDto xPagopaPnCxType = CxTypeAuthFleetDto.PG;
         String xPagopaPnCxRole = "ADMIN";
-        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2_B;
+        ConsentTypeDto consentType = ConsentTypeDto.TOS_DEST_B2B;
         String version = "v1";
         ConsentActionDto consentActionDto = new ConsentActionDto();
         List<String> xPagopaPnCxGroups = List.of("group1");

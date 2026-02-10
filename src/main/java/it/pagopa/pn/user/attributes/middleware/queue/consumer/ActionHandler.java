@@ -22,62 +22,32 @@ public class ActionHandler {
         this.pecValidationExpiredResponseHandler = pecValidationExpiredResponseHandler;
     }
 
-    @SqsListener(value = "${pn.user-attributes.actions}")
-    public void pnUserAttributesSendMessageActionConsumer(Message<Action> message) {
-        String process = "Managing app IO send message";
-        ConsumerMDCUtils.addMessageHeadersToMDC(message.getHeaders());
-        try {
-            Action action = message.getPayload();
-            MDC.put(MDCUtils.MDC_PN_IUN_KEY, action.getSentNotification().getIun());
-            MDC.put(MDCUtils.MDC_CX_ID_KEY, action.getInternalId());
-            MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, action.getActionId());
-
-            // messo lo starting process dopo, così nei log ha MDC aggiornato
-            log.logStartingProcess(process);
-            log.debug("pnUserAttributesSendMessageActionConsumer action={}", action);
-            MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoSendMessageEvent(action.getInternalId(), action.getSentNotification())).block();
-            log.logEndingProcess(process);
-        } catch (Exception ex) {
-            HandleEventUtils.handleException(message.getHeaders(), ex);
-            log.logEndingProcess(process, false, ex.getMessage());
-            throw ex;
-        }
-    }
-
-    @SqsListener(value = "${pn.user-attributes.actions}")
-    public void pnUserAttributesIoActivatedActionConsumer(Message<Action> message) {
-        String process = "Managing app IO activated";
+    @SqsListener(value = "${pn.user-attributes.topics.actions}")
+    public void pnUserAttributesActionConsumer(Message<Action> message) {
+        String process = "Managing action";
         ConsumerMDCUtils.addMessageHeadersToMDC(message.getHeaders());
         try {
             Action action = message.getPayload();
             MDC.put(MDCUtils.MDC_CX_ID_KEY, action.getInternalId());
             MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, action.getActionId());
-            // messo lo starting process dopo, così nei log ha MDC aggiornato
+            if (action.getSentNotification() != null) {
+                MDC.put(MDCUtils.MDC_PN_IUN_KEY, action.getSentNotification().getIun());
+            }
             log.logStartingProcess(process);
-            log.debug("pnUserAttributesIoActivatedActionConsumer action={}", action);
-            MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoActivationEvent(action.getActionId(), action.getInternalId(), action.getCheckFromWhen()).then()).block();
-            log.logEndingProcess(process);
-        } catch (Exception ex) {
-            HandleEventUtils.handleException(message.getHeaders(), ex);
-            log.logEndingProcess(process, false, ex.getMessage());
-            throw ex;
-        }
-    }
-
-
-    @SqsListener(value = "${pn.user-attributes.actions}")
-    public void pnUserAttributesPecValidationExpiredActionConsumer(Message<Action> message) {
-        String process = "Managing PEC validation expired";
-        ConsumerMDCUtils.addMessageHeadersToMDC(message.getHeaders());
-        try {
-            Action action = message.getPayload();
-            MDC.put(MDCUtils.MDC_CX_ID_KEY, action.getInternalId());
-            MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, action.getActionId());
-
-            // messo lo starting process dopo, così nei log ha MDC aggiornato
-            log.logStartingProcess(process);
-            log.debug("pnUserAttributesPecValidationExpiredActionConsumer action={}", action);
-            MDCUtils.addMDCToContextAndExecute(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(action.getInternalId(), action.getAddress())).block();
+            log.debug("pnUserAttributesActionConsumer action={}", action);
+            switch (action.getType()) {
+                case SEND_MESSAGE_ACTION:
+                    MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoSendMessageEvent(action.getInternalId(), action.getSentNotification())).block();
+                    break;
+                case IO_ACTIVATED_ACTION:
+                    MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoActivationEvent(action.getActionId(), action.getInternalId(), action.getCheckFromWhen()).then()).block();
+                    break;
+                case PEC_REJECTED_ACTION:
+                    MDCUtils.addMDCToContextAndExecute(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(action.getInternalId(), action.getAddress())).block();
+                    break;
+                default:
+                    log.warn("Unknown action type: {}", action.getType());
+            }
             log.logEndingProcess(process);
         } catch (Exception ex) {
             HandleEventUtils.handleException(message.getHeaders(), ex);
