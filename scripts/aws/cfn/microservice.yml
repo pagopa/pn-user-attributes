@@ -168,10 +168,6 @@ Parameters:
     Type: String
     Description: 'Kinesis stream that receive logs'
 
-  AlbSecurityGroup:
-    Type: String
-    Description: 'Application load balancer security group'
-
   UserAttributesTableEncryptKeyId:
     Type: String
     Description: 'Key per dynamodb'
