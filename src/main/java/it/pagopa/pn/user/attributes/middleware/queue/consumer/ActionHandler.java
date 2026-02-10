@@ -1,6 +1,7 @@
 package it.pagopa.pn.user.attributes.middleware.queue.consumer;
 
 import io.awspring.cloud.sqs.annotation.SqsListener;
+import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.handler.PecValidationExpiredResponseHandler;
 import it.pagopa.pn.user.attributes.middleware.queue.entities.Action;
@@ -9,6 +10,8 @@ import it.pagopa.pn.user.attributes.utils.ConsumerMDCUtils;
 import org.slf4j.MDC;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
+
+import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_INVALID_ACTION_TYPE;
 
 @Component
 @lombok.CustomLog
@@ -46,7 +49,9 @@ public class ActionHandler {
                     MDCUtils.addMDCToContextAndExecute(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(action.getInternalId(), action.getAddress())).block();
                     break;
                 default:
-                    log.warn("Unknown action type: {}", action.getType());
+                    String msg = "Unknown action type: " + action.getType();
+                    log.error("Unknown action type: {}", action.getType());
+                    throw new PnInternalException(msg, ERROR_CODE_USERATTRIBUTES_INVALID_ACTION_TYPE);
             }
             log.logEndingProcess(process);
         } catch (Exception ex) {
