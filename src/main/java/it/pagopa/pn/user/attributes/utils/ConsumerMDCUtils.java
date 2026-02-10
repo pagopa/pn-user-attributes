@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class ConsumerMDCUtils {
+    private ConsumerMDCUtils() {}
+
     public static void addMessageHeadersToMDC(Map<String, Object> messageHeaders) {
         String traceId = null;
         String messageId = null;

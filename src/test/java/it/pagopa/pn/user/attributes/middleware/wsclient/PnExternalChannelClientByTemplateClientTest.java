@@ -18,9 +18,9 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -53,22 +53,22 @@ class PnExternalChannelClientByTemplateClientTest {
     @Autowired
     PnExternalChannelClient pnExternalChannelClient;
 
-    @MockBean
+    @MockitoBean
     PnDataVaultClient pnDataVaultClient;
 
-    @MockBean
+    @MockitoBean
     TemplateApi templateApi;
 
-    @MockBean
+    @MockitoBean
     ActionHandler actionHandler;
 
-    @MockBean
+    @MockitoBean
     SqsActionProducer sqsActionProducer;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelResponseHandler externalChannelResponseHandler;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelHandler externalChannelHandler;
 
     private static ClientAndServer mockServer;
