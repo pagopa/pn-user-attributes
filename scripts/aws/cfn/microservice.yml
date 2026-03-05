@@ -183,14 +183,6 @@ Parameters:
   PecValidationExpiredLambdaName:
     Type: String
 
-  PecValidationExpiredDLQARN:
-    Type: String
-    Description: 'DLQ ARN for PecValidationExpiredLambda'
-
-  PecValidationExpiredDLQAlarmARN:
-    Type: String
-    Description: 'DLQ Alarm ARN for PecValidationExpiredLambda'
-
   #PecValidationExpiredLambdaName parameters
   PecValidationExpiredLambdaMaximumBatchingWindowInSeconds:
     Type: String
@@ -235,6 +227,10 @@ Parameters:
   CdcKinesisSourceStreamArn:
     Type: String
     Description: 'Where to send CDC'
+
+  CdcKinesisSourceStreamName:
+    Type: String
+    Description: 'Name of the kinesis stream where CDC are sent'
 
   CdcKinesisSourceStreamKeyArn:
     Description: "Kinesis source CDC stream crypto key ARN"
@@ -344,6 +340,16 @@ Parameters:
     Type: Number
     Default: 600
     Description: B2B api WAF Limit (per IP)
+
+  ESMKinesisFailureNotificationsBucketName:
+    Type: String
+    Description: "S3 bucket name for ESM Kinesis failure notifications"
+
+  PecValidationExpiredMaximumRecordAge:
+    Type: Number
+    Description: "Maximum record age in seconds for MetadataStatusUpdaterLambdaKinesisSource"
+    Default: 604800 # 7 days
+
 
 
 Conditions:
@@ -538,7 +544,6 @@ Resources:
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiErrorAlarmArn
             - !GetAtt AddressBookMicroservicePublicIoAPI.Outputs.RestApiLatencyAlarmArn
             - !GetAtt AddressBookMicroserviceB2BPGApi.Outputs.RestApiLatencyAlarmArn
-            - !Ref PecValidationExpiredDLQAlarmARN
             - !GetAtt PecValidationExpiredLambdaAlarms.Outputs.LambdaInvocationErrorLogsMetricAlarm
             - !Ref UserAttributesActionsQueueAlarmARN
             - !Ref ExternalChannels2UserAttributesQueueAlarmARN
@@ -660,17 +665,19 @@ Resources:
               !Ref UserAttributesActionsQueueARN
           - Effect: Allow
             Action:
-              - sqs:ChangeMessageVisibility
-              - sqs:GetQueueAttributes
-              - sqs:GetQueueUrl
-              - sqs:SendMessage
-            Resource:
-              !Ref PecValidationExpiredDLQARN
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}/*
 
 
   # CDC to PecValidationExpiredLambda Event Manager
   PecValidationExpiredLambdaKinesisSource:
     Type: AWS::Lambda::EventSourceMapping
+    DependsOn: PecValidationExpiredLambdaPolicy
     Properties:
       BatchSize: !Sub ${PecValidationExpiredLambdaBatchSize}
       BisectBatchOnFunctionError: true
@@ -679,10 +686,35 @@ Resources:
       FunctionResponseTypes:
         - ReportBatchItemFailures
       MaximumBatchingWindowInSeconds: !Sub ${PecValidationExpiredLambdaMaximumBatchingWindowInSeconds}
+      MaximumRecordAgeInSeconds: !Ref PecValidationExpiredMaximumRecordAge
       StartingPosition: TRIM_HORIZON
       DestinationConfig:
         OnFailure:
-          Destination: !Ref PecValidationExpiredDLQARN
+          Destination: !Sub arn:aws:s3:::${ESMKinesisFailureNotificationsBucketName}
+
+  PecValidationExpiredKinesisFailuresAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-PecValidationExpiredLambda-ESM-Alarm"
+      AlarmDescription: "CloudWatch alarm for when PecValidationExpiredLambda has Kinesis stream read failures, which can indicate problems with the function processing or with the stream itself."
+      TreatMissingData: notBreaching        
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
+      OKActions:
+        - !Ref AlarmSNSTopicArn
+      Dimensions:
+        - Value: !Ref PecValidationExpiredLambda
+          Name: FunctionName
+        - Value: !Ref CdcKinesisSourceStreamName
+          Name: StreamName
+      DatapointsToAlarm: 1           
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 6
+      Period: 600
+      Namespace: ESM/Kinesis   
+      MetricName: ProcessingFailures
+      Statistic: Maximum      
+      Threshold: 1
 
   PecValidationExpiredLambdaAlarms:
     Type: AWS::CloudFormation::Stack

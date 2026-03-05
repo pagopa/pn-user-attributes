@@ -120,20 +120,6 @@ Resources:
         LogGroupRetention: !Ref LogRetention
         LogsKinesisSourceStreamArn: !Ref LogsKinesisSourceStreamArn
 
-  # internal queues DLQ
-  PecValidationExpiredDLQ:
-    Type: AWS::CloudFormation::Stack
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Properties:
-      TemplateURL: !Sub "${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml"
-      Parameters:
-        QueueName: !Sub '${ProjectName}-user-attributes-pecvalidationexpired_DLQ'
-        DelaySeconds: 1
-        AlarmSNSTopicName: !Ref AlarmSNSTopicName
-        HasDLQ: "false"
-        QueueHasAlarm: "true"
-
   PecValidationExpiredLambdaLogGroup:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
@@ -184,18 +170,3 @@ Outputs:
   # Lambda functions
   PecValidationExpiredLambdaName:
     Value: !Sub "${ProjectName}-PecValidationExpiredLambda"
-
-  
-  # PecValidationExpiredLambda Step Manager DLQ
-  PecValidationExpiredDLQName:
-    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueName
-    Description: pn-user-attributes-pecvalidationexpired_DLQ queue name
-  PecValidationExpiredDLQURL:
-    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueURL
-    Description: pn-user-attributes-pecvalidationexpired_DLQ queue URL
-  PecValidationExpiredDLQARN:
-    Value: !GetAtt PecValidationExpiredDLQ.Outputs.QueueARN
-    Description: pn-user-attributes-pecvalidationexpired_DLQ queue ARN
-  PecValidationExpiredDLQAlarmARN:
-    Value: !GetAtt PecValidationExpiredDLQ.Outputs.SqsDLQAlarmArn
-    Description: pn-user-attributes-pecvalidationexpired_DLQ alarm ARN
