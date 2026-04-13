@@ -20,6 +20,9 @@
   </scm>
 
   <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <lombok.version>1.18.30</lombok.version>
     <sonar.coverage.exclusions>
       src/main/java/it/pagopa/pn/user/attributes/springbootcfg/**
     </sonar.coverage.exclusions>
@@ -68,7 +71,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.30</version>
+      <version>${lombok.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -122,7 +125,7 @@
             <path>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
-              <version>1.18.30</version>
+              <version>${lombok.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
