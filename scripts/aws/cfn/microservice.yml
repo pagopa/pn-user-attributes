@@ -350,9 +350,6 @@ Parameters:
     Description: "Maximum record age in seconds for MetadataStatusUpdaterLambdaKinesisSource"
     Default: 604800 # 7 days
 
-
-
-
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
   HaveToDefineVpcs: !Equals ["true", !Ref PutIntoVpc]
@@ -416,6 +413,7 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
+        AlbSecurityGroup: !Ref AlbSecurityGroup
         TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
