@@ -352,6 +352,7 @@ Parameters:
 
 
 
+
 Conditions:
   UseExternalChannelMock: !Equals [ !Ref ExternalChannelBaseUrl, "Mock" ]
   HaveToDefineVpcs: !Equals ["true", !Ref PutIntoVpc]
