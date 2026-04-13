@@ -17,9 +17,9 @@ import org.mockserver.model.MediaType;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,16 +39,16 @@ public class PnSelfcareClientTest {
     @Autowired
     private PnSelfcareClient client;
 
-    @MockBean
+    @MockitoBean
     ActionHandler actionHandler;
 
-    @MockBean
+    @MockitoBean
     SqsActionProducer sqsActionProducer;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelResponseHandler externalChannelResponseHandler;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelHandler externalChannelHandler;
 
     private static ClientAndServer mockServer;

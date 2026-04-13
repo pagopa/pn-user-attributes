@@ -11,8 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
 import java.time.Duration;
@@ -37,10 +37,10 @@ public class ConsentDaoTestIT {
     @Autowired
     PnUserattributesConfig pnUserattributesConfig;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelResponseHandler externalChannelResponseHandler;
 
-    @MockBean
+    @MockitoBean
     ExternalChannelHandler externalChannelHandler;
 
     TestDao<ConsentEntity> testDao;

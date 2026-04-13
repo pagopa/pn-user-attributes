@@ -33,6 +33,6 @@ public class PnSelfcareClient extends CommonBaseClient {
         log.logInvokingExternalDownstreamService(PnLogger.EXTERNAL_SERVICES.SELFCARE_PA, "Retrieving PAs summary infos");
         log.debug("getManyPaByIds ids={}", ids);
         return this.infoPaApi.getManyPa(ids).doOnError(
-                throwable -> log.logInvokationResultDownstreamFailed(PnLogger.EXTERNAL_SERVICES.SELFCARE_PA, throwable.getMessage()));
+                throwable -> log.logInvokationResultDownstreamFailed(PnLogger.EXTERNAL_SERVICES.SELFCARE_PA, throwable.getMessage(), throwable));
     }
 }

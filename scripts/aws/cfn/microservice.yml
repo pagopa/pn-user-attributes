@@ -396,7 +396,7 @@ Resources:
         ContainerEnvEntry7: !Sub 'PN_USER_ATTRIBUTES_CLIENT_EXTERNALREGISTRY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry8: !Sub 'PN_USER_ATTRIBUTES_CLIENT_DELIVERY_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry9: !Sub 'PN_USER_ATTRIBUTES_IOACTIVATIONSENDOLDERTHANDAYS=${IoActivationSendOlderThanDays}'
-        ContainerEnvEntry10: !Sub 'SPRING_CLOUD_FUNCTIONROUTER_QUEUES_LIST=${UserAttributesActionsQueueName},${ExternalChannels2UserAttributesQueueName}'
+        ContainerEnvEntry10: !Sub 'PN_USER_ATTRIBUTES_CLIENT_TEMPLATESENGINE_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         ContainerEnvEntry11: !Sub 'PN_USER_ATTRIBUTES_TOPICS_ACTIONS=${UserAttributesActionsQueueName}'
         ContainerEnvEntry12: !Sub 'PN_USER_ATTRIBUTES_VALIDATIONCODEMAXATTEMPTS=${ValidationCodeMaxAttempts}'
         ContainerEnvEntry13: !Sub 'PN_USER_ATTRIBUTES_VERIFICATIONCODELEGALTTL=${VerificationCodeLegalTTL}'
@@ -407,7 +407,6 @@ Resources:
         ContainerEnvEntry18: !Sub 'WIRE_TAP_LOG=${WireTapLogActivation}'
         ContainerEnvEntry19: !Sub 'PN_USER_ATTRIBUTES_SERCQ_ADDRESS=${SercqAddress}'
         ContainerEnvEntry20: !Sub 'PN_USER_ATTRIBUTES_IS_SERCQ_ENABLED=${IsSercqEnabled}'
-        ContainerEnvEntry21: !Sub 'PN_USER_ATTRIBUTES_CLIENT_TEMPLATESENGINE_BASEPATH=http://${ApplicationLoadBalancerDomain}:8080'
         MappedPaths: '/user-consents/*,/address-book/*,/address-book-private/*,/address-book-io/*,/pg-consents/*'
         ECSClusterName: !Ref ECSClusterName
         Subnets: !Ref SubnetsIds

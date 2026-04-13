@@ -42,6 +42,7 @@ components:
         value:
           type: string
           x-field-extra-annotation: "@lombok.ToString.Exclude"                                             # NO EXTERNAL
+          format: password # NO EXTERNAL
           maxLength: 254
           #Tel. number or email address
           pattern: ^(((00|\+)393\d{8,9})|(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])|(ENABLED)|(DISABLED)|(APPIO)|([a-zA-Z0-9\-]+:[a-zA-Z0-9\-]+:[a-zA-Z0-9\-]+\??.*))$
@@ -127,6 +128,7 @@ components:
             value:
               type: string
               x-field-extra-annotation: "@lombok.ToString.Exclude"                                         # NO EXTERNAL
+              format: password # NO EXTERNAL
               example: 'nome.utente@server.it'
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
@@ -144,6 +146,7 @@ components:
             value:
               type: string
               x-field-extra-annotation: "@lombok.ToString.Exclude"                                         # NO EXTERNAL
+              format: password # NO EXTERNAL
               example: 'nome.utente@server.it'
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
@@ -182,6 +185,7 @@ components:
             value:
               type: string
               x-field-extra-annotation: "@lombok.ToString.Exclude"                                         # NO EXTERNAL
+              format: password # NO EXTERNAL
               example: 'nome.utente@server.it'
             channelType:
               $ref: '#/components/schemas/CourtesyChannelType'
