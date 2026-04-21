@@ -58,7 +58,7 @@ public class PnExternalRegistryClient {
 
     public Flux<String> getAooUoIdsApi (List<String> ids){
         log.info("filtering just aoo/uo ids {}", ids);
-        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids);
+        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids).flatMapMany(Flux::fromIterable);
     }
 }
 

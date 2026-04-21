@@ -175,7 +175,7 @@ public class PnExternalChannelClient {
                     digitalNotificationRequestDto.setRequestId(requestId);
                     digitalNotificationRequestDto.setCorrelationId(requestId);
                     digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
-                    digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.HTML);
+                    digitalNotificationRequestDto.setMessageContentType(DigitalNotificationRequestDto.MessageContentTypeEnum.TEXT_HTML);
                     digitalNotificationRequestDto.setQos(DigitalNotificationRequestDto.QosEnum.INTERACTIVE);
                     digitalNotificationRequestDto.setMessageText(body);
                     digitalNotificationRequestDto.setReceiverDigitalAddress(address);
@@ -286,7 +286,7 @@ public class PnExternalChannelClient {
                     digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
                     digitalNotificationRequestDto.setAttachmentUrls(new ArrayList<>());
                     digitalNotificationRequestDto.setSubjectText(messageSubject);
-                    digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.HTML);
+                    digitalNotificationRequestDto.setMessageContentType(DigitalCourtesyMailRequestDto.MessageContentTypeEnum.TEXT_HTML);
                     if (StringUtils.hasText(pnUserattributesConfig.getClientExternalchannelsSenderEmail()))
                         digitalNotificationRequestDto.setSenderDigitalAddress(pnUserattributesConfig.getClientExternalchannelsSenderEmail());
 

@@ -13,8 +13,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,16 +36,16 @@ class LegalAddressControllerTest {
     private static final String RECIPIENTID = "PF-123e4567-e89b-12d3-a456-426614174000";
     private static final String SENDERID = "default";
 
-    @MockBean
+    @MockitoBean
     AddressBookService svc;
 
-    @MockBean
+    @MockitoBean
     ConsentsService consentsService;
 
     @Autowired
     WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     PnUserattributesConfig pnUserattributesConfig;
 
 
