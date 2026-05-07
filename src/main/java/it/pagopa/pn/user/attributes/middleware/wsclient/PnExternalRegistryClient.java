@@ -8,6 +8,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
 import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -58,7 +59,12 @@ public class PnExternalRegistryClient {
 
     public Flux<String> getAooUoIdsApi (List<String> ids){
         log.info("filtering just aoo/uo ids {}", ids);
-        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids).flatMapMany(Flux::fromIterable);
+        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids)
+                .onErrorResume(DecodingException.class, e -> {
+                    log.warn("filter-out-root-pa-ids risposta non standard: {}", e.getMessage());
+                    return Mono.just(ids);
+                })
+                .flatMapMany(Flux::fromIterable);
     }
 }
 
