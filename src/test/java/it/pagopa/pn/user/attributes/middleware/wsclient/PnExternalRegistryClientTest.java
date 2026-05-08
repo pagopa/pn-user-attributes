@@ -23,6 +23,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -156,6 +158,38 @@ class PnExternalRegistryClientTest {
         //When
         Mono<String> mono = client.findPrivacyNoticeVersion( "TOS", "PF" );
         Assertions.assertThrows(Exception.class, () -> mono.block());
+    }
+
+    @Test
+    void getAooUoIdsApi_withJsonArray_returnsElements() {
+        new MockServerClient("localhost", 9999)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/ext-registry-private/pa/v1/actions/filter-out-root-pa-ids"))
+                .respond(response()
+                        .withBody("[\"id1\", \"id2\"]")
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        List<String> result = client.getAooUoIdsApi(List.of("id1", "id2")).collectList().block();
+
+        Assertions.assertEquals(List.of("id1", "id2"), result);
+    }
+
+    @Test
+    void getAooUoIdsApi_withPlainString_doesNotThrow() {
+        new MockServerClient("localhost", 9999)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/ext-registry-private/pa/v1/actions/filter-out-root-pa-ids"))
+                .respond(response()
+                        .withBody("\"id1\"")
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        List<String> result = client.getAooUoIdsApi(List.of("id1")).collectList().block();
+
+        Assertions.assertEquals(List.of("id1"), result);
     }
 
     @Test
