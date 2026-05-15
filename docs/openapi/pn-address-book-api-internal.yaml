@@ -179,7 +179,7 @@ paths:
       tags:
         - legal
       parameters:
-        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
@@ -257,7 +257,7 @@ paths:
       tags:
         - courtesy
       parameters:
-        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
