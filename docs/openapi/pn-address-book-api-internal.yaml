@@ -178,6 +178,8 @@ paths:
       operationId: postRecipientLegalAddress
       tags:
         - legal
+      parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:
@@ -254,6 +256,8 @@ paths:
       operationId: postRecipientCourtesyAddress
       tags:
         - courtesy
+      parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
 #      security:                                                                # ONLY EXTERNAL
 #        - bearerAuth: [ ]                                                      # ONLY EXTERNAL
       requestBody:

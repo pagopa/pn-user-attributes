@@ -16,6 +16,24 @@ components:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/2255b75acd2e592e59bfda0f82ea9f2ecc4c45e5/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxTaxIdAuthFleet'
     cxRoleAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/2255b75acd2e592e59bfda0f82ea9f2ecc4c45e5/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxRoleAuthFleet'
+    headerLanguage:
+      # TODO: replace inline definition with $ref once PN-19954 (pn-auth-fleet) is merged and SHA is updated.
+      # $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/<NEW_SHA>/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/headerLanguage'
+      name: x-pagopa-pn-language
+      in: header
+      description: >
+        User preferred language for platform communications.
+        Mirrors LanguageEnum of pn-templates-engine client (IT/DE/SL/FR/EN).
+      required: false
+      schema:
+        type: string
+        enum:
+          - IT
+          - DE
+          - SL
+          - FR
+          - EN
+        default: IT
   schemas:
 
     ############################################################################################

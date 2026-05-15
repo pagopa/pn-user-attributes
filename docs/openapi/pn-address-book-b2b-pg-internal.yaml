@@ -213,6 +213,7 @@ paths:
       summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'             # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'           # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'         # NO EXTERNAL
@@ -305,6 +306,7 @@ paths:
       summary: Crea o aggiorna un indirizzo senza valore legale per un determinato canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'    # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxIdAuthFleet'       # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxTypeAuthFleet'     # NO EXTERNAL
         - $ref: 'remote-refs.yaml#/components/parameters/cxGroupsAuthFleet'   # NO EXTERNAL
