@@ -13,6 +13,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalNotificationRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.middleware.templates.TemplateGenerator;
@@ -47,6 +48,9 @@ public class PnExternalChannelClient {
     private static final String PF_PREFIX = "PF";
     private static final String PG_PREFIX = "PG";
 
+/** TODO: rimuovere questo DEFAULT_LANGUAGE quando verrà implementata la parte del bilinguismo */
+    private static final LanguageEnum DEFAULT_LANGUAGE = LanguageEnum.IT;
+
     public PnExternalChannelClient(PnUserattributesConfig pnUserattributesConfig,
                                    DigitalCourtesyMessagesApi digitalCourtesyMessagesApi, DigitalLegalMessagesApi digitalLegalMessagesApi, PnDataVaultClient dataVaultClient,
                                    TemplateGenerator templateGenerator) {
@@ -74,8 +78,8 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(getRecipientType(recipientId)),
-                    templateGenerator.generatePecSubjectReject(), address)
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.BATCH, templateGenerator.generatePecRejectBody(getRecipientType(recipientId), DEFAULT_LANGUAGE),
+                    templateGenerator.generatePecSubjectReject(DEFAULT_LANGUAGE), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -105,7 +109,7 @@ public class PnExternalChannelClient {
 
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             return sendLegalMessage(recipientId, requestId, address, LegalChannelTypeDto.PEC,
-                    templateGenerator.generatePecConfirmBody(getRecipientType(recipientId)), templateGenerator.generatePecSubjectConfirm());
+                    templateGenerator.generatePecConfirmBody(getRecipientType(recipientId), DEFAULT_LANGUAGE), templateGenerator.generatePecSubjectConfirm(DEFAULT_LANGUAGE));
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND CONFIRM!!!!");
@@ -120,9 +124,9 @@ public class PnExternalChannelClient {
         String requestId = UUID.randomUUID().toString();
         if ( ! pnUserattributesConfig.isDevelopment() ) {
             if (legalChannelType != null)
-                return sendLegalVerificationCode(recipientId, requestId, address, legalChannelType, verificationCode);
+                return sendLegalVerificationCode(recipientId, requestId, address, legalChannelType, verificationCode, DEFAULT_LANGUAGE);
             else
-                return sendCourtesyVerificationCode(recipientId, requestId, address, courtesyChannelType, verificationCode);
+                return sendCourtesyVerificationCode(recipientId, requestId, address, courtesyChannelType, verificationCode, DEFAULT_LANGUAGE);
         }
         else {
             log.warn("DEVELOPMENT IS ACTIVE, MOCKING MESSAGE SEND!!!!");
@@ -132,7 +136,7 @@ public class PnExternalChannelClient {
         }
     }
 
-    private Mono<String> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode)
+    private Mono<String> sendLegalVerificationCode(String recipientId, String requestId, String address, LegalChannelTypeDto legalChannelType, String verificationCode, LanguageEnum language)
     {
         log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending legal verification code", requestId);
         String logMessage = String.format(
@@ -146,7 +150,7 @@ public class PnExternalChannelClient {
         logEvent.log();
 
 
-        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode, getRecipientType(recipientId)), templateGenerator.generatePecSubject())
+        return sendLegalMessage(recipientId, requestId, address, legalChannelType, templateGenerator.generatePecBody(verificationCode, getRecipientType(recipientId), language), templateGenerator.generatePecSubject(language))
                 .onErrorResume(x -> {
                     String message = elabExceptionMessage(x);
                     String failureMessage = String.format("sendLegalVerificationCode PEC response error %s", message);
@@ -195,7 +199,7 @@ public class PnExternalChannelClient {
                 .then(Mono.just(requestId));
     }
 
-    private Mono<String> sendCourtesyVerificationCode(String recipientId, String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode)
+    private Mono<String> sendCourtesyVerificationCode(String recipientId, String requestId, String address, CourtesyChannelTypeDto courtesyChannelType, String verificationCode, LanguageEnum language)
     {
         log.logInvokingAsyncExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_CHANNELS, "Sending courtesy verification code", requestId);
         if (courtesyChannelType == CourtesyChannelTypeDto.SMS)
@@ -249,8 +253,8 @@ public class PnExternalChannelClient {
                     .before(PnAuditLogEventType.AUD_AB_VERIFY_MAIL, logMessage)
                     .build();
             logEvent.log();
-            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode,getRecipientType(recipientId)),
-                    templateGenerator.generateEmailSubject(), address)
+            return sendCourtesyEmail(recipientId, requestId, DigitalCourtesyMailRequestDto.QosEnum.INTERACTIVE, templateGenerator.generateEmailBody(verificationCode,getRecipientType(recipientId), language),
+                    templateGenerator.generateEmailSubject(language), address)
                     .onErrorResume(x -> {
                         String message = elabExceptionMessage(x);
 
@@ -301,7 +305,7 @@ public class PnExternalChannelClient {
 
     private String getSMSVerificationCodeBody(String verificationCode)
     {
-        String message = templateGenerator.generateSmsBody();
+        String message = templateGenerator.generateSmsBody(DEFAULT_LANGUAGE);
         message = String.format(message, verificationCode);
         return  message;
     }
