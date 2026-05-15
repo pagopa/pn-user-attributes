@@ -21,9 +21,7 @@ components:
       # $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/<NEW_SHA>/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/headerLanguage'
       name: x-pagopa-pn-language
       in: header
-      description: >
-        User preferred language for platform communications.
-        Mirrors LanguageEnum of pn-templates-engine client (IT/DE/SL/FR/EN).
+      description: User preferred language for platform communications.
       required: false
       schema:
         type: string
