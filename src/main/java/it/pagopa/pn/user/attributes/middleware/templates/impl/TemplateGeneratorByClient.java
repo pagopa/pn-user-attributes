@@ -22,12 +22,12 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated email body template as a String.
      */
     @Override
-    public String generateEmailBody(String verificationCode, String recipientType) {
+    public String generateEmailBody(String verificationCode, String recipientType, LanguageEnum language) {
         log.debug("retrieve template mailVerificationCodeBody");
         MailVerificationCodeBody mailVerificationCodeBody = new MailVerificationCodeBody();
         mailVerificationCodeBody.setVerificationCode(verificationCode);
         mailVerificationCodeBody.setRecipientType(recipientType);
-        return templatesClient.mailVerificationCodeBody(LanguageEnum.IT, mailVerificationCodeBody);
+        return templatesClient.mailVerificationCodeBody(language, mailVerificationCodeBody);
     }
 
     /**
@@ -39,9 +39,9 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated email subject template as a String.
      */
     @Override
-    public String generateEmailSubject() {
+    public String generateEmailSubject(LanguageEnum language) {
         log.debug("retrieve template mailVerificationCodeSubject");
-        return templatesClient.mailVerificationCodeSubject(LanguageEnum.IT);
+        return templatesClient.mailVerificationCodeSubject(language);
     }
 
     /**
@@ -54,12 +54,12 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC body template as a String.
      */
     @Override
-    public String generatePecBody(String verificationCode, String recipientType) {
+    public String generatePecBody(String verificationCode, String recipientType, LanguageEnum language) {
         log.debug("retrieve template pecVerificationCodeBody");
         PecVerificationCodeBody pecVerificationCodeBody = new PecVerificationCodeBody();
         pecVerificationCodeBody.setVerificationCode(verificationCode);
         pecVerificationCodeBody.setRecipientType(recipientType);
-        return templatesClient.pecVerificationCodeBody(LanguageEnum.IT, pecVerificationCodeBody);
+        return templatesClient.pecVerificationCodeBody(language, pecVerificationCodeBody);
     }
 
     /**
@@ -71,11 +71,11 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC confirmation body template as a String.
      */
     @Override
-    public String generatePecConfirmBody(String recipientType) {
+    public String generatePecConfirmBody(String recipientType, LanguageEnum language) {
         log.debug("retrieve template pecValidationContactsSuccessBody");
         PecValidationContactsBody pecValidationContactsBody = new PecValidationContactsBody();
         pecValidationContactsBody.setRecipientType(recipientType);
-        return templatesClient.pecValidationContactsSuccessBody(LanguageEnum.IT,pecValidationContactsBody);
+        return templatesClient.pecValidationContactsSuccessBody(language,pecValidationContactsBody);
     }
 
     /**
@@ -87,11 +87,11 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC reject body template as a String.
      */
     @Override
-    public String generatePecRejectBody(String recipientType) {
+    public String generatePecRejectBody(String recipientType, LanguageEnum language) {
         log.debug("retrieve template pecValidationContactsRejectBody");
         PecValidationContactsBody pecValidationContactsBody = new PecValidationContactsBody();
         pecValidationContactsBody.setRecipientType(recipientType);
-        return templatesClient.pecValidationContactsRejectBody(LanguageEnum.IT,pecValidationContactsBody);
+        return templatesClient.pecValidationContactsRejectBody(language,pecValidationContactsBody);
     }
 
     /**
@@ -103,9 +103,9 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC subject template as a String.
      */
     @Override
-    public String generatePecSubject() {
+    public String generatePecSubject(LanguageEnum language) {
         log.debug("retrieve template pecVerificationCodeSubject");
-        return templatesClient.pecVerificationCodeSubject(LanguageEnum.IT);
+        return templatesClient.pecVerificationCodeSubject(language);
     }
 
     /**
@@ -117,9 +117,9 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC confirmation subject template as a String.
      */
     @Override
-    public String generatePecSubjectConfirm() {
+    public String generatePecSubjectConfirm(LanguageEnum language) {
         log.debug("retrieve template pecValidationContactsSuccessSubject");
-        return templatesClient.pecValidationContactsSuccessSubject(LanguageEnum.IT);
+        return templatesClient.pecValidationContactsSuccessSubject(language);
     }
 
     /**
@@ -131,9 +131,9 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated PEC reject subject template as a String.
      */
     @Override
-    public String generatePecSubjectReject() {
+    public String generatePecSubjectReject(LanguageEnum language) {
         log.debug("retrieve template pecValidationContactsRejectSubject");
-        return templatesClient.pecValidationContactsRejectSubject(LanguageEnum.IT);
+        return templatesClient.pecValidationContactsRejectSubject(language);
     }
 
     /**
@@ -145,8 +145,8 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
      * @return the generated SMS body template as a String.
      */
     @Override
-    public String generateSmsBody() {
+    public String generateSmsBody(LanguageEnum language) {
         log.debug("retrieve template smsVerificationCodeBody");
-        return templatesClient.smsVerificationCodeBody(LanguageEnum.IT);
+        return templatesClient.smsVerificationCodeBody(language);
     }
 }
