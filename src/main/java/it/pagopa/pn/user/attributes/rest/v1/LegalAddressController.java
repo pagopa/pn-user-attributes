@@ -99,6 +99,7 @@ public class LegalAddressController implements LegalApi {
                                                                                           Mono<AddressVerificationDto> addressVerificationDto,
                                                                                           List<String> pnCxGroups,
                                                                                           String pnCxRole,
+                                                                                          String xPagopaPnLanguage,
                                                                                           ServerWebExchange exchange) {
         addressVerificationDto.doOnNext(dto -> log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}"
                 ,recipientId, pnCxType, senderId, channelType, dto, pnCxGroups, pnCxRole));
