@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: u6zSu9ewPkXmlDp8soE1+g3rIDuLHjvBYhWbpf64Kfo=
+  version: ANOw9Umvi0xEhlP8PIq/wstDWia03USqIA3QBO+3Y9o=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -609,14 +609,7 @@ components:
       description: User preferred language for platform communications.
       required: false
       schema:
-        type: string
-        enum:
-          - IT
-          - DE
-          - SL
-          - FR
-          - EN
-        default: IT
+        $ref: '#/components/schemas/CxLanguage'
   schemas:
     BaseDigitalAddress:
       type: object
@@ -794,6 +787,15 @@ components:
               example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
+    CxLanguage:
+      type: string
+      enum:
+        - IT
+        - DE
+        - SL
+        - FR
+        - EN
+      default: IT
     VerificationCode:
       type: string
       description: Verification Code
