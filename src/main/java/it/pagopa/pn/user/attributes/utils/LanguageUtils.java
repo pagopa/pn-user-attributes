@@ -11,13 +11,13 @@ public class LanguageUtils {
 
     public static LanguageEnum resolveLanguage(CxLanguageDto headerValue) {
         if (headerValue == null) {
-            log.warn("language header fallback to IT");
+            log.warn("Language header absent, fallback to IT");
             return LanguageEnum.IT;
         }
         try {
             return LanguageEnum.fromValue(headerValue.getValue());
         } catch (IllegalArgumentException e) {
-            log.warn("language header fallback to IT");
+            log.warn("Unsupported language header, fallback to IT");
             return LanguageEnum.IT;
         }
     }
