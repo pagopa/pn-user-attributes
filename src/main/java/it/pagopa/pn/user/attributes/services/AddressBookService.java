@@ -18,6 +18,7 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
@@ -481,12 +482,14 @@ public class AddressBookService {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
+                                // TODO WI-4.2: sostituire LanguageEnum.IT con la lingua propagata dalla firma di saveAddressBook quando il parametro sarà aggiunto
                                 return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
                                     recipientId,
                                     addressVerificationDto.getValue(),
                                     legalChannelType,
                                     courtesyChannelType,
-                                    checkedSenderId);
+                                    checkedSenderId,
+                                    LanguageEnum.IT);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return prepareAndDeleteAddresses(filteredAddressList)

@@ -13,6 +13,7 @@ import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,8 @@ public class ExternalChannelResponseHandler {
                                     String address = tuple.getT2().getValue();
                                     return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, tuple.getT1(), address).map(x -> address);
                                 })
-                                .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address))
+                                // TODO WI-4.1/WI-4.3: sostituire LanguageEnum.IT con LanguageUtils.resolveLanguage(verificationCodeEntity.getLanguage()) quando VerificationCodeEntity avrà il campo language
+                                .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address, LanguageEnum.IT))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
                     } else {

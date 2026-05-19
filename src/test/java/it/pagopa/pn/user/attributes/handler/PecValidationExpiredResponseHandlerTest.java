@@ -23,9 +23,9 @@ class PecValidationExpiredResponseHandlerTest {
     @Test
     void consumePecValidationExpiredEvent() {
 
-        Mockito.when(pnExternalChannelClient.sendCourtesyPecRejected(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(pnExternalChannelClient.sendCourtesyPecRejected(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.any())).thenReturn(Mono.empty());
 
-        Assertions.assertDoesNotThrow(() -> pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent("fghjkl", "435678@fghj").block());
+        Assertions.assertDoesNotThrow(() -> pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent("fghjkl", "435678@fghj", null).block());
 
     }
 
@@ -33,9 +33,9 @@ class PecValidationExpiredResponseHandlerTest {
     @Test
     void consumePecValidationExpiredEventException() {
 
-        Mockito.when(pnExternalChannelClient.sendCourtesyPecRejected(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.error(new RuntimeException("aaaa")));
+        Mockito.when(pnExternalChannelClient.sendCourtesyPecRejected(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.any())).thenReturn(Mono.error(new RuntimeException("aaaa")));
 
-        Assertions.assertThrows(Exception.class, () -> pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent("fghjkl", "435678@fghj").block());
+        Assertions.assertThrows(Exception.class, () -> pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent("fghjkl", "435678@fghj", null).block());
 
     }
 }
