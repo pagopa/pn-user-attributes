@@ -17,7 +17,7 @@ components:
     cxRoleAuthFleet:
       $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/2255b75acd2e592e59bfda0f82ea9f2ecc4c45e5/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/cxRoleAuthFleet'
     headerLanguage:
-      $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/36fa52a16bc565eb12cf6c2ef584ea32db060ec2/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/headerLanguage'
+      $ref: 'https://raw.githubusercontent.com/pagopa/pn-auth-fleet/5c00a15e59db151dd79b2321a82eeae508ec3464/docs/openapi/authenticationParameters-v1.yaml#/components/parameters/headerLanguage'
   schemas:
 
     ############################################################################################
