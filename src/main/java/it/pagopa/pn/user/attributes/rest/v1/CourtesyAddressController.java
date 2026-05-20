@@ -6,8 +6,10 @@ import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.CourtesyApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.user.attributes.utils.LanguageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
@@ -140,9 +142,10 @@ public class CourtesyAddressController implements CourtesyApi {
                                                                    Mono<AddressVerificationDto> addressVerificationDto,
                                                                    List<String> pnCxGroups,
                                                                    String pnCxRole,
+                                                                   CxLanguageDto xPagopaPnLanguage,
                                                                    ServerWebExchange exchange) {
 
-
+        LanguageEnum language = LanguageUtils.resolveLanguage(xPagopaPnLanguage);
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));
@@ -160,7 +163,7 @@ public class CourtesyAddressController implements CourtesyApi {
                                 return Tuples.of(addressVerificationDto1, auditLogEvent);
                             })
 
-                            .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole)
+                            .flatMap(tupleVerCodeLogEvent -> addressBookService.saveCourtesyAddressBook(recipientId, senderId, channelType, tupleVerCodeLogEvent.getT1(), pnCxType, pnCxGroups, pnCxRole, language)
                                     .onErrorResume(throwable ->
                                         addressBookService.manageError(tupleVerCodeLogEvent.getT2(),throwable)
                                     )

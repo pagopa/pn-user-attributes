@@ -18,8 +18,10 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
@@ -111,10 +113,10 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
-                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, LanguageEnum language) {
 
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole ));
+                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole));
     }
 
     /**
@@ -144,7 +146,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto,
-                                                             CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+                                                             CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, LanguageEnum language) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
                 .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, null));
     }
@@ -481,12 +483,14 @@ public class AddressBookService {
                             // l'indirizzo non è verificato. Ho due casi possibili:
                             if (!StringUtils.hasText(addressVerificationDto.getVerificationCode())) {
                                 // CASO A: non mi viene passato un codice verifica
+                                // TODO WI-4.2: sostituire LanguageEnum.IT con la lingua propagata dalla firma di saveAddressBook quando il parametro sarà aggiunto
                                 return verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
                                     recipientId,
                                     addressVerificationDto.getValue(),
                                     legalChannelType,
                                     courtesyChannelType,
-                                    checkedSenderId);
+                                    checkedSenderId,
+                                    LanguageEnum.IT);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return prepareAndDeleteAddresses(filteredAddressList)

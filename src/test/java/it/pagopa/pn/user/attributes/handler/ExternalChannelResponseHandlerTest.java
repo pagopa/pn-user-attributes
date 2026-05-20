@@ -15,6 +15,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAddressTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalDigitalAddressDto;
 import org.junit.jupiter.api.Assertions;
@@ -104,7 +105,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
 
@@ -136,7 +137,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
 
@@ -169,7 +170,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertThrows(NullPointerException.class, () -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
 
@@ -203,7 +204,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
     @Test
@@ -231,7 +232,7 @@ class ExternalChannelResponseHandlerTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(any(), any(), any())).thenReturn(Mono.empty());
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(any(), any(), any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
-        Mockito.when(pnExternalChannelClient.sendPecConfirm(anyString(), anyString(), anyString())).thenReturn(Mono.just(UUID.randomUUID().toString()));
+        Mockito.when(pnExternalChannelClient.sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class))).thenReturn(Mono.just(UUID.randomUUID().toString()));
         Mockito.when(addressBookService.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.just(new LegalDigitalAddressDto().senderId("senderId").recipientId("recipientId").channelType(LegalChannelTypeDto.PEC)));
         Mockito.when(addressBookService.prepareAndDeleteAddresses(any())).thenReturn(Mono.just(List.of()));
         Mockito.when(pnDatavaultClient.getVerificationCodeAddressByInternalId(any(), any())).thenReturn(Mono.just(new AddressDtoDto().value("value")));
@@ -241,7 +242,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
     @Test
@@ -277,7 +278,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertThrows(PnInternalException.class, () -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
     @Test
@@ -307,7 +308,7 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 
 
@@ -336,6 +337,6 @@ class ExternalChannelResponseHandlerTest {
         Assertions.assertDoesNotThrow(() -> mono.block(d));
 
         //THEN
-        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString());
+        Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
     }
 }

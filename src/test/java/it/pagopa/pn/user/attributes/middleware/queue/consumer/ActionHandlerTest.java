@@ -98,7 +98,7 @@ class ActionHandlerTest {
     }
     @Test
     void pnUserAttributesPecValidationExpiredActionConsumer() {
-        Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString(), Mockito.any())).thenReturn(Mono.empty());
         Message<Action> message = new Message<Action>() {
             @Override
             public Action getPayload() {
