@@ -190,6 +190,7 @@ paths:
       summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
         - in: path
           name: channelType
@@ -274,6 +275,7 @@ paths:
       summary: Crea o aggiorna un indirizzo senza valore legale per un determinato canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
+        - $ref: 'remote-refs.yaml#/components/parameters/headerLanguage'
         - $ref: 'pn-address-book-common-components.yaml#/components/parameters/senderId'
         - in: path
           name: channelType

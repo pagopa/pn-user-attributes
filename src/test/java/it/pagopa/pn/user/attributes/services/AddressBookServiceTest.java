@@ -161,7 +161,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(pnDatavaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString(), any(BigDecimal.class))).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, null, null)
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, null, null, null)
                 .block(d);
 
         //THEN
@@ -209,7 +209,7 @@ class AddressBookServiceTest {
         legalDigitalAddressDtos.add(dto);
         Mockito.lenient().when(pnExternalRegistryClient.getAooUoIdsApi(ids)).thenReturn(Flux.empty());
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, "default", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF,legalDigitalAddressDtos,pnCxGroups, "role")
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, "default", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, legalDigitalAddressDtos, pnCxGroups, "role", null)
                 .block(d);
 
         //THEN
@@ -240,7 +240,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), anyList())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role");
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role", null);
 
         //THEN
         assertThrows(PnInvalidVerificationCodeException.class, () -> mono.block(d));
@@ -272,7 +272,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role");
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> mono = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role", null);
         assertThrows(PnExpiredVerificationCodeException.class, () -> mono.block(d));
 
         verificationCode.setLastModified(Instant.now().minus(1, ChronoUnit.SECONDS));
@@ -282,7 +282,7 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role");
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, new ArrayList<>(), new ArrayList<>(), "role", null);
         assertDoesNotThrow(() -> monoOk.block(d));
 
         //THEN
@@ -329,7 +329,7 @@ class AddressBookServiceTest {
 
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role").block();
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role", null).block();
 
         //THEN
         assertNotNull(result);
@@ -377,7 +377,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.deleteAddressBook(Mockito.any(), Mockito.any(), Mockito.any(), any(), eq(true))).thenReturn(Mono.empty());
 
         // WHEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role");
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role", null);
         AddressBookService.SAVE_ADDRESS_RESULT res = monoOk.block(d);
 
         //THEN
@@ -424,7 +424,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.deleteAddressBook(Mockito.any(), Mockito.any(), Mockito.any(), any(), eq(true))).thenReturn(Mono.empty());
 
         //THEN
-        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role");
+        Mono<AddressBookService.SAVE_ADDRESS_RESULT> monoOk = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role", null);
         assertDoesNotThrow(() -> monoOk.block(d));
 
     }
@@ -463,7 +463,7 @@ class AddressBookServiceTest {
         Mockito.lenient().when(addressBookDao.deleteAddressBook(Mockito.any(), Mockito.any(), Mockito.any(), any(), eq(true))).thenReturn(Mono.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role").block(d);
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, null, legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, pnCxGroups, "role", null).block(d);
 
         //THEN
         assertNotNull(result);
@@ -579,7 +579,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
 
         // WHEN
-        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null)
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, courtesyChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null)
                 .block(d);
 
         //THEN
@@ -711,7 +711,7 @@ class AddressBookServiceTest {
 
         //THEN
          assertThrows(PnInvalidInputException.class, () -> {
-            addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelTypeDto, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, groups, "role").block();
+            addressBookService.saveLegalAddressBook(recipientId, senderId, legalChannelTypeDto, addressVerificationDto, CxTypeAuthFleetDto.PF, addressList, groups, "role", null).block();
         });
     }
 
@@ -1764,7 +1764,7 @@ class AddressBookServiceTest {
 
         PnInvalidInputException thrown = assertThrows(
                 PnInvalidInputException.class,
-                () -> addressBookService.saveLegalAddressBook(recipientId, "NOTROOT", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null).block(),
+                () -> addressBookService.saveLegalAddressBook(recipientId, "NOTROOT", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null, null).block(),
                 "Expected saveLegalAddressBook() to throw, but it didn't"
         );
 
