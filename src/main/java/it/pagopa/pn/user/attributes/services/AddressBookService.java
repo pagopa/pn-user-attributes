@@ -127,6 +127,10 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid) {
+        return saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, xPagopaCxTaxid, null);
+    }
+
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid, LanguageEnum language) {
         return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null, xPagopaCxTaxid, language);
     }
