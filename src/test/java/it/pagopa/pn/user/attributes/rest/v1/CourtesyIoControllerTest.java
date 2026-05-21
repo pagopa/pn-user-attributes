@@ -70,7 +70,7 @@ class CourtesyIoControllerTest {
         Mockito.when(svc.saveCourtesyAddressBook(Mockito.any(),
                         Mockito.any(),
                         Mockito.any(),
-                        Mockito.any(), Mockito.any()
+                        Mockito.any(), Mockito.any(), Mockito.any()
                 ))
                 .thenReturn(voidReturn);
 
@@ -125,7 +125,7 @@ class CourtesyIoControllerTest {
         Mockito.when(svc.saveCourtesyAddressBook(Mockito.anyString(),
                         Mockito.any(),
                         Mockito.any(),
-                        Mockito.any(), Mockito.anyString()))
+                        Mockito.any(), Mockito.anyString(), Mockito.any()))
                 .thenReturn(Mono.error(new PnInternalException("test", "test")));
 
         // Then
