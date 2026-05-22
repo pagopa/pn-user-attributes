@@ -119,18 +119,34 @@ public class AddressBookService {
     }
 
     /**
-     * Il metodo si occupa di salvare un indirizzo di tipo CORTESIA
+     * Overload riservato al flusso di attivazione/disattivazione APPIO (canale {@link CourtesyChannelTypeDto#APPIO}),
+     * invocato da {@code CourtesyIoController.setCourtesyAddressIo}. Il flusso non produce template OTP/PEC
+     * via {@code pn-templates-engine} ma si limita alla persistenza dell'attivazione su {@code pn-external-registries-io},
+     * quindi non c'è alcuna lingua da risolvere. Delega all'overload con {@code language=null}, che mantiene
+     * il fallback IT centralizzato nei consumer.
      *
      * @param recipientId id utente
      * @param senderId eventuale id PA
-     * @param courtesyChannelType tipologia canale cortesia
+     * @param courtesyChannelType tipologia canale cortesia (atteso APPIO per questo entry point)
      * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param xPagopaCxTaxid codice fiscale del destinatario (richiesto dal backend IO)
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid) {
         return saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, xPagopaCxTaxid, null);
     }
 
+    /**
+     * Il metodo si occupa di salvare un indirizzo di tipo CORTESIA
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param courtesyChannelType tipologia canale cortesia
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param xPagopaCxTaxid codice fiscale del destinatario
+     * @param language lingua per eventuali template OTP/PEC
+     * @return risultato operazione
+     */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid, LanguageEnum language) {
         return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null, xPagopaCxTaxid, language);
     }
