@@ -21,4 +21,18 @@ public class LanguageUtils {
             return LanguageEnum.IT;
         }
     }
+
+    public static LanguageEnum resolveLanguage(String language) {
+        if (language == null) {
+            log.warn("Language field absent (pre-feature record or missing payload field), fallback to IT");
+            return LanguageEnum.IT;
+        }
+        try {
+            return LanguageEnum.fromValue(language);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unsupported language value '{}', fallback to IT", language);
+            return LanguageEnum.IT;
+        }
+    }
+
 }
