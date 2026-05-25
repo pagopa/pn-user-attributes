@@ -21,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import static it.pagopa.pn.user.attributes.handler.PecRequestPrefixes.PEC_CONFIRM_PREFIX;
+import static it.pagopa.pn.user.attributes.handler.PecRequestPrefixes.PEC_REJECTED_PREFIX;
+
 @Slf4j
 @AllArgsConstructor
 @Component
@@ -32,9 +35,6 @@ public class ExternalChannelResponseHandler {
     private final VerificationCodeUtils verificationCodeUtils;
     private final PnExternalChannelClient externalChannelClient;
     private final PnDataVaultClient pnDataVaultClient;
-    private static final String PEC_CONFIRM_PREFIX = "pec-confirm-";
-    private static final String PEC_REJECTED_PREFIX = "pec-rejected-";
-    private static final String PEC_FAIL_EVENT_CODE = "C009";
 
 
 
@@ -51,7 +51,7 @@ public class ExternalChannelResponseHandler {
                 log.info("Arrived legal singleStatusUpdateDto from external channel, and is SUCCESS code, saving PEC flag singleStatusUpdateDto={}", singleStatusUpdateDto);
                 return checkVerificationAddressAndSave(legalMessageSentDetailsDto.getRequestId());
             }
-            else if (PEC_FAIL_EVENT_CODE.equals(eventCode)) {
+            else if (pnUserattributesConfig.getExternalChannelDigitalCodesFail().contains(eventCode)) {
                 log.info("Arrived legal singleStatusUpdateDto from external channel, and is FAILURE code, sending PEC rejection singleStatusUpdateDto={}", singleStatusUpdateDto);
                 return handlePermanentDeliveryFailure(legalMessageSentDetailsDto.getRequestId());
             }
