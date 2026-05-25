@@ -74,14 +74,7 @@ public class ExternalChannelResponseHandler {
             return Mono.empty();
         }
 
-        String logMessage = String.format(
-                "checkVerificationAddressAndSave PEC sending verification code requestId=%s", requestId);
-
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
-                .build();
-        logEvent.log();
+        PnAuditLogEvent logEvent = openAuditEvent(String.format("checkVerificationAddressAndSave PEC sending verification code requestId=%s", requestId));
 
         // devo recuperare il record tramire il requestId, quindi purtroppo devo far una query ad-hoc
         return addressBookDao.getVerificationCodeByRequestId(requestId)
@@ -114,10 +107,7 @@ public class ExternalChannelResponseHandler {
                 .switchIfEmpty(Mono.fromRunnable(
                         () -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()).thenReturn("KO"))
                 .onErrorResume(x -> {
-                    String message;
-                    if (x instanceof PnRuntimeException pnRuntimeException)
-                        message = String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
-                    else message = x.getMessage();
+                    String message = extractErrorMessage(x);
                     String failureMessage = String.format("checkVerificationAddressAndSave PEC error %s", message);
                     logEvent.generateFailure(failureMessage).log();
                     log.error("checkVerificationAddressAndSave PEC error {}", message, x);
@@ -127,13 +117,7 @@ public class ExternalChannelResponseHandler {
     }
 
     private Mono<Void> handlePermanentDeliveryFailure(String requestId) {
-        String logMessage = String.format("handlePermanentDeliveryFailure PEC sending rejection requestId=%s", requestId);
-
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
-                .build();
-        logEvent.log();
+        PnAuditLogEvent logEvent = openAuditEvent(String.format("handlePermanentDeliveryFailure PEC sending rejection requestId=%s", requestId));
 
         return addressBookDao.getVerificationCodeByRequestId(requestId)
                 .flatMap(verificationCodeEntity -> resolveAddress(verificationCodeEntity)
@@ -146,16 +130,27 @@ public class ExternalChannelResponseHandler {
                         .doOnSuccess(x -> logEvent.generateSuccess("Pec rejection sent recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log()))
                 .switchIfEmpty(Mono.fromRunnable(() -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()))
                 .onErrorResume(x -> {
-                    String message;
-                    if (x instanceof PnRuntimeException pnRuntimeException)
-                        message = String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
-                    else message = x.getMessage();
+                    String message = extractErrorMessage(x);
                     String failureMessage = String.format("handlePermanentDeliveryFailure PEC error %s", message);
                     logEvent.generateFailure(failureMessage).log();
                     log.error("handlePermanentDeliveryFailure PEC error {}", message, x);
                     return Mono.error(x);
                 })
                 .then();
+    }
+
+    private PnAuditLogEvent openAuditEvent(String logMessage) {
+        PnAuditLogEvent logEvent = new PnAuditLogBuilder()
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
+                .build();
+        logEvent.log();
+        return logEvent;
+    }
+
+    private String extractErrorMessage(Throwable x) {
+        if (x instanceof PnRuntimeException pnRuntimeException)
+            return String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
+        return x.getMessage();
     }
 
     private Mono<AddressDtoDto> resolveAddress(VerificationCodeEntity verificationCodeEntity) {
