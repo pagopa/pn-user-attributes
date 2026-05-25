@@ -21,6 +21,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.UserStatusResponse;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import org.junit.jupiter.api.Assertions;
@@ -43,7 +44,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -154,7 +154,7 @@ class AddressBookServiceTest {
         listFromDb.add(AddressBookDaoTestIT.newAddress(true));
         listFromDb.add(AddressBookDaoTestIT.newAddress(false));
 
-        Mockito.lenient().when(pnExternalRegistryClient.getAooUoIdsApi(List.of(ROOT_SENDER))).thenReturn(Flux.empty());
+        Mockito.lenient().when(pnExternalRegistryClient.getAooUoIdsV2Api(List.of(ROOT_SENDER))).thenReturn(Mono.just(new FilteredPaIdsResponse()));
         Mockito.lenient().when(addressBookDao.getAddresses(Mockito.any(), Mockito.any(), Mockito.any(), anyBoolean())).thenReturn(Flux.fromIterable(listFromDb));
         Mockito.lenient().when(pnDatavaultClient.deleteRecipientAddressByInternalId(anyString(), anyString())).thenReturn(Mono.empty());
         Mockito.lenient().when(addressBookDao.deleteAddressBook(Mockito.any(), Mockito.any(), Mockito.any(), any(), eq(true))).thenReturn(Mono.empty());
@@ -207,7 +207,7 @@ class AddressBookServiceTest {
         dto.setChannelType(legalChannelType);
         dto.setSenderName("default");
         legalDigitalAddressDtos.add(dto);
-        Mockito.lenient().when(pnExternalRegistryClient.getAooUoIdsApi(ids)).thenReturn(Flux.empty());
+        Mockito.lenient().when(pnExternalRegistryClient.getAooUoIdsV2Api(ids)).thenReturn(Mono.just(new FilteredPaIdsResponse()));
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveLegalAddressBook(recipientId, "default", legalChannelType, addressVerificationDto, CxTypeAuthFleetDto.PF,legalDigitalAddressDtos,pnCxGroups, "role")
                 .block(d);
@@ -1760,7 +1760,10 @@ class AddressBookServiceTest {
         VerificationCodeEntity verificationCode = new VerificationCodeEntity();
         verificationCode.setVerificationCode("12345");
 
-        Mockito.when(pnExternalRegistryClient.getAooUoIdsApi(Arrays.asList("NOTROOT"))).thenReturn(Flux.just("NOTROOT"));
+        FilteredPaIdsResponse clientResponse = new FilteredPaIdsResponse();
+        clientResponse.addIdsItem("NOTROOT");
+
+        Mockito.when(pnExternalRegistryClient.getAooUoIdsV2Api(List.of("NOTROOT"))).thenReturn(Mono.just(clientResponse));
 
         PnInvalidInputException thrown = assertThrows(
                 PnInvalidInputException.class,
@@ -1786,7 +1789,7 @@ class AddressBookServiceTest {
         Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(ioNotificationService.scheduleCheckNotificationToSendAfterIOActivation(Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(pnExternalRegistryClient.getAooUoIdsApi(List.of(ROOT_SENDER))).thenReturn(Flux.empty());
+        Mockito.when(pnExternalRegistryClient.getAooUoIdsV2Api(List.of(ROOT_SENDER))).thenReturn(Mono.just(new FilteredPaIdsResponse()));
 
         // WHEN
         AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, ROOT_SENDER, courtesyChannelType, new AddressVerificationDto(), "EEEEEE00E00E000A").block(d);

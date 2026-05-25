@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -18,25 +17,23 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
@@ -540,23 +537,20 @@ public class AddressBookService {
                 .collectList();
     }
 
-    private Mono<String> filterNotRootSender(final String senderId){
-
+    private Mono<String> filterNotRootSender(final String senderId) {
         if (senderId == null) return Mono.just(AddressBookEntity.SENDER_ID_DEFAULT);
-
-        return  externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next()
-            .switchIfEmpty(Mono.just( "")) //Root case
-            .flatMap(s -> {
-                    if (StringUtils.hasText(s)){
-                        // Not Root
-                        return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
-                    } else {
-                        // Root
-                        return Mono.just(senderId);
-                    }
-                }
-            );
-
+        return externalRegistryClient.getAooUoIdsV2Api(List.of(senderId))
+                .switchIfEmpty(Mono.just(new FilteredPaIdsResponse())) //Root case
+                .flatMap(response -> {
+                            if (response.getIds() != null && !response.getIds().isEmpty()) {
+                                // Not Root
+                                return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
+                            } else {
+                                // Root
+                                return Mono.just(senderId);
+                            }
+                        }
+                );
     }
 
 

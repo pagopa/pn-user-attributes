@@ -6,6 +6,7 @@ import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto.PrivacyNoticeVersionResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.ActivationPayload;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.dto.ActivationStatus;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -23,8 +24,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -190,6 +194,30 @@ class PnExternalRegistryClientTest {
         List<String> result = client.getAooUoIdsApi(List.of("id1")).collectList().block();
 
         Assertions.assertEquals(List.of("id1"), result);
+    }
+
+    @Test
+    void getAooUoIdsV2Api_returnsElements() {
+        // MockServer deve restituire un oggetto con la proprietà "ids", non solo un array
+        new MockServerClient("localhost", 9999)
+                .when(request()
+                        .withMethod("GET")
+                        .withPath("/ext-registry-private/pa/v2/actions/filter-out-root-pa-ids"))
+                .respond(response()
+                        .withBody("{\"ids\": [\"id1\", \"id2\"]}")
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(200));
+
+        // When
+        FilteredPaIdsResponse result = client.getAooUoIdsV2Api(List.of("id1"))
+                .block(Duration.ofMillis(3000));
+
+        // Then
+        assertNotNull(result);
+        assertNotNull(result.getIds());
+        assertEquals(2, result.getIds().size());
+        assertEquals("id1", result.getIds().get(0));
+        assertEquals("id2", result.getIds().get(1));
     }
 
     @Test
