@@ -69,7 +69,7 @@ public class PnUserattributesConfig {
     private Duration datavaultVcAddressTtl;
 
     private List<String> externalChannelDigitalCodesSuccess;
-    private List<String> externalChannelDigitalCodesFail;
+    private List<String> externalChannelDigitalCodesFail = new ArrayList<>();
 
     private Topics topics;
 
