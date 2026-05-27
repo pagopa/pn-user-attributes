@@ -10,6 +10,7 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -163,7 +164,7 @@ public class VerificationCodeUtils {
      * @return risultato dell'operazione
      */
     public Mono<AddressBookService.SAVE_ADDRESS_RESULT> saveInDynamodbNewVerificationCodeAndSendToExternalChannel(String recipientId, String realaddress,
-                                                                                                                  LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId) {
+                                                                                                                  LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, String senderId, LanguageEnum language) {
         String hashedaddress = hashAddress(realaddress);
         String addressType = getLegalType(legalChannelType);
 
@@ -173,12 +174,13 @@ public class VerificationCodeUtils {
 
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationcodettl()).atZone(ZoneId.systemDefault()).toEpochSecond());
+        verificationCode.setLanguage(language != null ? language.getValue() : null);
 
         //la send non va fatta senza il codice
         return removePreviousVerificationCode(verificationCode)
                 .then(dao.saveVerificationCode(verificationCode))
                 .flatMap(r ->
-                        pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode())
+                        pnExternalChannelClient.sendVerificationCode(recipientId, realaddress, legalChannelType, courtesyChannelType, verificationCode.getVerificationCode(), language)
                                 .flatMap(requestId -> {
                                     // aggiorno il requestId
                                     verificationCode.setRequestId(requestId);

@@ -6,6 +6,7 @@ import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
+import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
@@ -14,10 +15,14 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.d
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.LegalMessageSentDetailsDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.SingleStatusUpdateDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
+import it.pagopa.pn.user.attributes.utils.LanguageUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import static it.pagopa.pn.user.attributes.handler.PecRequestPrefixes.PEC_CONFIRM_PREFIX;
+import static it.pagopa.pn.user.attributes.handler.PecRequestPrefixes.PEC_REJECTED_PREFIX;
 
 @Slf4j
 @AllArgsConstructor
@@ -30,7 +35,6 @@ public class ExternalChannelResponseHandler {
     private final VerificationCodeUtils verificationCodeUtils;
     private final PnExternalChannelClient externalChannelClient;
     private final PnDataVaultClient pnDataVaultClient;
-    private static final String PEC_CONFIRM_PREFIX = "pec-confirm-";
 
 
 
@@ -38,13 +42,18 @@ public class ExternalChannelResponseHandler {
         if (singleStatusUpdateDto.getDigitalLegal() != null)
         {
             LegalMessageSentDetailsDto legalMessageSentDetailsDto = singleStatusUpdateDto.getDigitalLegal();
-            if (pnUserattributesConfig.getExternalChannelDigitalCodesSuccess().contains(legalMessageSentDetailsDto.getEventCode()))
+            String eventCode = legalMessageSentDetailsDto.getEventCode();
+            if (pnUserattributesConfig.getExternalChannelDigitalCodesSuccess().contains(eventCode))
             {
                 // è una conferma di invio PEC.
                 // cerco il verification code da aggiornare e setto il flag di PEC inviata.
                 // se non lo trovo, loggo e ignoro perchè vuol dire che è la conferma è arrivata "tardi".
                 log.info("Arrived legal singleStatusUpdateDto from external channel, and is SUCCESS code, saving PEC flag singleStatusUpdateDto={}", singleStatusUpdateDto);
                 return checkVerificationAddressAndSave(legalMessageSentDetailsDto.getRequestId());
+            }
+            else if (pnUserattributesConfig.getExternalChannelDigitalCodesFail().contains(eventCode)) {
+                log.info("Arrived legal singleStatusUpdateDto from external channel, and is FAILURE code, sending PEC rejection singleStatusUpdateDto={}", singleStatusUpdateDto);
+                return handlePermanentDeliveryFailure(legalMessageSentDetailsDto.getRequestId());
             }
             else {
                 log.info("Arrived legal singleStatusUpdateDto from external channel, but not an success code, nothig to do singleStatusUpdateDto={}", singleStatusUpdateDto);
@@ -65,14 +74,7 @@ public class ExternalChannelResponseHandler {
             return Mono.empty();
         }
 
-        String logMessage = String.format(
-                "checkVerificationAddressAndSave PEC sending verification code requestId=%s", requestId);
-
-        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
-        PnAuditLogEvent logEvent = auditLogBuilder
-                .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
-                .build();
-        logEvent.log();
+        PnAuditLogEvent logEvent = openAuditEvent(String.format("checkVerificationAddressAndSave PEC sending verification code requestId=%s", requestId));
 
         // devo recuperare il record tramire il requestId, quindi purtroppo devo far una query ad-hoc
         return addressBookDao.getVerificationCodeByRequestId(requestId)
@@ -87,13 +89,12 @@ public class ExternalChannelResponseHandler {
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
                                 .collectList()
                                 .flatMap(addressBookService::prepareAndDeleteAddresses)
-                                .zipWhen(addressesToDelete -> pnDataVaultClient.getVerificationCodeAddressByInternalId(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress())
-                                        .defaultIfEmpty(new AddressDtoDto().value(verificationCodeEntity.getAddress())))
+                                .zipWhen(addressesToDelete -> resolveAddress(verificationCodeEntity))
                                 .flatMap(tuple -> {
                                     String address = tuple.getT2().getValue();
                                     return verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, tuple.getT1(), address).map(x -> address);
                                 })
-                                .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address))
+                                .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address, LanguageUtils.resolveLanguage(verificationCodeEntity.getLanguage())))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
                                 .thenReturn("OK");
                     } else {
@@ -106,16 +107,55 @@ public class ExternalChannelResponseHandler {
                 .switchIfEmpty(Mono.fromRunnable(
                         () -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()).thenReturn("KO"))
                 .onErrorResume(x -> {
-                    String message;
-                    if (x instanceof PnRuntimeException pnRuntimeException)
-                        message = String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
-                    else message = x.getMessage();
+                    String message = extractErrorMessage(x);
                     String failureMessage = String.format("checkVerificationAddressAndSave PEC error %s", message);
                     logEvent.generateFailure(failureMessage).log();
                     log.error("checkVerificationAddressAndSave PEC error {}", message, x);
                     return Mono.error(x);
                 })
                 .then();
+    }
+
+    private Mono<Void> handlePermanentDeliveryFailure(String requestId) {
+        PnAuditLogEvent logEvent = openAuditEvent(String.format("handlePermanentDeliveryFailure PEC sending rejection requestId=%s", requestId));
+
+        return addressBookDao.getVerificationCodeByRequestId(requestId)
+                .flatMap(verificationCodeEntity -> resolveAddress(verificationCodeEntity)
+                        .flatMap(addressDto -> externalChannelClient.sendCourtesyPecRejected(
+                                PEC_REJECTED_PREFIX + requestId,
+                                verificationCodeEntity.getRecipientId(),
+                                addressDto.getValue(),
+                                LanguageUtils.resolveLanguage(verificationCodeEntity.getLanguage())))
+                        .then(addressBookDao.deleteVerificationCode(verificationCodeEntity))
+                        .doOnSuccess(x -> logEvent.generateSuccess("Pec rejection sent recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log()))
+                .switchIfEmpty(Mono.fromRunnable(() -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()))
+                .onErrorResume(x -> {
+                    String message = extractErrorMessage(x);
+                    String failureMessage = String.format("handlePermanentDeliveryFailure PEC error %s", message);
+                    logEvent.generateFailure(failureMessage).log();
+                    log.error("handlePermanentDeliveryFailure PEC error {}", message, x);
+                    return Mono.error(x);
+                })
+                .then();
+    }
+
+    private PnAuditLogEvent openAuditEvent(String logMessage) {
+        PnAuditLogEvent logEvent = new PnAuditLogBuilder()
+                .before(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, logMessage)
+                .build();
+        logEvent.log();
+        return logEvent;
+    }
+
+    private String extractErrorMessage(Throwable x) {
+        if (x instanceof PnRuntimeException pnRuntimeException)
+            return String.format("%s - %s", pnRuntimeException.getProblem().getTitle(), pnRuntimeException.getProblem().getDetail());
+        return x.getMessage();
+    }
+
+    private Mono<AddressDtoDto> resolveAddress(VerificationCodeEntity verificationCodeEntity) {
+        return pnDataVaultClient.getVerificationCodeAddressByInternalId(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress())
+                .defaultIfEmpty(new AddressDtoDto().value(verificationCodeEntity.getAddress()));
     }
 
 

@@ -98,7 +98,7 @@ class ActionHandlerTest {
     }
     @Test
     void pnUserAttributesPecValidationExpiredActionConsumer() {
-        Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString(), Mockito.any())).thenReturn(Mono.empty());
         Message<Action> message = new Message<Action>() {
             @Override
             public Action getPayload() {
@@ -119,5 +119,32 @@ class ActionHandlerTest {
         };
 
         Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesActionConsumer(message));
+    }
+
+    @Test
+    void pnUserAttributesPecValidationExpiredActionConsumer_withLanguage() {
+        Mockito.when(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString(), Mockito.eq("DE"))).thenReturn(Mono.empty());
+        Message<Action> message = new Message<Action>() {
+            @Override
+            public Action getPayload() {
+                Action action = Action.builder()
+                        .internalId("123")
+                        .actionId("123456")
+                        .type(ActionType.PEC_REJECTED_ACTION)
+                        .address("email@email.it")
+                        .language("DE")
+                        .build();
+                return action;
+            }
+
+            @Override
+            public MessageHeaders getHeaders() {
+                MessageHeaders messageHeaders = new MessageHeaders(Map.of());
+                return messageHeaders;
+            }
+        };
+
+        Assertions.assertDoesNotThrow(() -> actionHandler.pnUserAttributesActionConsumer(message));
+        Mockito.verify(pecValidationExpiredResponseHandler).consumePecValidationExpiredEvent(Mockito.any(), Mockito.anyString(), Mockito.eq("DE"));
     }
 }

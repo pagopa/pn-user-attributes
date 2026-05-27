@@ -6,6 +6,7 @@ import it.pagopa.pn.user.attributes.middleware.queue.consumer.ExternalChannelHan
 import it.pagopa.pn.user.attributes.middleware.queue.sqs.SqsActionProducer;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.api.TemplateApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.AfterEach;
@@ -107,7 +108,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", RECIPIENT_ID, ADDRESS).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", RECIPIENT_ID, ADDRESS, LanguageEnum.IT).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
@@ -116,7 +117,7 @@ class PnExternalChannelClientByTemplateClientTest {
         //Given
         Mockito.when(pnDataVaultClient.getRecipientDenominationByInternalId(Mockito.any())).thenReturn(Flux.error(new Throwable("errore")));
 
-        Mono<String> mono = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", RECIPIENT_ID, ADDRESS);
+        Mono<String> mono = pnExternalChannelClient.sendCourtesyPecRejected("pec-rejected-1234567", RECIPIENT_ID, ADDRESS, LanguageEnum.IT);
         Assertions.assertThrows(Exception.class, () -> mono.block(Duration.ofMillis(3000)));
     }
 
@@ -143,7 +144,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", RECIPIENT_ID, ADDRESS).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendPecConfirm("pec-confirm-1234567", RECIPIENT_ID, ADDRESS, LanguageEnum.IT).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
@@ -170,7 +171,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
@@ -197,7 +198,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
     }
 
@@ -223,7 +224,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
 
-        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
@@ -250,7 +251,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
     }
 
@@ -270,7 +271,7 @@ class PnExternalChannelClientByTemplateClientTest {
                 .respond(response()
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(204));
-        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode).block(Duration.ofMillis(3000));
+        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT).block(Duration.ofMillis(3000));
         assertNotNull(res);
     }
 
@@ -292,7 +293,7 @@ class PnExternalChannelClientByTemplateClientTest {
                         .withContentType(MediaType.APPLICATION_JSON)
                         .withStatusCode(500));
 
-        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode);
+        Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
     }
 }

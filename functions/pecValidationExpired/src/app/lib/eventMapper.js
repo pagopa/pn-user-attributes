@@ -13,7 +13,8 @@ async function mapPayload(event) {
         address: entity.address,
         hashedAddress : entity.sk.split("#")[0],
         timestamp: date.toISOString(),
-        type: 'PEC_REJECTED_ACTION'
+        type: 'PEC_REJECTED_ACTION',
+        language: entity.language ?? "IT"
       };
 
       const evId = crypto.randomUUID();

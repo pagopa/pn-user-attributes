@@ -25,5 +25,7 @@ public class Action {
 
     private ActionType type;
 
+    private String language;
+
     @lombok.ToString.Exclude private String address;
 }

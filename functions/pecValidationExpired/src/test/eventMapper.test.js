@@ -21,6 +21,19 @@ describe("event mapper tests", function () {
     expect(entity.actionId).equal(
       "VC#PF-12345678026e8c72-7944-4dcd-8668-f596447fec6d"
     );
+    expect(entity.language).equal("IT"); // language assente nel fixture → fallback
+  });
+
+  // correct mapping with language field present
+  it("test PEC_REJECTED_ACTION with language", async () => {
+    const eventJSON = fs.readFileSync("./src/test/entity.verificationcode_ok.json");
+    const event = JSON.parse(eventJSON);
+    event.dynamodb.OldImage.language = { S: "DE" };
+    const events = [event];
+
+    const res = await mapEvents(events);
+    const entity = JSON.parse(res[0].MessageBody);
+    expect(entity.language).equal("DE");
   });
 
   // correct mapping with missing address field

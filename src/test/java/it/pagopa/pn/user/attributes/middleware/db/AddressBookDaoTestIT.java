@@ -774,6 +774,7 @@ class AddressBookDaoTestIT {
         void saveVerificationCode () {
             //Given
             VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178000", "Address345678", "SMS", "senderid", "COURTESY", "addressreal");
+            verificationCodeToInsert.setLanguage("DE");
 
             try {
                 testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
@@ -788,6 +789,7 @@ class AddressBookDaoTestIT {
 
                 Assertions.assertNotNull( verificationCodeFromDb);
                 Assertions.assertEquals( verificationCodeToInsert, verificationCodeFromDb);
+                Assertions.assertEquals("DE", verificationCodeFromDb.getLanguage());
 
 
             } catch (Exception e) {
@@ -801,6 +803,37 @@ class AddressBookDaoTestIT {
             }
 
 
+        }
+
+        @Test
+        void saveVerificationCodeWithoutLanguage () {
+            //Given
+            VerificationCodeEntity verificationCodeToInsert= new VerificationCodeEntity("VC-123e4567-e89b-12d3-a456-426614178099", "Address345678", "SMS", "senderid", "COURTESY", "addressreal");
+
+            try {
+                testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+            } catch (Exception e) {
+                System.out.println("error removing");
+            }
+            //When
+            addressBookDao.saveVerificationCode(verificationCodeToInsert).block(d);
+            //Then
+            try {
+                VerificationCodeEntity verificationCodeFromDb = testCodeDao.get(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+
+                Assertions.assertNotNull(verificationCodeFromDb);
+                Assertions.assertNull(verificationCodeFromDb.getLanguage());
+                Assertions.assertEquals(verificationCodeToInsert, verificationCodeFromDb);
+
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                try {
+                    testDao.delete(verificationCodeToInsert.getPk(), verificationCodeToInsert.getSk());
+                } catch (Exception e) {
+                    System.out.println("Nothing to remove");
+                }
+            }
         }
 
         @Test
