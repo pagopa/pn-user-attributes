@@ -8,16 +8,21 @@ import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntit
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalChannelClient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.api.AddressBookApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.List;
 
 import static it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAddressTypeDto.LEGAL;
@@ -105,6 +110,42 @@ class VerificationCodeUtilsTest {
 
         //THEN
         StepVerifier.create(verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCodeEntity, List.of(), realAddress)).expectError(PnInternalException.class);
+    }
+
+    @Test
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_persistsLanguage() {
+        String realAddress = "user@example.com";
+
+        when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
+        when(addressBookDao.getAllVerificationCodesByRecipient(eq(RECIPIENT_ID), any())).thenReturn(Flux.empty());
+        when(addressBookDao.saveVerificationCode(any(VerificationCodeEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq(LanguageEnum.DE))).thenReturn(Mono.just("req-id"));
+        when(addressBookDao.updateVerificationCodeIfExists(any(VerificationCodeEntity.class))).thenReturn(Mono.empty());
+
+        verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                RECIPIENT_ID, realAddress, null, CourtesyChannelTypeDto.EMAIL, "default", LanguageEnum.DE).block();
+
+        ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
+        verify(addressBookDao).saveVerificationCode(captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals("DE", captor.getValue().getLanguage());
+    }
+
+    @Test
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_nullLanguagePersistsNull() {
+        String realAddress = "user@example.com";
+
+        when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
+        when(addressBookDao.getAllVerificationCodesByRecipient(eq(RECIPIENT_ID), any())).thenReturn(Flux.empty());
+        when(addressBookDao.saveVerificationCode(any(VerificationCodeEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq((LanguageEnum) null))).thenReturn(Mono.just("req-id"));
+        when(addressBookDao.updateVerificationCodeIfExists(any(VerificationCodeEntity.class))).thenReturn(Mono.empty());
+
+        verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                RECIPIENT_ID, realAddress, null, CourtesyChannelTypeDto.EMAIL, "default", null).block();
+
+        ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
+        verify(addressBookDao).saveVerificationCode(captor.capture());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().getLanguage());
     }
 
 }

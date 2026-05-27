@@ -46,8 +46,7 @@ public class ActionHandler {
                     MDCUtils.addMDCToContextAndExecute(ioNotificationService.consumeIoActivationEvent(action.getActionId(), action.getInternalId(), action.getCheckFromWhen()).then()).block();
                     break;
                 case PEC_REJECTED_ACTION:
-                    // TODO WI-4.3: sostituire null con action.getLanguage() quando il campo language sarà aggiunto ad Action
-                    MDCUtils.addMDCToContextAndExecute(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(action.getInternalId(), action.getAddress(), null)).block();
+                    MDCUtils.addMDCToContextAndExecute(pecValidationExpiredResponseHandler.consumePecValidationExpiredEvent(action.getInternalId(), action.getAddress(), action.getLanguage())).block();
                     break;
                 default:
                     String msg = "Unknown action type: " + action.getType();

@@ -17,7 +17,7 @@ class ActionTypeTest {
     @BeforeEach
     void setUp() {
         action = new Action("testID","testInternalID",
-                Instant.now(),new SentNotificationV25(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null);
+                Instant.now(),new SentNotificationV25(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null, null);
     }
 
 

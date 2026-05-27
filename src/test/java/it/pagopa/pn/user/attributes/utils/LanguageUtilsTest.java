@@ -10,7 +10,8 @@ class LanguageUtilsTest {
 
     @Test
     void resolveLanguage_null_returnsIT() {
-        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage(null));
+        CxLanguageDto nullLanguage = null;
+        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage(nullLanguage));
     }
 
     @Test
@@ -36,5 +37,37 @@ class LanguageUtilsTest {
     @Test
     void resolveLanguage_EN_fallbackToIT() {
         assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage(CxLanguageDto.EN));
+    }
+
+    // resolveLanguage(String) overload
+
+    @Test
+    void resolveLanguageString_null_returnsIT() {
+        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage((String) null));
+    }
+
+    @Test
+    void resolveLanguageString_IT_returnsIT() {
+        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage("IT"));
+    }
+
+    @Test
+    void resolveLanguageString_DE_returnsDE() {
+        assertEquals(LanguageEnum.DE, LanguageUtils.resolveLanguage("DE"));
+    }
+
+    @Test
+    void resolveLanguageString_SL_returnsSL() {
+        assertEquals(LanguageEnum.SL, LanguageUtils.resolveLanguage("SL"));
+    }
+
+    @Test
+    void resolveLanguageString_FR_returnsFR() {
+        assertEquals(LanguageEnum.FR, LanguageUtils.resolveLanguage("FR"));
+    }
+
+    @Test
+    void resolveLanguageString_unsupported_fallbackToIT() {
+        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage("XX"));
     }
 }
