@@ -9,7 +9,11 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnDataVaultClient;
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.AddressDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.RecipientAddressesDtoDto;
-import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.AddressVerificationResponseDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalAddressTypeDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +24,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
 
@@ -81,7 +84,7 @@ class LegalAddressControllerTestIT {
         Map<String, AddressDtoDto> addresses = Map.of(LegalAddressTypeDto.LEGAL + "#" + "default" + "#" + "PEC", new AddressDtoDto().value(realAddress));
         when(dataVaultClient.getRecipientAddressesByInternalId(RECIPIENTID)).thenReturn(Mono.just(new RecipientAddressesDtoDto().addresses(addresses)));
         when(dataVaultClient.updateRecipientAddressByInternalId(anyString(), anyString(), anyString(), any(BigDecimal.class))).thenReturn(Mono.empty());
-        when(externalRegistryClient.getAooUoIdsApi(List.of(SENDERID))).thenReturn(Flux.empty());
+        when(externalRegistryClient.getAooUoIdsV2Api(List.of(SENDERID))).thenReturn(Mono.just(new FilteredPaIdsResponse()));
 
         // Then
         webTestClient.post()
@@ -118,7 +121,7 @@ class LegalAddressControllerTestIT {
         // When
         Map<String, AddressDtoDto> addresses = Map.of(LegalAddressTypeDto.LEGAL + "#" + "default" + "#" + "PEC", new AddressDtoDto().value(realAddress));
         when(dataVaultClient.getRecipientAddressesByInternalId(RECIPIENTID)).thenReturn(Mono.just(new RecipientAddressesDtoDto().addresses(addresses)));
-        when(externalRegistryClient.getAooUoIdsApi(List.of(SENDERID))).thenReturn(Flux.empty());
+        when(externalRegistryClient.getAooUoIdsV2Api(List.of(SENDERID))).thenReturn(Mono.just(new FilteredPaIdsResponse()));
 
         // Then
         webTestClient.post()
