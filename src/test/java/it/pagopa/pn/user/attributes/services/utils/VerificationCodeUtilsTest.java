@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 
@@ -113,7 +114,47 @@ class VerificationCodeUtilsTest {
     }
 
     @Test
-    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_persistsLanguage() {
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_pecPersistsLanguage() {
+        String realAddress = "user@pec.example.com";
+
+        when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
+        when(pnUserattributesConfig.getDatavaultVcAddressTtl()).thenReturn(Duration.ofHours(48));
+        when(addressBookDao.getAllVerificationCodesByRecipient(eq(RECIPIENT_ID), any())).thenReturn(Flux.empty());
+        when(addressBookDao.saveVerificationCode(any(VerificationCodeEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq(LanguageEnum.DE))).thenReturn(Mono.just("req-id"));
+        when(addressBookDao.updateVerificationCodeIfExists(any(VerificationCodeEntity.class))).thenReturn(Mono.empty());
+        when(dataVaultClient.updateRecipientAddressByInternalId(eq(RECIPIENT_ID), any(), eq(realAddress), any(BigDecimal.class))).thenReturn(Mono.empty());
+
+        verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                RECIPIENT_ID, realAddress, LegalChannelTypeDto.PEC, null, "default", LanguageEnum.DE).block();
+
+        ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
+        verify(addressBookDao).saveVerificationCode(captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals("DE", captor.getValue().getLanguage());
+    }
+
+    @Test
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_pecWithNullLanguagePersistsNull() {
+        String realAddress = "user@pec.example.com";
+
+        when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
+        when(pnUserattributesConfig.getDatavaultVcAddressTtl()).thenReturn(Duration.ofHours(48));
+        when(addressBookDao.getAllVerificationCodesByRecipient(eq(RECIPIENT_ID), any())).thenReturn(Flux.empty());
+        when(addressBookDao.saveVerificationCode(any(VerificationCodeEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq((LanguageEnum) null))).thenReturn(Mono.just("req-id"));
+        when(addressBookDao.updateVerificationCodeIfExists(any(VerificationCodeEntity.class))).thenReturn(Mono.empty());
+        when(dataVaultClient.updateRecipientAddressByInternalId(eq(RECIPIENT_ID), any(), eq(realAddress), any(BigDecimal.class))).thenReturn(Mono.empty());
+
+        verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
+                RECIPIENT_ID, realAddress, LegalChannelTypeDto.PEC, null, "default", null).block();
+
+        ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
+        verify(addressBookDao).saveVerificationCode(captor.capture());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().getLanguage());
+    }
+
+    @Test
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_emailChannelDoesNotPersistLanguage() {
         String realAddress = "user@example.com";
 
         when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
@@ -127,21 +168,21 @@ class VerificationCodeUtilsTest {
 
         ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
         verify(addressBookDao).saveVerificationCode(captor.capture());
-        org.junit.jupiter.api.Assertions.assertEquals("DE", captor.getValue().getLanguage());
+        org.junit.jupiter.api.Assertions.assertNull(captor.getValue().getLanguage());
     }
 
     @Test
-    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_nullLanguagePersistsNull() {
-        String realAddress = "user@example.com";
+    void saveInDynamodbNewVerificationCodeAndSendToExternalChannel_smsChannelDoesNotPersistLanguage() {
+        String realAddress = "+39000000000";
 
         when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofMinutes(15));
         when(addressBookDao.getAllVerificationCodesByRecipient(eq(RECIPIENT_ID), any())).thenReturn(Flux.empty());
         when(addressBookDao.saveVerificationCode(any(VerificationCodeEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
-        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq((LanguageEnum) null))).thenReturn(Mono.just("req-id"));
+        when(externalChannelClient.sendVerificationCode(eq(RECIPIENT_ID), eq(realAddress), any(), any(), any(), eq(LanguageEnum.FR))).thenReturn(Mono.just("req-id"));
         when(addressBookDao.updateVerificationCodeIfExists(any(VerificationCodeEntity.class))).thenReturn(Mono.empty());
 
         verificationCodeUtils.saveInDynamodbNewVerificationCodeAndSendToExternalChannel(
-                RECIPIENT_ID, realAddress, null, CourtesyChannelTypeDto.EMAIL, "default", null).block();
+                RECIPIENT_ID, realAddress, null, CourtesyChannelTypeDto.SMS, "default", LanguageEnum.FR).block();
 
         ArgumentCaptor<VerificationCodeEntity> captor = ArgumentCaptor.forClass(VerificationCodeEntity.class);
         verify(addressBookDao).saveVerificationCode(captor.capture());
