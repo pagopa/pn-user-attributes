@@ -174,7 +174,7 @@ public class VerificationCodeUtils {
 
         verificationCode.setVerificationCode(vercode);
         verificationCode.setTtl(LocalDateTime.now().plus(pnUserattributesConfig.getVerificationcodettl()).atZone(ZoneId.systemDefault()).toEpochSecond());
-        verificationCode.setLanguage(language != null ? language.getValue() : null);
+        verificationCode.setLanguage(legalChannelType == LegalChannelTypeDto.PEC && language != null ? language.getValue() : null);
 
         //la send non va fatta senza il codice
         return removePreviousVerificationCode(verificationCode)
