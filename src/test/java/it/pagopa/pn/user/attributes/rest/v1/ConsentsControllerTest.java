@@ -638,10 +638,10 @@ class ConsentsControllerTest {
         when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.just(new Object()));
 
-        Logger controllerLogger = (Logger) LoggerFactory.getLogger(ConsentsController.class);
+        Logger auditLogger = (Logger) LoggerFactory.getLogger("it.pagopa.pn.commons.log.PnAuditLog");
         ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
         listAppender.start();
-        controllerLogger.addAppender(listAppender);
+        auditLogger.addAppender(listAppender);
 
         webTestClient.put()
                 .uri(url)
@@ -653,7 +653,7 @@ class ConsentsControllerTest {
                 .exchange()
                 .expectStatus().isOk();
 
-        controllerLogger.detachAppender(listAppender);
+        auditLogger.detachAppender(listAppender);
 
         boolean cxIdPresentInLog = listAppender.list.stream()
                 .anyMatch(event -> event.getFormattedMessage() != null
