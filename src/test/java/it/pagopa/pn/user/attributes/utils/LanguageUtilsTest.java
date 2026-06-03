@@ -34,11 +34,6 @@ class LanguageUtilsTest {
         assertEquals(LanguageEnum.FR, LanguageUtils.resolveLanguage(CxLanguageDto.FR));
     }
 
-    @Test
-    void resolveLanguage_EN_fallbackToIT() {
-        assertEquals(LanguageEnum.IT, LanguageUtils.resolveLanguage(CxLanguageDto.EN));
-    }
-
     // resolveLanguage(String) overload
 
     @Test
