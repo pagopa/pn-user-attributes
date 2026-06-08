@@ -272,7 +272,7 @@
             </goals>
             <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/8086e30e29056c08c6ae9cb8612e4462dc2ae1ad/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-data-vault/dd3b399e2d24abdaa07f7fe9672b73697c534405/docs/openapi/pn-datavault-api-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
@@ -393,7 +393,7 @@
             </goals>
             <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/d120971effba9a36803d66d52714ba62364e5fa4/docs/openapi/api-private.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-delivery/aa195a3e4be5c0b58e2e2419645ca14714dc4767/docs/openapi/api-private.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
