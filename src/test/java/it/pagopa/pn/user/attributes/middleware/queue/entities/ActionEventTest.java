@@ -14,7 +14,7 @@ class ActionEventTest {
     private ActionEvent actionEvent;
 
     private Action action = new Action("testID","testInternalID",
-            Instant.now(),new SentNotificationV25(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null);
+            Instant.now(),new SentNotificationV25(),Instant.now(),ActionType.IO_ACTIVATED_ACTION, null, null);
     private StandardEventHeader standardEventHeader = new StandardEventHeader();
 
     @BeforeEach

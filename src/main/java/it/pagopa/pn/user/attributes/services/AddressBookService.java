@@ -1,6 +1,5 @@
 package it.pagopa.pn.user.attributes.services;
 
-import it.pagopa.pn.commons.exceptions.PnInternalException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
@@ -18,25 +17,24 @@ import it.pagopa.pn.user.attributes.middleware.wsclient.PnExternalRegistryClient
 import it.pagopa.pn.user.attributes.middleware.wsclient.PnSelfcareClient;
 import it.pagopa.pn.user.attributes.services.utils.AppIOUtils;
 import it.pagopa.pn.user.attributes.services.utils.VerificationCodeUtils;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.PaSummary;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
 import it.pagopa.pn.user.attributes.utils.PgUtils;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
-import software.amazon.awssdk.enhanced.dynamodb.model.DeleteItemEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactDeleteItemEnhancedRequest;
 
 import static it.pagopa.pn.user.attributes.exceptions.PnUserattributesExceptionCodes.ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
@@ -93,8 +91,8 @@ public class AddressBookService {
      * @param addressVerificationDto dto con indirizzo e codice verifica
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveAddressBookLegal(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
-        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, null);
+    public Mono<SAVE_ADDRESS_RESULT> saveAddressBookLegal(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto, CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, LanguageEnum language) {
+        return saveAddressBook(recipientId, senderId, legalChannelType, null,  addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, null, language);
     }
 
     /**
@@ -111,10 +109,28 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveLegalAddressBook(String recipientId, String senderId, LegalChannelTypeDto legalChannelType, AddressVerificationDto addressVerificationDto,
-                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole) {
+                                                          CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, LanguageEnum language) {
 
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole ));
+                .flatMap(r -> saveAddressBookLegal(recipientId, senderId, legalChannelType, addressVerificationDto, pnCxType, filteredAddressList, pnCxGroups, pnCxRole, language));
+    }
+
+    /**
+     * Overload riservato al flusso di attivazione/disattivazione APPIO (canale {@link CourtesyChannelTypeDto#APPIO}),
+     * invocato da {@code CourtesyIoController.setCourtesyAddressIo}. Il flusso non produce template OTP/PEC
+     * via {@code pn-templates-engine} ma si limita alla persistenza dell'attivazione su {@code pn-external-registries-io},
+     * quindi non c'è alcuna lingua da risolvere. Delega all'overload con {@code language=null}, che mantiene
+     * il fallback IT centralizzato nei consumer.
+     *
+     * @param recipientId id utente
+     * @param senderId eventuale id PA
+     * @param courtesyChannelType tipologia canale cortesia (atteso APPIO per questo entry point)
+     * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param xPagopaCxTaxid codice fiscale del destinatario (richiesto dal backend IO)
+     * @return risultato operazione
+     */
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid) {
+        return saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, xPagopaCxTaxid, null);
     }
 
     /**
@@ -124,10 +140,12 @@ public class AddressBookService {
      * @param senderId eventuale id PA
      * @param courtesyChannelType tipologia canale cortesia
      * @param addressVerificationDto dto con indirizzo e codice verifica
+     * @param xPagopaCxTaxid codice fiscale del destinatario
+     * @param language lingua per eventuali template OTP/PEC
      * @return risultato operazione
      */
-    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid) {
-        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null, xPagopaCxTaxid);
+    public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto, String xPagopaCxTaxid, LanguageEnum language) {
+        return saveAddressBook(recipientId, senderId, null, courtesyChannelType,  addressVerificationDto, null, List.of(), null, null, xPagopaCxTaxid, language);
     }
 
     /**
@@ -144,9 +162,9 @@ public class AddressBookService {
      * @return risultato operazione
      */
     public Mono<SAVE_ADDRESS_RESULT> saveCourtesyAddressBook(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto,
-                                                             CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole) {
+                                                             CxTypeAuthFleetDto pnCxType, List<String> pnCxGroups, String pnCxRole, LanguageEnum language) {
         return PgUtils.validaAccesso(pnCxType, pnCxRole, pnCxGroups)
-                .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, null));
+                .flatMap(r -> saveCourtesyAddressBook(recipientId, senderId, courtesyChannelType, addressVerificationDto, null, language));
     }
 
     /**
@@ -436,7 +454,7 @@ public class AddressBookService {
      * @return risultato operazione
      */
     private Mono<SAVE_ADDRESS_RESULT> saveAddressBook(String recipientId, String firstSenderId, LegalChannelTypeDto legalChannelType, CourtesyChannelTypeDto courtesyChannelType, AddressVerificationDto addressVerificationDto
-                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, String xPagopaCxTaxid) {
+                                                     ,CxTypeAuthFleetDto pnCxType, List<LegalDigitalAddressDto> filteredAddressList, List<String> pnCxGroups, String pnCxRole, String xPagopaCxTaxid, LanguageEnum language) {
         log.info("Start saveAddressBook recipientId={} - firstSenderId={} - legalChannelType={} - courtesyChannelType={} - addressVerificationDto={} - pnCxType={} - pnCxGroups={} - pnCxRole={}", recipientId, firstSenderId, legalChannelType, courtesyChannelType, addressVerificationDto.toString(), pnCxType, pnCxGroups, pnCxRole);
          return filterNotRootSender(firstSenderId).flatMap(checkedSenderId ->
         {
@@ -486,7 +504,8 @@ public class AddressBookService {
                                     addressVerificationDto.getValue(),
                                     legalChannelType,
                                     courtesyChannelType,
-                                    checkedSenderId);
+                                    checkedSenderId,
+                                    language);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
                                 return prepareAndDeleteAddresses(filteredAddressList)
@@ -540,23 +559,20 @@ public class AddressBookService {
                 .collectList();
     }
 
-    private Mono<String> filterNotRootSender(final String senderId){
-
+    private Mono<String> filterNotRootSender(final String senderId) {
         if (senderId == null) return Mono.just(AddressBookEntity.SENDER_ID_DEFAULT);
-
-        return  externalRegistryClient.getAooUoIdsApi(Arrays.asList(senderId)).next()
-            .switchIfEmpty(Mono.just( "")) //Root case
-            .flatMap(s -> {
-                    if (StringUtils.hasText(s)){
-                        // Not Root
-                        return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
-                    } else {
-                        // Root
-                        return Mono.just(senderId);
-                    }
-                }
-            );
-
+        return externalRegistryClient.getAooUoIdsV2Api(List.of(senderId))
+                .switchIfEmpty(Mono.just(new FilteredPaIdsResponse())) //Root case
+                .flatMap(response -> {
+                            if (response.getIds() != null && !response.getIds().isEmpty()) {
+                                // Not Root
+                                return Mono.error(new PnInvalidInputException(ERROR_CODE_USERATTRIBUTES_SENDERIDNOTROOT, "sender Id not root, cannot save address"));
+                            } else {
+                                // Root
+                                return Mono.just(senderId);
+                            }
+                        }
+                );
     }
 
 

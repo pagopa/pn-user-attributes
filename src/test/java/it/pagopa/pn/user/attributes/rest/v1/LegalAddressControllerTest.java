@@ -177,7 +177,7 @@ class LegalAddressControllerTest {
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.getCourtesyAddressByRecipient(any(), any(),any(),any()))
                 .thenReturn(Flux.just(courtesyEmail));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
@@ -219,7 +219,7 @@ class LegalAddressControllerTest {
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.getCourtesyAddressByRecipient(any(), any(),any(),any()))
                 .thenReturn(Flux.empty());
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
@@ -269,7 +269,7 @@ class LegalAddressControllerTest {
         when(svc.getCourtesyAddressByRecipient(any(), any(), any(), any()))
                 .thenThrow(new PnExceptionInsertingAddress(
                         ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
@@ -329,7 +329,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
@@ -370,7 +370,7 @@ class LegalAddressControllerTest {
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
         when(svc.getCourtesyAddressByRecipient(any(),any(), any(),any())).thenReturn(Flux.just(courtesyEmail));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(true);
 
@@ -404,7 +404,7 @@ class LegalAddressControllerTest {
                         .recipientId("recipientId")
                         .consentType(ConsentTypeDto.TOS_SERCQ)
                         .build())));
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), anyList(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), anyList(), any(), any(), any()))
                 .thenThrow(new PnInvalidVerificationCodeException());
 
         // Then
@@ -451,7 +451,7 @@ class LegalAddressControllerTest {
         when(consentsService.getConsentByType(anyString(), eq(CxTypeAuthFleetDto.PF), eq(ConsentTypeDto.DATAPRIVACY_SERCQ), any()))
                 .thenReturn(Mono.just(consentDto1));
         when(svc.getLegalAddressByRecipientAndSender(anyString(), anyString())).thenReturn(Flux.empty());
-        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+        when(svc.saveLegalAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(voidReturn);
         when(pnUserattributesConfig.isSercqEnabled()).thenReturn(false);
 

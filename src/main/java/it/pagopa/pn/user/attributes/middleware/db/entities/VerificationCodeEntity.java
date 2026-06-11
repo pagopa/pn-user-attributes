@@ -76,4 +76,6 @@ public class VerificationCodeEntity extends BaseEntity {
     private String address;
 
     @Getter(onMethod=@__({@DynamoDbAttribute("ttl")}))  private long ttl;
+
+    @Getter(onMethod=@__({@DynamoDbAttribute("language")}))  private String language;
 }

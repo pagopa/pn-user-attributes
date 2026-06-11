@@ -10,8 +10,10 @@ import it.pagopa.pn.user.attributes.exceptions.PnExceptionInsertingAddress;
 import it.pagopa.pn.user.attributes.exceptions.SercqDisabledException;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.services.ConsentsService;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.api.LegalApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.*;
+import it.pagopa.pn.user.attributes.utils.LanguageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MDC;
@@ -99,7 +101,9 @@ public class LegalAddressController implements LegalApi {
                                                                                           Mono<AddressVerificationDto> addressVerificationDto,
                                                                                           List<String> pnCxGroups,
                                                                                           String pnCxRole,
+                                                                                          CxLanguageDto xPagopaPnLanguage,
                                                                                           ServerWebExchange exchange) {
+        LanguageEnum language = LanguageUtils.resolveLanguage(xPagopaPnLanguage);
         addressVerificationDto.doOnNext(dto -> log.info("Start postRecipientLegalAddress - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}"
                 ,recipientId, pnCxType, senderId, channelType, dto, pnCxGroups, pnCxRole));
         if(!pnUserattributesConfig.isSercqEnabled() && channelType == LegalChannelTypeDto.SERCQ) {
@@ -125,7 +129,7 @@ public class LegalAddressController implements LegalApi {
                             .flatMap(hasConsents -> Boolean.TRUE.equals(hasConsents)
                                     ? Mono.empty()
                                     : Mono.just(ResponseEntity.badRequest().body(new AddressVerificationResponseDto())))
-                            .then(Mono.defer(() -> handleChannelLogic(recipientId,pnCxType,senderId,channelType,addressVerificationDtoMdc,pnCxGroups,pnCxRole,filteredAddresses)));
+                            .then(Mono.defer(() -> handleChannelLogic(recipientId,pnCxType,senderId,channelType,addressVerificationDtoMdc,pnCxGroups,pnCxRole,filteredAddresses,language)));
         });
     }
 
@@ -136,12 +140,13 @@ public class LegalAddressController implements LegalApi {
                                                                                     AddressVerificationDto addressVerificationDtoMdc,
                                                                                     List<String> pnCxGroups,
                                                                                     String pnCxRole,
-                                                                                    Flux<LegalDigitalAddressDto> filteredAddresses) {
+                                                                                    Flux<LegalDigitalAddressDto> filteredAddresses,
+                                                                                    LanguageEnum language) {
 
         if (channelType != LegalChannelTypeDto.SERCQ) {
             return filteredAddresses.collectList()
                     .flatMap(list -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                            addressVerificationDtoMdc, pnCxGroups, pnCxRole, list));
+                            addressVerificationDtoMdc, pnCxGroups, pnCxRole, list, language));
         }
 
         // Logica SERCQ: controllo presenza EMAIL courtesy
@@ -155,7 +160,7 @@ public class LegalAddressController implements LegalApi {
                     }
                     return filteredAddresses.collectList()
                             .flatMap(list -> executePostLegalAddressLogic(recipientId, pnCxType, senderId, channelType,
-                                    addressVerificationDtoMdc, pnCxGroups, pnCxRole, list));
+                                    addressVerificationDtoMdc, pnCxGroups, pnCxRole, list, language));
                 });
     }
 
@@ -198,7 +203,9 @@ public class LegalAddressController implements LegalApi {
                                                                                               LegalChannelTypeDto channelType,
                                                                                               AddressVerificationDto addressVerificationDtoMdc,
                                                                                               List<String> pnCxGroups,
-                                                                                              String pnCxRole, List<LegalDigitalAddressDto> filteredAddressesList) {
+                                                                                              String pnCxRole,
+                                                                                              List<LegalDigitalAddressDto> filteredAddressesList,
+                                                                                              LanguageEnum language) {
         log.info("Start executePostLegalAddressLogic - recipientId={} - pnCxType={} - senderId={} - channelType={} - addressVerificationDto={} - pnCxGroups={} - pnCxRole={}",
                 recipientId, pnCxType, senderId, channelType, addressVerificationDtoMdc.getValue(), pnCxGroups, pnCxRole);
 
@@ -217,7 +224,7 @@ public class LegalAddressController implements LegalApi {
                 .flatMap(tupleVerCodeLogEvent -> {
                     // Chiamata al metodo di salvataggio, passando la lista degli indirizzi filtrati
                     return addressBookService.saveLegalAddressBook(recipientId, senderId, channelType,
-                                    tupleVerCodeLogEvent.getT1(), pnCxType, filteredAddressesList, pnCxGroups, pnCxRole)
+                                    tupleVerCodeLogEvent.getT1(), pnCxType, filteredAddressesList, pnCxGroups, pnCxRole, language)
                             .onErrorResume(throwable -> addressBookService.manageError(tupleVerCodeLogEvent.getT2(), throwable))
                             .map(m -> {
                                 log.info("postRecipientLegalAddress done - recipientId={} - senderId={} - channelType={} res={}",

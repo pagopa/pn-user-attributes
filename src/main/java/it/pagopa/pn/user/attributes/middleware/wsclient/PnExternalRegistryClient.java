@@ -5,6 +5,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.internal.v1.dto.PrivacyNoticeVersionResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.AooUoIdsApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.RootSenderIdApi;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
 import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
@@ -65,6 +66,11 @@ public class PnExternalRegistryClient {
                     return Mono.just(ids);
                 })
                 .flatMapMany(Flux::fromIterable);
+    }
+    public Mono<FilteredPaIdsResponse> getAooUoIdsV2Api(List<String> ids) {
+        log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Check aoo uo in ids list with v2 api");
+        log.info("filtering just aoo/uo v2 ids {}", ids);
+        return this.aooUoIdsApi.getFilteredAooUoIdV2Private(ids);
     }
 }
 

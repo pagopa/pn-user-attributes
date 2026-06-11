@@ -2,6 +2,7 @@ openapi: 3.0.0
 info:
   description: |
     OpenApi definition for PN User Attributes - Consents
+    DEPRECATED: User consents APIs are invoked directly on internal endpoints. This external contract is no longer used.
   version: v1
   title: PN User Attributes Consents
   termsOfService: 'http://swagger.io/terms/'
@@ -22,6 +23,7 @@ paths:
       summary: Get all recipient consents
       description: Returns all consents for the recipient. Return empty array if none is present.
       operationId: getConsents
+      deprecated: true
       tags:
         - consents
       security:                                                                # ONLY EXTERNAL
@@ -49,6 +51,7 @@ paths:
       summary: Get single consent by type 
       description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
       operationId: getConsentByType
+      deprecated: true
       parameters:
         - $ref: '#/components/parameters/queryVersion'
       tags:
@@ -73,6 +76,7 @@ paths:
       summary: Accept a single consent type 
       description: Accept single consent type for the recipient
       operationId: consentAction
+      deprecated: true
       parameters:
         - $ref: '#/components/parameters/queryVersionRequired'
       tags:
@@ -102,6 +106,7 @@ paths:
       summary: Get single consent by type
       description: Returns single consent type for the recipient. Return a Consent with accepted false if consent type is not found.
       operationId: getPgConsentByType
+      deprecated: true
       parameters:
         - $ref: '#/components/parameters/queryVersion'
       tags:
@@ -132,6 +137,7 @@ paths:
       summary: Accept a single consent type
       description: Accept single consent type for the recipient
       operationId: setPgConsentAction
+      deprecated: true
       parameters:
         - $ref: '#/components/parameters/queryVersionRequired'
       tags:

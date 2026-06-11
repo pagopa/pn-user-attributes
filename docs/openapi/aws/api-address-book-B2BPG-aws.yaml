@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: >-
     ${stageVariables.ProjectName}-${stageVariables.MicroServiceUniqueName}-${stageVariables.IntendedUsage}
-  version: RksjTsc56yKPg3+e68LZB4rFRhKiDcTtOoWt5fuTO9U=
+  version: ANOw9Umvi0xEhlP8PIq/wstDWia03USqIA3QBO+3Y9o=
 servers:
   - url: https://${stageVariables.DnsName}/{basePath}
     variables:
@@ -309,6 +309,7 @@ paths:
       summary: Crea o aggiorna un indirizzo digitale con valore legale
       operationId: postRecipientLegalAddress
       parameters:
+        - $ref: '#/components/parameters/headerLanguage'
         - $ref: '#/components/parameters/senderId'
         - in: path
           name: channelType
@@ -451,6 +452,7 @@ paths:
         canale e mittente
       operationId: postRecipientCourtesyAddress
       parameters:
+        - $ref: '#/components/parameters/headerLanguage'
         - $ref: '#/components/parameters/senderId'
         - in: path
           name: channelType
@@ -601,6 +603,13 @@ components:
         type: string
         maxLength: 50
         pattern: ^[ -~ ]*$
+    headerLanguage:
+      name: x-pagopa-pn-language
+      in: header
+      description: User preferred language for platform communications.
+      required: false
+      schema:
+        $ref: '#/components/schemas/CxLanguage'
   schemas:
     BaseDigitalAddress:
       type: object
@@ -778,6 +787,15 @@ components:
               example: nome.utente@server.it
             channelType:
               $ref: '#/components/schemas/LegalChannelType'
+    CxLanguage:
+      type: string
+      enum:
+        - IT
+        - DE
+        - SL
+        - FR
+        - EN
+      default: IT
     VerificationCode:
       type: string
       description: Verification Code

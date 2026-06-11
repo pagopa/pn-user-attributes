@@ -1,5 +1,8 @@
 package it.pagopa.pn.user.attributes.rest.v1;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.PnForbiddenException;
 import it.pagopa.pn.user.attributes.middleware.db.entities.ConsentEntity;
@@ -10,6 +13,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CxTypeAuthFleetDto;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.MediaType;
@@ -18,6 +22,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +70,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
@@ -95,6 +101,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
@@ -125,6 +132,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
@@ -154,6 +162,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
@@ -183,6 +192,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isBadRequest();
@@ -212,6 +222,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isBadRequest();
@@ -242,6 +253,7 @@ class ConsentsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(consentAction)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().is5xxServerError();
@@ -268,6 +280,7 @@ class ConsentsControllerTest {
                 .uri(url)
                 .accept(MediaType.APPLICATION_JSON)
                 .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isOk();
@@ -611,5 +624,40 @@ class ConsentsControllerTest {
                 .header(PA_CX_TYPE, CX_TYPE)
                 .exchange()
                 .expectStatus().isForbidden();
+    }
+
+    @Test
+    void consentAction_logContainsCxId() {
+        String url = "/user-consents/v1/consents/{consentType}?version={version}"
+                .replace("{consentType}", CONSENTTYPE)
+                .replace("{version}", VERSION);
+
+        ConsentActionDto consentAction = new ConsentActionDto();
+        consentAction.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+
+        when(svc.consentAction(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.just(new Object()));
+
+        Logger auditLogger = (Logger) LoggerFactory.getLogger("it.pagopa.pn.commons.log.PnAuditLog");
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        auditLogger.addAppender(listAppender);
+
+        webTestClient.put()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(consentAction)
+                .header(PA_ID, RECIPIENTID)
+                .header(CX_ID, RECIPIENTID)
+                .header(PA_CX_TYPE, CX_TYPE)
+                .exchange()
+                .expectStatus().isOk();
+
+        auditLogger.detachAppender(listAppender);
+
+        boolean cxIdPresentInLog = listAppender.list.stream()
+                .anyMatch(event -> event.getFormattedMessage() != null
+                        && event.getFormattedMessage().contains("xPagopaPnCxId=" + RECIPIENTID));
+        assertThat(cxIdPresentInLog).isTrue();
     }
 }
