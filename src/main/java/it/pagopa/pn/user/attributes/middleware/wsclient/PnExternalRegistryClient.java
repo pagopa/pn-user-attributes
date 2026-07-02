@@ -7,12 +7,10 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.api.RootSenderIdApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.FilteredPaIdsResponse;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.selfcare.v1.dto.RootSenderIdResponse;
-import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.codec.DecodingException;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.List;
 
 /**
  * Classe wrapper di io-external-channel, con gestione del backoff
@@ -58,15 +56,6 @@ public class PnExternalRegistryClient {
         return this.rootSenderIdApi.getRootSenderIdPrivate(id).map(RootSenderIdResponse::getRootId);
     }
 
-    public Flux<String> getAooUoIdsApi (List<String> ids){
-        log.info("filtering just aoo/uo ids {}", ids);
-        return this.aooUoIdsApi.getFilteredAooUoIdPrivate(ids)
-                .onErrorResume(DecodingException.class, e -> {
-                    log.warn("filter-out-root-pa-ids risposta non standard: {}", e.getMessage());
-                    return Mono.just(ids);
-                })
-                .flatMapMany(Flux::fromIterable);
-    }
     public Mono<FilteredPaIdsResponse> getAooUoIdsV2Api(List<String> ids) {
         log.logInvokingExternalService(PnLogger.EXTERNAL_SERVICES.PN_EXTERNAL_REGISTRIES, "Check aoo uo in ids list with v2 api");
         log.info("filtering just aoo/uo v2 ids {}", ids);

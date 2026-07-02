@@ -333,7 +333,7 @@
             </goals>
             <phase>generate-resources</phase>
             <configuration>
-              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/7eb17aae8cc15e852768ec43fd4f2e383ccd5b46/docs/openapi/pn-io-message-v1.yaml</inputSpec>
+              <inputSpec>https://raw.githubusercontent.com/pagopa/pn-external-registries/85b27c9f915f10da5487da6e6b5cc041f4f68990/docs/openapi/pn-io-message-v1.yaml</inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>
               <generateApiDocumentation>false</generateApiDocumentation>
