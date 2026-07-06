@@ -231,7 +231,6 @@ components:
           enum:
             - WEB
             - IO
-            - BOTTOM_SHEET
 
     Consent:
       type: object
