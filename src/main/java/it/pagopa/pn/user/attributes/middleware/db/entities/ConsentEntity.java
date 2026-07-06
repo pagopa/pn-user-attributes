@@ -24,6 +24,7 @@ public class ConsentEntity extends BaseEntity {
     public static final String NONEACCEPTED_VERSION = "NONEACCEPTED";
 
     public static final String COL_ACCEPTED = "accepted";
+    public static final String COL_CHANNEL = "channel";
 
     public ConsentEntity(String recipientId, String consentType, String version){
         this.setPk(PK_PREFIX + recipientId);
@@ -46,4 +47,5 @@ public class ConsentEntity extends BaseEntity {
     }
 
     @Getter(onMethod=@__({@DynamoDbAttribute(COL_ACCEPTED)}))  private boolean accepted;
+    @Getter(onMethod=@__({@DynamoDbAttribute(COL_CHANNEL)}))  private String channel;
 }
