@@ -415,7 +415,6 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref ApplicationLoadBalancerListenerArn
         LoadbalancerRulePriority: !Ref MicroserviceNumber
-        AlbSecurityGroup: !Ref AlbSecurityGroup
         TaskRoleManagedPolicyArn: !Ref UserAttributesMicroserviceTaskManagedPolicy
         EcsLogGroup: !Ref EcsLogGroup
         LogAlarmStrategyV1: !Ref LogAlarmStrategy
@@ -573,11 +572,6 @@ Resources:
     Properties:
       GroupDescription: !Sub ${ProjectName}-DataVaultServiceSecurityGroup
       VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          CidrIp: 0.0.0.0/0
 
   # Lambda function
   PecValidationExpiredLambda:
@@ -723,4 +717,3 @@ Resources:
       Parameters:
         FunctionName: !Ref PecValidationExpiredLambda
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-
