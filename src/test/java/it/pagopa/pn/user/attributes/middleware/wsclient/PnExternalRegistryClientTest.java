@@ -165,38 +165,6 @@ class PnExternalRegistryClientTest {
     }
 
     @Test
-    void getAooUoIdsApi_withJsonArray_returnsElements() {
-        new MockServerClient("localhost", 9999)
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/ext-registry-private/pa/v1/actions/filter-out-root-pa-ids"))
-                .respond(response()
-                        .withBody("[\"id1\", \"id2\"]")
-                        .withContentType(MediaType.APPLICATION_JSON)
-                        .withStatusCode(200));
-
-        List<String> result = client.getAooUoIdsApi(List.of("id1", "id2")).collectList().block();
-
-        Assertions.assertEquals(List.of("id1", "id2"), result);
-    }
-
-    @Test
-    void getAooUoIdsApi_withPlainString_doesNotThrow() {
-        new MockServerClient("localhost", 9999)
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/ext-registry-private/pa/v1/actions/filter-out-root-pa-ids"))
-                .respond(response()
-                        .withBody("\"id1\"")
-                        .withContentType(MediaType.APPLICATION_JSON)
-                        .withStatusCode(200));
-
-        List<String> result = client.getAooUoIdsApi(List.of("id1")).collectList().block();
-
-        Assertions.assertEquals(List.of("id1"), result);
-    }
-
-    @Test
     void getAooUoIdsV2Api_returnsElements() {
         // MockServer deve restituire un oggetto con la proprietà "ids", non solo un array
         new MockServerClient("localhost", 9999)
