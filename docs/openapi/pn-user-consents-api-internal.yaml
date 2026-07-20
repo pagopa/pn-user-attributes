@@ -220,12 +220,17 @@ components:
     ConsentAction:
       type: object
       properties:
-        action: 
+        action:
           type: string
           description: action on consent
           enum:
             - ACCEPT
             - DECLINE
+        channel:
+          type: string
+          enum:
+            - WEB
+            - IO
 
     Consent:
       type: object

@@ -30,5 +30,26 @@ class ConsentActionDtoToConsentEntityMapperTest {
         //THEN
         assertEquals(ceExpected.getRecipientId(), ce.getRecipientId());
         assertEquals(ceExpected.getConsentType(), ce.getConsentType());
+        assertEquals(ceExpected.isAccepted(), ce.isAccepted());
+        assertEquals(null, ce.getChannel());
+    }
+
+    @Test
+    void toEntityWithChannel() {
+        //GIVEN
+        String recipientId = "1234";
+        ConsentTypeDto type = ConsentTypeDto.TOS;
+
+        ConsentActionDtoToConsentEntityMapper mapper = new ConsentActionDtoToConsentEntityMapper();
+
+        ConsentActionDto dto = new ConsentActionDto();
+        dto.setAction(ConsentActionDto.ActionEnum.ACCEPT);
+        dto.setChannel(ConsentActionDto.ChannelEnum.IO);
+
+        //WHEN
+        ConsentEntity ce = mapper.toEntity(recipientId, type, dto, null);
+
+        //THEN
+        assertEquals("IO", ce.getChannel());
     }
 }
