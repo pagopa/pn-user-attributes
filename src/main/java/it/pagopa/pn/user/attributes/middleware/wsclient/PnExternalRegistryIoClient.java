@@ -69,7 +69,7 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
         dto.setFiscalCode(taxId);
         dto.setStatus(activated ? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
 
-        return ioApi.upsertServiceActivation(dto)
+        return ioApi.upsertServiceActivation(internalId, CxTypeAuthFleet.PF, internalId, dto)
                 .onErrorResume(throwable -> {
                     log.error("error upserting service activation message={}", elabExceptionMessage(throwable), throwable);
                     return getServiceActivation(internalId);
