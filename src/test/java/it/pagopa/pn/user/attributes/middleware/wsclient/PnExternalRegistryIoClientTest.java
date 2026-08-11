@@ -113,12 +113,15 @@ class PnExternalRegistryIoClientTest {
         }
 
 
+        // l'internalId è prefissato, lo uid inviato ad auth-fleet non deve esserlo
+        String internalId = "PF-abcd";
+
         new MockServerClient( "localhost", 9999 )
                 .when( request()
                         .withMethod( "PUT" )
-                        .withHeader( "x-pagopa-pn-uid", fiscalCodePayload.getFiscalCode() )
+                        .withHeader( "x-pagopa-pn-uid", "abcd" )
                         .withHeader( "x-pagopa-pn-cx-type", "PF" )
-                        .withHeader( "x-pagopa-pn-cx-id", fiscalCodePayload.getFiscalCode() )
+                        .withHeader( "x-pagopa-pn-cx-id", internalId )
                         .withPath( "/ext-registry-private/io/v1/activations" ))
                 .respond( response()
                         .withBody( responseBodyBites )
@@ -126,7 +129,7 @@ class PnExternalRegistryIoClientTest {
                         .withStatusCode( 200 ));
 
         BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setInternalId("PF-abcd");
+        baseRecipientDtoDto.setInternalId(internalId);
         baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
         baseRecipientDtoDto.setDenomination("mario rossi");
         List<BaseRecipientDtoDto> list = new ArrayList<>();
@@ -135,7 +138,7 @@ class PnExternalRegistryIoClientTest {
 
 
         //When
-        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true, baseRecipientDtoDto.getTaxId()).block();
+        Boolean limitedProfile = client.upsertServiceActivation( internalId, true, baseRecipientDtoDto.getTaxId()).block();
 
         //Then
         Assertions.assertEquals( true, limitedProfile );
@@ -165,7 +168,7 @@ class PnExternalRegistryIoClientTest {
         new MockServerClient( "localhost", 9999 )
                 .when( request()
                         .withMethod( "PUT" )
-                        .withHeader( "x-pagopa-pn-uid", internalId )
+                        .withHeader( "x-pagopa-pn-uid", "abcd" )
                         .withHeader( "x-pagopa-pn-cx-type", "PF" )
                         .withHeader( "x-pagopa-pn-cx-id", internalId )
                         .withPath( "/ext-registry-private/io/v1/activations" )
