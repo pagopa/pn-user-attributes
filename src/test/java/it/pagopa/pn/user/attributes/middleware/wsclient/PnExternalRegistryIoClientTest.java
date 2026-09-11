@@ -33,6 +33,7 @@ import java.util.List;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.JsonBody.json;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -112,9 +113,15 @@ class PnExternalRegistryIoClientTest {
         }
 
 
+        // l'internalId è prefissato, lo uid inviato ad auth-fleet non deve esserlo
+        String internalId = "PF-abcd";
+
         new MockServerClient( "localhost", 9999 )
                 .when( request()
                         .withMethod( "PUT" )
+                        .withHeader( "x-pagopa-pn-uid", "abcd" )
+                        .withHeader( "x-pagopa-pn-cx-type", "PF" )
+                        .withHeader( "x-pagopa-pn-cx-id", internalId )
                         .withPath( "/ext-registry-private/io/v1/activations" ))
                 .respond( response()
                         .withBody( responseBodyBites )
@@ -122,7 +129,7 @@ class PnExternalRegistryIoClientTest {
                         .withStatusCode( 200 ));
 
         BaseRecipientDtoDto baseRecipientDtoDto = new BaseRecipientDtoDto();
-        baseRecipientDtoDto.setInternalId("PF-abcd");
+        baseRecipientDtoDto.setInternalId(internalId);
         baseRecipientDtoDto.setTaxId("EEEEEE00E00E000A");
         baseRecipientDtoDto.setDenomination("mario rossi");
         List<BaseRecipientDtoDto> list = new ArrayList<>();
@@ -131,10 +138,51 @@ class PnExternalRegistryIoClientTest {
 
 
         //When
-        Boolean limitedProfile = client.upsertServiceActivation( fiscalCodePayload.getFiscalCode(), true, baseRecipientDtoDto.getTaxId()).block();
+        Boolean limitedProfile = client.upsertServiceActivation( internalId, true, baseRecipientDtoDto.getTaxId()).block();
 
         //Then
         Assertions.assertEquals( true, limitedProfile );
+    }
+
+
+    @Test
+    void upsertServiceActivationDeactivation() {
+        //Given
+        Activation responseDto = new Activation();
+        responseDto.setFiscalCode("EEEEEE00E00E000A");
+        responseDto.setStatus(ActivationStatus.INACTIVE);
+        responseDto.setVersion(1);
+
+        byte[] responseBodyBites = new byte[0];
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerFor( Activation.class );
+        try {
+            responseBodyBites = mapper.writeValueAsBytes( responseDto );
+        } catch ( JsonProcessingException e ){
+            e.printStackTrace();
+        }
+
+        String internalId = "PF-abcd";
+
+        new MockServerClient( "localhost", 9999 )
+                .when( request()
+                        .withMethod( "PUT" )
+                        .withHeader( "x-pagopa-pn-uid", "abcd" )
+                        .withHeader( "x-pagopa-pn-cx-type", "PF" )
+                        .withHeader( "x-pagopa-pn-cx-id", internalId )
+                        .withPath( "/ext-registry-private/io/v1/activations" )
+                        .withBody( json( "{\"status\": \"INACTIVE\"}" ) ))
+                .respond( response()
+                        .withBody( responseBodyBites )
+                        .withContentType( MediaType.APPLICATION_JSON )
+                        .withStatusCode( 200 ));
+
+        //When
+        Boolean activated = client.upsertServiceActivation( internalId, false, "EEEEEE00E00E000A" ).block();
+
+        //Then
+        Assertions.assertEquals( false, activated );
     }
 
 
@@ -174,6 +222,9 @@ class PnExternalRegistryIoClientTest {
                 .when( request()
                         .withMethod( "PUT" )
                         .withHeader("Ocp-Apim-Subscription-Key", "fake_api_key")
+                        .withHeader( "x-pagopa-pn-uid", fiscalCodePayload.getFiscalCode() )
+                        .withHeader( "x-pagopa-pn-cx-type", "PF" )
+                        .withHeader( "x-pagopa-pn-cx-id", fiscalCodePayload.getFiscalCode() )
                         .withPath( "/ext-registry-private/io/v1/activations" ))
                 .respond( response()
                         .withContentType( MediaType.APPLICATION_JSON )

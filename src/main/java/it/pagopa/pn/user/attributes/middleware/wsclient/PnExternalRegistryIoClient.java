@@ -8,6 +8,8 @@ import it.pagopa.pn.commons.pnclients.CommonBaseClient;
 import it.pagopa.pn.commons.utils.LogUtils;
 import it.pagopa.pn.user.attributes.services.AuditLogService;
 
+import static it.pagopa.pn.user.attributes.utils.RecipientIdUtils.removeRecipientIdPrefix;
+
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.datavault.v1.dto.BaseRecipientDtoDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.IoActivationApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalregistry.io.v1.api.SendIoMessageApi;
@@ -69,7 +71,10 @@ public class PnExternalRegistryIoClient extends CommonBaseClient {
         dto.setFiscalCode(taxId);
         dto.setStatus(activated ? ActivationStatus.ACTIVE : ActivationStatus.INACTIVE);
 
-        return ioApi.upsertServiceActivation(dto)
+        // pn-external-registries inoltra lo uid ricevuto alla consentAction di pn-user-attributes,
+        // che ricostruisce la chiave del consenso come cxType + "-" + uid: lo uid va quindi passato
+        // privo del prefisso, altrimenti la chiave risulterebbe duplicata (PF-PF-<uuid>).
+        return ioApi.upsertServiceActivation(removeRecipientIdPrefix(internalId), CxTypeAuthFleet.PF, internalId, dto)
                 .onErrorResume(throwable -> {
                     log.error("error upserting service activation message={}", elabExceptionMessage(throwable), throwable);
                     return getServiceActivation(internalId);
