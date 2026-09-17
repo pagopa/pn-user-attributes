@@ -93,14 +93,13 @@ public class ConsentsService {
     public Flux<ConsentDto> getConsents(String xPagopaPnUid, CxTypeAuthFleetDto xPagopaPnCxType) {
         String uidWithCxType = computeRecipientIdWithCxType(xPagopaPnUid, xPagopaPnCxType);
         return consentDao.getConsents(uidWithCxType)
-                .flatMap(consentEntity -> pnExternalRegistryClient.findPrivacyNoticeVersion(consentEntity.getConsentType(), xPagopaPnCxType.getValue())
-                        .map(unused -> ConsentDto.builder()
-                                        .consentVersion(consentEntity.getConsentVersion())
-                                        .recipientId(uidWithCxType)
-                                        .consentType(ConsentTypeDto.fromValue(consentEntity.getConsentType()))
-                                        .isFirstAccept(consentEntity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
-                                        .accepted(consentEntity.isAccepted())
-                                        .build())
+                .map(consentEntity -> ConsentDto.builder()
+                        .consentVersion(consentEntity.getConsentVersion())
+                        .recipientId(uidWithCxType)
+                        .consentType(ConsentTypeDto.fromValue(consentEntity.getConsentType()))
+                        .isFirstAccept(consentEntity.getConsentVersion().equals(ConsentEntity.NONEACCEPTED_VERSION))
+                        .accepted(consentEntity.isAccepted())
+                        .build()
                 );
     }
 
