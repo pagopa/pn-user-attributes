@@ -377,8 +377,6 @@ class ConsentsServiceTest {
         list.add(ConsentDaoTestIT.newConsentSercQ(false));
 
         Mockito.when(consentDao.getConsents(any())).thenReturn(Flux.fromIterable(list));
-        Mockito.when(pnExternalRegistryClient.findPrivacyNoticeVersion(dto.getValue(), CxTypeAuthFleetDto.PF.getValue())).thenReturn(Mono.just(vers1));
-
 
         // WHEN
         List<ConsentDto> result = service.getConsents(recipientId, CxTypeAuthFleetDto.PF).collectList().block(d);
