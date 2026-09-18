@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import static it.pagopa.pn.user.attributes.services.utils.ConstantsError.ERROR_ACTIVATION_LEGAL_SERCQ_DETAIL;
 import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
+import static it.pagopa.pn.user.attributes.utils.RecipientIdUtils.removeRecipientIdPrefix;
 
 @RestController
 @Slf4j
@@ -240,14 +241,6 @@ public class LegalAddressController implements LegalApi {
                                 }
                             });
                 }));
-    }
-
-    public String removeRecipientIdPrefix(String recipientId) {
-        if (recipientId.charAt(2) == '-') {
-            return recipientId.substring(3);
-        } else {
-            return recipientId;
-        }
     }
 
 
