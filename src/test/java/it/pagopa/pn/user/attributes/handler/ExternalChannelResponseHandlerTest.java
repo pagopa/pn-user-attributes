@@ -1,6 +1,13 @@
 package it.pagopa.pn.user.attributes.handler;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import it.pagopa.pn.commons.exceptions.PnInternalException;
+import it.pagopa.pn.commons.log.PnAuditLog;
+import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -18,6 +25,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalChannelTypeDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.LegalDigitalAddressDto;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +34,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,6 +45,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -67,6 +78,10 @@ class ExternalChannelResponseHandlerTest {
 
     VerifiedAddressUtils verifiedAddressUtils;
 
+    private Logger auditLogger;
+    private ListAppender<ILoggingEvent> auditAppender;
+    private Level auditPreviousLevel;
+
     @BeforeEach
     public void before(){
         MockitoAnnotations.openMocks(pnExternalChannelClient);
@@ -74,6 +89,32 @@ class ExternalChannelResponseHandlerTest {
         verifiedAddressUtils = new VerifiedAddressUtils(addressBookDao);
         verificationCodeUtils = new VerificationCodeUtils(addressBookDao, pnUserattributesConfig, pnDatavaultClient, pnExternalChannelClient, verifiedAddressUtils);
         this.externalChannelResponseHandler = new ExternalChannelResponseHandler(pnUserattributesConfig, addressBookService, addressBookDao, verificationCodeUtils, pnExternalChannelClient, pnDatavaultClient);
+        MDC.clear();
+        auditLogger = (Logger) LoggerFactory.getLogger(PnAuditLog.class);
+        auditPreviousLevel = auditLogger.getLevel();
+        auditLogger.setLevel(Level.INFO);
+        auditAppender = new ListAppender<>();
+        auditAppender.start();
+        auditLogger.addAppender(auditAppender);
+    }
+
+    @AfterEach
+    public void after(){
+        auditLogger.detachAppender(auditAppender);
+        auditAppender.stop();
+        auditLogger.setLevel(auditPreviousLevel);
+        MDC.clear();
+    }
+
+    private List<ILoggingEvent> auditRows(PnAuditLogEventType audType, Level level) {
+        return auditAppender.list.stream()
+                .filter(e -> audType.toString().equals(e.getMDCPropertyMap().get("aud_type")))
+                .filter(e -> level == null || level.equals(e.getLevel()))
+                .toList();
+    }
+
+    private String auditCxId(ILoggingEvent event) {
+        return event.getMDCPropertyMap().get(MDCUtils.MDC_CX_ID_KEY);
     }
 
     @Test
@@ -98,7 +139,12 @@ class ExternalChannelResponseHandlerTest {
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
-        Mockito.when(addressBookDao.updateVerificationCodeIfExists(any())).thenReturn(Mono.empty());
+        AtomicReference<String> cxIdInContext = new AtomicReference<>();
+        Mockito.when(addressBookDao.updateVerificationCodeIfExists(any()))
+                .thenReturn(Mono.deferContextual(ctx -> {
+                    cxIdInContext.set(ctx.getOrDefault(MDCUtils.MDC_CX_ID_KEY, null));
+                    return Mono.empty();
+                }));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
@@ -106,6 +152,8 @@ class ExternalChannelResponseHandlerTest {
 
         //THEN
         Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        Assertions.assertTrue(auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, null).stream().anyMatch(e -> recipientId.equals(auditCxId(e))));
+        Assertions.assertEquals(recipientId, cxIdInContext.get());
     }
 
 
@@ -138,6 +186,9 @@ class ExternalChannelResponseHandlerTest {
 
         //THEN
         Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        List<ILoggingEvent> warnings = auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, Level.WARN);
+        Assertions.assertEquals(1, warnings.size());
+        Assertions.assertNull(auditCxId(warnings.get(0)));
     }
 
 
@@ -158,6 +209,7 @@ class ExternalChannelResponseHandlerTest {
 
         VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", legalChannelType.getValue(), null, LegalAddressTypeDto.LEGAL.getValue(), "pec@pec.it");
         verificationCode.setVerificationCode("12345");
+
         verificationCode.setCodeValid(false);
         verificationCode.setLastModified(Instant.now().minusSeconds(1));
 
@@ -171,6 +223,9 @@ class ExternalChannelResponseHandlerTest {
 
         //THEN
         Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        List<ILoggingEvent> failures = auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, Level.ERROR);
+        Assertions.assertEquals(1, failures.size());
+        Assertions.assertEquals(recipientId, auditCxId(failures.get(0)));
     }
 
 
@@ -229,7 +284,12 @@ class ExternalChannelResponseHandlerTest {
 
         Mockito.when(addressBookDao.getVerificationCodeByRequestId(any())).thenReturn(Mono.just(verificationCode));
         Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesSuccess()).thenReturn(List.of("C003"));
-        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(any(), any(), any())).thenReturn(Mono.empty());
+        AtomicReference<String> cxIdInContext = new AtomicReference<>();
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(any(), any(), any()))
+                .thenReturn(Mono.deferContextual(ctx -> {
+                    cxIdInContext.set(ctx.getOrDefault(MDCUtils.MDC_CX_ID_KEY, null));
+                    return Mono.empty();
+                }));
         Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(any(), any(), any())).thenReturn(Mono.empty());
         Mockito.when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
         Mockito.when(pnExternalChannelClient.sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class))).thenReturn(Mono.just(UUID.randomUUID().toString()));
@@ -243,6 +303,8 @@ class ExternalChannelResponseHandlerTest {
 
         //THEN
         Mockito.verify(pnExternalChannelClient, Mockito.atMostOnce()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        Assertions.assertTrue(auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, null).stream().anyMatch(e -> recipientId.equals(auditCxId(e))));
+        Assertions.assertEquals(recipientId, cxIdInContext.get());
     }
 
     @Test
@@ -373,7 +435,12 @@ class ExternalChannelResponseHandlerTest {
         Mockito.when(pnUserattributesConfig.getExternalChannelDigitalCodesFail()).thenReturn(List.of("C009"));
         Mockito.when(pnDatavaultClient.getVerificationCodeAddressByInternalId(any(), any())).thenReturn(Mono.just(new AddressDtoDto().value("pec@pec.it")));
         Mockito.when(pnExternalChannelClient.sendCourtesyPecRejected(anyString(), anyString(), anyString(), any(LanguageEnum.class))).thenReturn(Mono.just(UUID.randomUUID().toString()));
-        Mockito.when(addressBookDao.deleteVerificationCode(any())).thenReturn(Mono.empty());
+        AtomicReference<String> cxIdInContext = new AtomicReference<>();
+        Mockito.when(addressBookDao.deleteVerificationCode(any()))
+                .thenReturn(Mono.deferContextual(ctx -> {
+                    cxIdInContext.set(ctx.getOrDefault(MDCUtils.MDC_CX_ID_KEY, null));
+                    return Mono.empty();
+                }));
 
         // WHEN
         Mono<Void> mono = externalChannelResponseHandler.consumeExternalChannelResponse(singleStatusUpdateDto);
@@ -383,6 +450,8 @@ class ExternalChannelResponseHandlerTest {
         Mockito.verify(pnExternalChannelClient).sendCourtesyPecRejected(Mockito.startsWith("pec-rejected-"), Mockito.eq(recipientId), Mockito.eq("pec@pec.it"), Mockito.eq(LanguageEnum.DE));
         Mockito.verify(addressBookDao).deleteVerificationCode(verificationCode);
         Mockito.verify(pnExternalChannelClient, Mockito.never()).sendPecConfirm(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        Assertions.assertTrue(auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, null).stream().anyMatch(e -> recipientId.equals(auditCxId(e))));
+        Assertions.assertEquals(recipientId, cxIdInContext.get());
     }
 
     @Test
@@ -440,6 +509,9 @@ class ExternalChannelResponseHandlerTest {
         //THEN
         Mockito.verify(addressBookDao, Mockito.never()).deleteVerificationCode(any());
         Mockito.verify(pnExternalChannelClient, Mockito.never()).sendCourtesyPecRejected(anyString(), anyString(), anyString(), any(LanguageEnum.class));
+        List<ILoggingEvent> warnings = auditRows(PnAuditLogEventType.AUD_AB_VALIDATE_PEC, Level.WARN);
+        Assertions.assertEquals(1, warnings.size());
+        Assertions.assertNull(auditCxId(warnings.get(0)));
     }
 
     @Test

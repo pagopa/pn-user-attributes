@@ -4,6 +4,7 @@ import it.pagopa.pn.commons.exceptions.PnRuntimeException;
 import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
+import it.pagopa.pn.commons.utils.MDCUtils;
 import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.middleware.db.AddressBookDao;
 import it.pagopa.pn.user.attributes.middleware.db.entities.VerificationCodeEntity;
@@ -18,6 +19,7 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.
 import it.pagopa.pn.user.attributes.utils.LanguageUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -83,7 +85,7 @@ public class ExternalChannelResponseHandler {
                     if (verificationCodeEntity.isCodeValid()) {
                         // se il codice di verifica è valido posso procedere con il salvare l'indirizzo PEC
                         // gestisco la cancellazione dell'indirizzo SERCQ, se presente.
-                        return addressBookService.getLegalAddressByRecipientAndSender(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getSenderId())
+                        return propagateCxId(verificationCodeEntity, logEvent, addressBookService.getLegalAddressByRecipientAndSender(verificationCodeEntity.getRecipientId(), verificationCodeEntity.getSenderId())
                                 //Filtro sul senderId, perchè per logiche applicative la chiamata precedente potrebbe restituire anche gli indirizzi di default.
                                 .filter(address -> address.getSenderId().equals(verificationCodeEntity.getSenderId()))
                                 .filter(address -> address.getChannelType().equals(LegalChannelTypeDto.SERCQ))
@@ -96,12 +98,12 @@ public class ExternalChannelResponseHandler {
                                 })
                                 .flatMap(address -> externalChannelClient.sendPecConfirm(PEC_CONFIRM_PREFIX + requestId, verificationCodeEntity.getRecipientId(), address, LanguageUtils.resolveLanguage(verificationCodeEntity.getLanguage())))
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
-                                .thenReturn("OK");
+                                .thenReturn("OK"));
                     } else {
                         // altrimenti salvo semplicemente il flag
-                        return verificationCodeUtils.markVerificationCodeAsPecValid(verificationCodeEntity)
+                        return propagateCxId(verificationCodeEntity, logEvent,  verificationCodeUtils.markVerificationCodeAsPecValid(verificationCodeEntity)
                                 .doOnSuccess(x -> logEvent.generateSuccess("Pec verified successfully recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())
-                                .thenReturn("OK");
+                                .thenReturn("OK"));
                     }
                 })
                 .switchIfEmpty(Mono.fromRunnable(
@@ -120,14 +122,14 @@ public class ExternalChannelResponseHandler {
         PnAuditLogEvent logEvent = openAuditEvent(String.format("handlePermanentDeliveryFailure PEC sending rejection requestId=%s", requestId));
 
         return addressBookDao.getVerificationCodeByRequestId(requestId)
-                .flatMap(verificationCodeEntity -> resolveAddress(verificationCodeEntity)
+                .flatMap(verificationCodeEntity -> propagateCxId(verificationCodeEntity, logEvent, resolveAddress(verificationCodeEntity)
                         .flatMap(addressDto -> externalChannelClient.sendCourtesyPecRejected(
                                 PEC_REJECTED_PREFIX + requestId,
                                 verificationCodeEntity.getRecipientId(),
                                 addressDto.getValue(),
                                 LanguageUtils.resolveLanguage(verificationCodeEntity.getLanguage())))
                         .then(addressBookDao.deleteVerificationCode(verificationCodeEntity))
-                        .doOnSuccess(x -> logEvent.generateSuccess("Pec rejection sent recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log()))
+                        .doOnSuccess(x -> logEvent.generateSuccess("Pec rejection sent recipientId={} hashedAddress={}", verificationCodeEntity.getRecipientId(), verificationCodeEntity.getHashedAddress()).log())))
                 .switchIfEmpty(Mono.fromRunnable(() -> logEvent.generateWarning("No pending VerifiedCode for requestId").log()))
                 .onErrorResume(x -> {
                     String message = extractErrorMessage(x);
@@ -137,6 +139,14 @@ public class ExternalChannelResponseHandler {
                     return Mono.error(x);
                 })
                 .then();
+    }
+
+
+    private <T> Mono<T> propagateCxId(VerificationCodeEntity verificationCodeEntity, PnAuditLogEvent logEvent, Mono<T> chain) {
+        // la put va tenuta adiacente alla riga sotto: addMDCToContextAndExecute legge subito la MDC, e un log emesso nel frattempo la azzererebbe propagando un context vuoto
+        MDC.put(MDCUtils.MDC_CX_ID_KEY, verificationCodeEntity.getRecipientId());
+        logEvent.getMdc().put(MDCUtils.MDC_CX_ID_KEY, verificationCodeEntity.getRecipientId());
+        return MDCUtils.addMDCToContextAndExecute(chain);
     }
 
     private PnAuditLogEvent openAuditEvent(String logMessage) {
