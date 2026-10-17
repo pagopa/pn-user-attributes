@@ -4,6 +4,7 @@ import it.pagopa.pn.commons.log.PnAuditLogBuilder;
 import it.pagopa.pn.commons.log.PnAuditLogEvent;
 import it.pagopa.pn.commons.log.PnAuditLogEventType;
 import it.pagopa.pn.commons.utils.MDCUtils;
+import it.pagopa.pn.user.attributes.config.PnUserattributesConfig;
 import it.pagopa.pn.user.attributes.exceptions.*;
 import it.pagopa.pn.user.attributes.services.AddressBookService;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
@@ -34,9 +35,11 @@ import static it.pagopa.pn.user.attributes.utils.HashingUtils.hashAddress;
 public class CourtesyAddressController implements CourtesyApi {
 
     private final AddressBookService addressBookService;
+    private final PnUserattributesConfig pnUserattributesConfig;
 
-    public CourtesyAddressController(AddressBookService addressBookService) {
+    public CourtesyAddressController(AddressBookService addressBookService, PnUserattributesConfig pnUserattributesConfig) {
         this.addressBookService = addressBookService;
+        this.pnUserattributesConfig = pnUserattributesConfig;
     }
 
     @Override
@@ -146,6 +149,9 @@ public class CourtesyAddressController implements CourtesyApi {
                                                                    ServerWebExchange exchange) {
 
         LanguageEnum language = LanguageUtils.resolveLanguage(xPagopaPnLanguage);
+        if (!pnUserattributesConfig.isWhatsappEnabled() && channelType == CourtesyChannelTypeDto.WHATSAPP) {
+            return Mono.error(new WhatsappDisabledException("WhatsApp courtesy channel is disabled, cannot save channel type " + channelType));
+        }
         return addressVerificationDto
                 .flatMap(addressVerificationDtoMdc -> {
                     MDC.put(MDCUtils.MDC_PN_CTX_REQUEST_ID, hashAddress(addressVerificationDtoMdc.getValue()));

@@ -12,6 +12,9 @@ import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.e
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.api.DigitalLegalMessagesApi;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesyMailRequestDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesySmsRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalCourtesyWhatsappRequestDto;
+import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.WhatsappTemplateDto;
+import it.pagopa.pn.user.attributes.middleware.wsclient.dto.WhatsappTemplateDescriptor;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.externalchannels.v1.dto.DigitalNotificationRequestDto;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.msclient.templatesengine.model.LanguageEnum;
 import it.pagopa.pn.user.attributes.user.attributes.generated.openapi.server.v1.dto.CourtesyChannelTypeDto;
@@ -239,6 +242,10 @@ public class PnExternalChannelClient {
                             }
                     ));
         }
+        else if (courtesyChannelType == CourtesyChannelTypeDto.WHATSAPP)
+        {
+            return sendCourtesyWhatsappVerificationCode(recipientId, requestId, address, verificationCode, language);
+        }
         else  if (courtesyChannelType == CourtesyChannelTypeDto.EMAIL)
         {
             String logMessage = String.format(
@@ -270,6 +277,59 @@ public class PnExternalChannelClient {
         }
         else
             throw new PnInvalidInputException(ERROR_CODE_INVALID_COURTESY_CHANNEL, "courtesyChannelType");
+    }
+
+    /**
+     * Invia l'OTP su WhatsApp con il template Meta di categoria AUTHENTICATION: la conferma del codice dimostra
+     * che il numero è attivo su WhatsApp.
+     */
+    private Mono<String> sendCourtesyWhatsappVerificationCode(String recipientId, String requestId, String address, String verificationCode, LanguageEnum language)
+    {
+        String logMessage = String.format(
+                "sendCourtesyVerificationCode WHATSAPP sending verification code recipientId=%s address=%s vercode=%s channel=%s requestId=%s",
+                recipientId, LogUtils.maskNumber(address), verificationCode, CourtesyChannelTypeDto.WHATSAPP.getValue(), requestId
+        );
+        // TODO WHATSAPP: introdurre AUD_AB_VERIFY_WHATSAPP in pn-commons; fino ad allora si riusa la categoria dei messaggi brevi
+        PnAuditLogBuilder auditLogBuilder = new PnAuditLogBuilder();
+        PnAuditLogEvent logEvent = auditLogBuilder
+                .before(PnAuditLogEventType.AUD_AB_VERIFY_SMS, logMessage)
+                .build();
+        logEvent.log();
+
+        return Mono.fromCallable(() -> WhatsappTemplateDescriptor.fromVerificationCodeTemplate(
+                        templateGenerator.generateWhatsappVerificationCodeBody(language), verificationCode))
+                .map(descriptor -> {
+                    DigitalCourtesyWhatsappRequestDto digitalNotificationRequestDto = new DigitalCourtesyWhatsappRequestDto();
+                    digitalNotificationRequestDto.setChannel(DigitalCourtesyWhatsappRequestDto.ChannelEnum.WHATSAPP);
+                    digitalNotificationRequestDto.setRequestId(requestId);
+                    digitalNotificationRequestDto.setCorrelationId(requestId);
+                    digitalNotificationRequestDto.setEventType(EVENT_TYPE_VERIFICATION_CODE);
+                    digitalNotificationRequestDto.setQos(DigitalCourtesyWhatsappRequestDto.QosEnum.INTERACTIVE);
+                    digitalNotificationRequestDto.setMessageText(descriptor.getPreviewText());
+                    digitalNotificationRequestDto.setReceiverDigitalAddress(address);
+                    digitalNotificationRequestDto.setClientRequestTimeStamp(OffsetDateTime.now(ZoneOffset.UTC));
+                    digitalNotificationRequestDto.setWhatsappTemplate(new WhatsappTemplateDto()
+                            .name(descriptor.getTemplateName())
+                            .language(descriptor.getLanguage())
+                            .bodyParameters(descriptor.getBodyParameters())
+                            .buttonParameters(descriptor.getButtonParameters()));
+                    return digitalNotificationRequestDto;
+                })
+                .flatMap(request -> digitalCourtesyMessagesApi
+                        .sendCourtesyWhatsappMessage(requestId, pnUserattributesConfig.getClientExternalchannelsHeaderExtchCxId(), request))
+                .onErrorResume(x -> {
+                    String message = elabExceptionMessage(x);
+                    String failureMessage = String.format("sendCourtesyVerificationCode WHATSAPP response error %s", message);
+                    logEvent.generateFailure(failureMessage).log();
+                    log.error("sendCourtesyVerificationCode WHATSAPP response error {}", message, x);
+                    return Mono.error(x);
+                })
+                .then(Mono.fromSupplier(
+                        () -> {
+                            logEvent.generateSuccess(logMessage).log();
+                            return requestId;
+                        }
+                ));
     }
 
     @NotNull

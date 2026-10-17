@@ -149,4 +149,15 @@ public record TemplateGeneratorByClient(TemplatesClient templatesClient) impleme
         log.debug("retrieve template smsVerificationCodeBody");
         return templatesClient.smsVerificationCodeBody(language);
     }
+
+    /**
+     * Generates the WhatsApp verification code template descriptor.
+     *
+     * @return the JSON descriptor of the WhatsApp authentication template (with the %s placeholder for the code).
+     */
+    @Override
+    public String generateWhatsappVerificationCodeBody(LanguageEnum language) {
+        log.debug("retrieve template whatsappVerificationCodeBody");
+        return templatesClient.whatsappVerificationCodeBody(language);
+    }
 }

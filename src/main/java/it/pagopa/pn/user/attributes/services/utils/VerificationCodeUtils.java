@@ -306,8 +306,10 @@ public class VerificationCodeUtils {
                 throw new PnInvalidInputException(PnExceptionsCodes.ERROR_CODE_PN_GENERIC_INVALIDPARAMETER_PATTERN, emailfield);
             }
         }
-        else if (courtesyChannelType != null && courtesyChannelType.equals(CourtesyChannelTypeDto.SMS))
+        else if (courtesyChannelType != null
+                && (courtesyChannelType.equals(CourtesyChannelTypeDto.SMS) || courtesyChannelType.equals(CourtesyChannelTypeDto.WHATSAPP)))
         {
+            // SMS e WHATSAPP condividono lo stesso formato del numero di cellulare
             final Pattern phoneRegex = Pattern.compile("^(00|\\+)393\\d{8,9}$", Pattern.CASE_INSENSITIVE);
             if (!phoneRegex.matcher(addressVerificationDto.getValue()).matches()) {
                 log.logCheckingOutcome(process, false, "invalid address");

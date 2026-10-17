@@ -163,6 +163,7 @@ components:
       enum:
         - EMAIL
         - SMS
+        - WHATSAPP
         - APPIO
 
     CourtesyAddressType:

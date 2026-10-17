@@ -454,8 +454,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <!-- TODO WHATSAPP: sostituire feature/whatsapp-courtesy con il commit di merge di pn-templates-engine -->
               <inputSpec>
-                https://raw.githubusercontent.com/pagopa/pn-templates-engine/030fc7d7ac013f0aecfe58e52691bb5031f7fd1a/docs/openapi/pn-internal-templates-v1.yaml
+                https://raw.githubusercontent.com/pagopa/pn-templates-engine/feature/whatsapp-courtesy/docs/openapi/pn-internal-templates-v1.yaml
               </inputSpec>
               <skipValidateSpec>true</skipValidateSpec>
               <generatorName>java</generatorName>
@@ -489,8 +490,9 @@
               <goal>generate</goal>
             </goals>
             <configuration>
+              <!-- TODO WHATSAPP: sostituire feature/whatsapp-courtesy con il commit di merge di pn-templates-engine -->
               <inputSpec>
-                https://raw.githubusercontent.com/pagopa/pn-templates-engine/030fc7d7ac013f0aecfe58e52691bb5031f7fd1a/docs/openapi/pn-internal-templates-v1.yaml
+                https://raw.githubusercontent.com/pagopa/pn-templates-engine/feature/whatsapp-courtesy/docs/openapi/pn-internal-templates-v1.yaml
               </inputSpec>
               <generatorName>java</generatorName>
               <library>webclient</library>

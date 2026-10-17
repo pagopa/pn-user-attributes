@@ -45,6 +45,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import org.mockito.ArgumentCaptor;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -587,6 +588,141 @@ class AddressBookServiceTest {
         assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
     }
 
+
+    @Test
+    void saveCourtesyAddressBookWhatsappSendsVerificationCodeOnWhatsapp() {
+        //GIVEN
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity();
+        verificationCode.setVerificationCode("12345");
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.eq(CourtesyChannelTypeDto.WHATSAPP.getValue())))
+                .thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.when(addressBookDao.saveVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(pnExternalChannelClient.sendVerificationCode(Mockito.any(), Mockito.anyString(), Mockito.any(), Mockito.eq(CourtesyChannelTypeDto.WHATSAPP), Mockito.anyString(), Mockito.any()))
+                .thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.getAllVerificationCodesByRecipient(Mockito.any(), Mockito.eq(CourtesyAddressTypeDto.COURTESY.getValue()))).thenReturn(Flux.empty());
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, CourtesyChannelTypeDto.WHATSAPP, addressVerificationDto, CxTypeAuthFleetDto.PF, null, null, null)
+                .block(d);
+
+        //THEN - l'OTP parte sul canale WHATSAPP (non SMS): la conferma prova che il numero è attivo su WhatsApp
+        assertEquals(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED, result);
+        Mockito.verify(pnExternalChannelClient).sendVerificationCode(Mockito.eq(recipientId), Mockito.eq("+393331234567"), Mockito.isNull(),
+                Mockito.eq(CourtesyChannelTypeDto.WHATSAPP), Mockito.anyString(), Mockito.any());
+    }
+
+    @Test
+    void saveCourtesyAddressBookWhatsappWithVerificationCodeReplacesSms() {
+        //GIVEN
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+        addressVerificationDto.setVerificationCode("12345");
+
+        VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, "hashed", CourtesyChannelTypeDto.WHATSAPP.getValue(), AddressBookEntity.SENDER_ID_DEFAULT,
+                CourtesyAddressTypeDto.COURTESY.getValue(), addressVerificationDto.getValue());
+        verificationCode.setLastModified(Instant.now().minusSeconds(1));
+        verificationCode.setVerificationCode("12345");
+
+        AddressBookEntity existingSms = new AddressBookEntity(recipientId, CourtesyAddressTypeDto.COURTESY.getValue(), AddressBookEntity.SENDER_ID_DEFAULT, CourtesyChannelTypeDto.SMS.getValue());
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.NOT_EXISTS));
+        Mockito.when(addressBookDao.getVerificationCode(Mockito.any())).thenReturn(Mono.just(verificationCode));
+        Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(existingSms));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(pnUserattributesConfig.getVerificationcodettl()).thenReturn(Duration.ofSeconds(10));
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, CourtesyChannelTypeDto.WHATSAPP, addressVerificationDto, USER_TAX_ID).block(d);
+
+        //THEN - il recapito SMS dello stesso ente viene eliminato nella stessa transazione del salvataggio WhatsApp
+        assertEquals(SUCCESS, result);
+        ArgumentCaptor<AddressBookEntity> probeCaptor = ArgumentCaptor.forClass(AddressBookEntity.class);
+        Mockito.verify(addressBookDao).getAddressBook(probeCaptor.capture());
+        assertEquals(CourtesyChannelTypeDto.SMS.getValue(), probeCaptor.getValue().getChannelType());
+        assertEquals(AddressBookEntity.SENDER_ID_DEFAULT, probeCaptor.getValue().getSenderId());
+
+        ArgumentCaptor<AddressBookEntity> savedCaptor = ArgumentCaptor.forClass(AddressBookEntity.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<AddressBookEntity>> deletedCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(addressBookDao).saveAddressBookAndVerifiedAddress(savedCaptor.capture(), Mockito.any(), deletedCaptor.capture());
+        assertEquals(CourtesyChannelTypeDto.WHATSAPP.getValue(), savedCaptor.getValue().getChannelType());
+        assertEquals(List.of(existingSms), deletedCaptor.getValue());
+    }
+
+    @Test
+    void saveCourtesyAddressBookSmsAlreadyVerifiedReplacesWhatsapp() {
+        //GIVEN
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+
+        AddressBookEntity existingWhatsapp = new AddressBookEntity(recipientId, CourtesyAddressTypeDto.COURTESY.getValue(), AddressBookEntity.SENDER_ID_DEFAULT, CourtesyChannelTypeDto.WHATSAPP.getValue());
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED));
+        Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.just(existingWhatsapp));
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, CourtesyChannelTypeDto.SMS, addressVerificationDto, USER_TAX_ID).block(d);
+
+        //THEN
+        assertEquals(SUCCESS, result);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<AddressBookEntity>> deletedCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(addressBookDao).saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), deletedCaptor.capture());
+        assertEquals(List.of(existingWhatsapp), deletedCaptor.getValue());
+    }
+
+    @Test
+    void saveCourtesyAddressBookWhatsappWithoutTwinDeletesNothing() {
+        //GIVEN
+        String recipientId = "PF-123e4567-e89b-12d3-a456-426714174000";
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+
+        Mockito.when(addressBookDao.validateHashedAddress(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(Mono.just(AddressBookDao.CHECK_RESULT.ALREADY_VALIDATED));
+        Mockito.when(addressBookDao.getAddressBook(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(pnDatavaultClient.updateRecipientAddressByInternalId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(addressBookDao.deleteVerificationCode(Mockito.any())).thenReturn(Mono.empty());
+
+        // WHEN
+        AddressBookService.SAVE_ADDRESS_RESULT result = addressBookService.saveCourtesyAddressBook(recipientId, null, CourtesyChannelTypeDto.WHATSAPP, addressVerificationDto, USER_TAX_ID).block(d);
+
+        //THEN
+        assertEquals(SUCCESS, result);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<AddressBookEntity>> deletedCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(addressBookDao).saveAddressBookAndVerifiedAddress(Mockito.any(), Mockito.any(), deletedCaptor.capture());
+        assertTrue(deletedCaptor.getValue().isEmpty());
+    }
+
+    @Test
+    void saveCourtesyAddressBookWhatsapp_invalidNumber() {
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+383331234567");
+
+        assertThrows(PnInvalidInputException.class, () ->
+                addressBookService.saveCourtesyAddressBook("PF-123e4567-e89b-12d3-a456-426714174000", null, CourtesyChannelTypeDto.WHATSAPP, addressVerificationDto, USER_TAX_ID).block());
+    }
+
+    @Test
+    void mutuallyExclusiveCourtesyChannels() {
+        assertEquals(CourtesyChannelTypeDto.WHATSAPP, AddressBookService.mutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto.SMS));
+        assertEquals(CourtesyChannelTypeDto.SMS, AddressBookService.mutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto.WHATSAPP));
+        assertNull(AddressBookService.mutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto.EMAIL));
+        assertNull(AddressBookService.mutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto.APPIO));
+    }
 
     @Test
     void saveCourtesyAddressBookSMS_fail() {

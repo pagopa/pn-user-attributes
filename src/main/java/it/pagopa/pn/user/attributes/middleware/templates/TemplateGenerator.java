@@ -69,4 +69,11 @@ public interface TemplateGenerator {
      * @return the generated SMS body template as a String.
      */
     String generateSmsBody(LanguageEnum language);
+
+    /**
+     * Generates the WhatsApp verification code template descriptor (JSON with the %s placeholder for the code).
+     *
+     * @return the descriptor of the WhatsApp authentication template as a String.
+     */
+    String generateWhatsappVerificationCodeBody(LanguageEnum language);
 }

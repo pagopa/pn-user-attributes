@@ -50,6 +50,9 @@ class PnExternalChannelClientByTemplateClientTest {
     public static final String DELIVERIES_COURTESY_FULL_MESSAGE_REQUESTS = "/external-channels/v1/digital-deliveries/courtesy-full-message-requests/.*";
     public static final String DELIVERIES_LEGAL_FULL_MESSAGE_REQUESTS = "/external-channels/v1/digital-deliveries/legal-full-message-requests/.*";
     public static final String COURTESY_SIMPLE_MESSAGE_REQUESTS = "/external-channels/v1/digital-deliveries/courtesy-simple-message-requests/.*";
+    public static final String COURTESY_WHATSAPP_MESSAGE_REQUESTS = "/external-channels/v1/digital-deliveries/courtesy-whatsapp-message-requests/.*";
+    public static final String WHATSAPP_OTP_TEMPLATE = "{\"templateName\":\"send_codice_verifica\",\"language\":\"it\",\"bodyParameters\":[\"%s\"],"
+            + "\"buttonParameters\":[\"%s\"],\"previewText\":\"%s è il tuo codice di verifica.\"}";
 
     @Autowired
     PnExternalChannelClient pnExternalChannelClient;
@@ -295,5 +298,54 @@ class PnExternalChannelClientByTemplateClientTest {
 
         Mono<String> pnExternalChannelClientMono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, ADDRESS, legalChannelType, courtesyChannelType, verificationCode, LanguageEnum.IT);
         assertThrows(WebClientResponseException.class, () -> pnExternalChannelClientMono.block(duration));
+    }
+
+    @Test
+    void sendVerificationCodeWHATSAPP() {
+        //Given
+        String verificationCode = "12345";
+        Mockito.when(templateApi.whatsappVerificationCodeBody(Mockito.any())).thenReturn(WHATSAPP_OTP_TEMPLATE);
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(COURTESY_WHATSAPP_MESSAGE_REQUESTS)
+                        .withBody(org.mockserver.model.JsonBody.json("{\"channel\":\"WHATSAPP\",\"qos\":\"INTERACTIVE\",\"eventType\":\"VerificationCode\","
+                                + "\"receiverDigitalAddress\":\"+393331234567\",\"messageText\":\"12345 è il tuo codice di verifica.\","
+                                + "\"whatsappTemplate\":{\"name\":\"send_codice_verifica\",\"language\":\"it\",\"bodyParameters\":[\"12345\"],\"buttonParameters\":[\"12345\"]}}",
+                                org.mockserver.matchers.MatchType.ONLY_MATCHING_FIELDS)))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(204));
+
+        // When
+        String res = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, "+393331234567", null, CourtesyChannelTypeDto.WHATSAPP, verificationCode, LanguageEnum.IT)
+                .block(Duration.ofMillis(3000));
+
+        // Then
+        assertNotNull(res);
+        Mockito.verify(templateApi, Mockito.never()).smsVerificationCodeBody(Mockito.any());
+    }
+
+    @Test
+    void sendVerificationCodeWHATSAPP_FAIL() {
+        Mockito.when(templateApi.whatsappVerificationCodeBody(Mockito.any())).thenReturn(WHATSAPP_OTP_TEMPLATE);
+        new MockServerClient("localhost", 9998)
+                .when(request()
+                        .withMethod("PUT")
+                        .withPath(COURTESY_WHATSAPP_MESSAGE_REQUESTS))
+                .respond(response()
+                        .withContentType(MediaType.APPLICATION_JSON)
+                        .withStatusCode(500));
+
+        Mono<String> mono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, "+393331234567", null, CourtesyChannelTypeDto.WHATSAPP, "12345", LanguageEnum.IT);
+        assertThrows(WebClientResponseException.class, () -> mono.block(duration));
+    }
+
+    @Test
+    void sendVerificationCodeWHATSAPP_invalidTemplate() {
+        Mockito.when(templateApi.whatsappVerificationCodeBody(Mockito.any())).thenReturn("not a descriptor %s");
+
+        Mono<String> mono = pnExternalChannelClient.sendVerificationCode(RECIPIENT_ID, "+393331234567", null, CourtesyChannelTypeDto.WHATSAPP, "12345", LanguageEnum.IT);
+        assertThrows(it.pagopa.pn.commons.exceptions.PnInternalException.class, () -> mono.block(duration));
     }
 }

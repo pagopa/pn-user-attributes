@@ -494,6 +494,11 @@ public class AddressBookService {
                             // creo un record fittizio di verificationCode, così evito di passare tutti i parametri
                             VerificationCodeEntity verificationCode = new VerificationCodeEntity(recipientId, hashAddress(addressVerificationDto.getValue()),
                                 channelType, checkedSenderId, legal, null);
+                            if (isMutuallyExclusiveCourtesyChannel(courtesyChannelType)) {
+                                // SMS e WHATSAPP sono alternativi sullo stesso ente: il recapito "gemello" viene eliminato nella stessa transazione
+                                return findMutuallyExclusiveCourtesyAddresses(recipientId, checkedSenderId, courtesyChannelType)
+                                    .flatMap(addressesToDelete -> verificationCodeUtils.sendToDataVaultAndSaveInDynamodb(verificationCode, addressesToDelete, addressVerificationDto.getValue()));
+                            }
                             return handleVerifiedAddress(legalChannelType, verificationCode, filteredAddressList, addressVerificationDto.getValue());
                         } else {
                             // l'indirizzo non è verificato. Ho due casi possibili:
@@ -508,6 +513,10 @@ public class AddressBookService {
                                     language);
                             } else {
                                 // CASO B: ho un codice di verifica da validare e poi procedere.
+                                if (isMutuallyExclusiveCourtesyChannel(courtesyChannelType)) {
+                                    return findMutuallyExclusiveCourtesyAddresses(recipientId, checkedSenderId, courtesyChannelType)
+                                            .flatMap(addressesToDelete -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, addressesToDelete));
+                                }
                                 return prepareAndDeleteAddresses(filteredAddressList)
                                         .flatMap(addressesToDelete -> verificationCodeUtils.validateVerificationCodeAndSendToDataVault(recipientId, addressVerificationDto, legalChannelType, courtesyChannelType, addressesToDelete));
                             }
@@ -557,6 +566,37 @@ public class AddressBookService {
                                 })
                 )
                 .collectList();
+    }
+
+    /**
+     * SMS e WHATSAPP usano lo stesso numero di cellulare e sono alternativi: per ogni ente (o default)
+     * l'utente può avere attivo solo uno dei due canali.
+     */
+    static boolean isMutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto courtesyChannelType) {
+        return courtesyChannelType == CourtesyChannelTypeDto.SMS || courtesyChannelType == CourtesyChannelTypeDto.WHATSAPP;
+    }
+
+    static CourtesyChannelTypeDto mutuallyExclusiveCourtesyChannel(CourtesyChannelTypeDto courtesyChannelType) {
+        if (courtesyChannelType == CourtesyChannelTypeDto.SMS) return CourtesyChannelTypeDto.WHATSAPP;
+        if (courtesyChannelType == CourtesyChannelTypeDto.WHATSAPP) return CourtesyChannelTypeDto.SMS;
+        return null;
+    }
+
+    /**
+     * Restituisce il recapito "gemello" (WHATSAPP per SMS e viceversa) dello stesso ente, se esiste, da eliminare
+     * nella stessa transazione DynamoDB del salvataggio (stessa primitiva usata per il passaggio PEC/SERCQ).
+     */
+    Mono<List<AddressBookEntity>> findMutuallyExclusiveCourtesyAddresses(String recipientId, String senderId, CourtesyChannelTypeDto courtesyChannelType) {
+        CourtesyChannelTypeDto twin = mutuallyExclusiveCourtesyChannel(courtesyChannelType);
+        if (twin == null) {
+            return Mono.just(List.of());
+        }
+        AddressBookEntity probe = new AddressBookEntity(recipientId, CourtesyAddressTypeDto.COURTESY.getValue(), senderId, twin.getValue());
+        return dao.getAddressBook(probe)
+                .doOnNext(found -> log.info("mutually exclusive courtesy address found, it will be replaced - recipientId={} senderId={} from={} to={}",
+                        recipientId, senderId, twin, courtesyChannelType))
+                .map(List::of)
+                .defaultIfEmpty(List.of());
     }
 
     private Mono<String> filterNotRootSender(final String senderId) {
