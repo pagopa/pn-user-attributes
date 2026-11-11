@@ -68,6 +68,51 @@ class CourtesyAddressControllerTest {
     }
 
     @Test
+    void postRecipientCourtesyAddressWhatsappDisabled() {
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", "WHATSAPP");
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+
+        when(pnUserattributesConfig.isWhatsappEnabled()).thenReturn(false);
+
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerificationDto)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+        verify(svc, never()).saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void postRecipientCourtesyAddressWhatsappEnabledVerCodeNeeded() {
+        String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"
+                .replace("{senderId}", SENDERID)
+                .replace("{channelType}", "WHATSAPP");
+        AddressVerificationDto addressVerificationDto = new AddressVerificationDto();
+        addressVerificationDto.setValue("+393331234567");
+
+        when(pnUserattributesConfig.isWhatsappEnabled()).thenReturn(true);
+        when(svc.saveCourtesyAddressBook(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(AddressBookService.SAVE_ADDRESS_RESULT.CODE_VERIFICATION_REQUIRED));
+
+        webTestClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(addressVerificationDto)
+                .header(PA_ID, RECIPIENTID)
+                .header(PN_CX_TYPE_HEADER, PN_CX_TYPE_PF)
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    @Test
     void postRecipientCourtesyAddress_FAIL() {
         // Given
         String url = "/address-book/v1/digital-address/courtesy/{senderId}/{channelType}"

@@ -71,6 +71,7 @@ public class VerifiedAddressUtils {
             return null;
         }
         if (Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.SMS.getValue())
+            || Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.WHATSAPP.getValue())
             || Objects.equals(addressBook.getChannelType(), CourtesyChannelTypeDto.EMAIL.getValue()))
             auditLogEventType = PnAuditLogEventType.AUD_AB_DA_INSUP;
 

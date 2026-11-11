@@ -111,4 +111,14 @@ public class TemplatesClient {
     public String smsVerificationCodeBody(LanguageEnum xLanguage) {
         return templateEngineClient.smsVerificationCodeBody(xLanguage);
     }
+
+    /**
+     * Retrieves the descriptor of the WhatsApp verification code template.
+     *
+     * @param xLanguage the language for the template.
+     * @return the WhatsApp verification code template descriptor as a String.
+     */
+    public String whatsappVerificationCodeBody(LanguageEnum xLanguage) {
+        return templateEngineClient.whatsappVerificationCodeBody(xLanguage);
+    }
 }

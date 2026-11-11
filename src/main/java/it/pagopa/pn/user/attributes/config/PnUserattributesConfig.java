@@ -60,6 +60,7 @@ public class PnUserattributesConfig {
     private String verificationCodeMessagePECRejectSubject;
     private String sercqAddress;
     private String isSercqEnabled;
+    private String isWhatsappEnabled;
 
     private int ioactivationSendolderthandays;
 
@@ -127,6 +128,13 @@ public class PnUserattributesConfig {
 
     public boolean isSercqEnabled() {
         return isSercqEnabled != null && isSercqEnabled.equals("true");
+    }
+
+    /**
+     * Feature flag del canale di cortesia WHATSAPP: se disattivato non è possibile creare nuovi recapiti WHATSAPP.
+     */
+    public boolean isWhatsappEnabled() {
+        return isWhatsappEnabled != null && isWhatsappEnabled.equals("true");
     }
 
 }
